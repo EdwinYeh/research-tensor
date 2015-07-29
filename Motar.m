@@ -10,7 +10,7 @@ isUpdateFi = false;
 isBinary = false;
 isSampleInstance = true;
 isSampleFeature = true;
-isRandom = true;
+isURandom = true;
 %numTime = 20;
 maxIter = 100;
 
@@ -169,7 +169,7 @@ for tuneGama = 0:6
             for i = 1:numDom
                 if(i == targetDomain)
 %                   disp('Assign U{target} with predict result of logistic regression')
-                    if isRandom == true
+                    if isURandom == true
                         U{i} = rand(numInstance(i), numInstanceCluster(i));
                         U{i}(:, numInstanceCluster(i)) = 0;
                     else
