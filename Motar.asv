@@ -10,12 +10,12 @@ isUpdateFi = false;
 isBinary = false;
 isSampleInstance = true;
 isSampleFeature = true;
-isRandom = true;
+isRandom = false;
 %numTime = 20;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'Motar1_2000_random';
+exp_title = 'Motar1_6000';
 datasetId = 1;
 numDom = 2;
 sourceDomain = 1;
@@ -31,7 +31,7 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numSampleInstance = [500 500];
-numSampleFeature = [2000 2000];
+numSampleFeature = [6000 6000];
 numInstanceCluster = [3 3];
 numFeatureCluster = [5 5];
 
@@ -94,16 +94,17 @@ for i = 1: numDom
             Y{i}(j, label{i}(j)) = 1;
         end
     end
+end
+
+for i = 1:numDom
     if isSampleFeature == true
-        denseFeatures = findDenseFeature(X{i}, numSampleFeature(i));
         X{i} = X{i}(:, denseFeatures);
         numFeature(i) = numSampleFeature(i);
-        %denseFeatures = randperm(57312, numSampleFeature(1));
     end
 end
 
-% disp('Train logistic regression');
-% logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
+disp('Train logistic regression');
+logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
 
 for i = 1: numDom   
     W{i} = zeros(numInstance(i), numFeature(i));
@@ -318,7 +319,7 @@ for tuneGama = 0:6
             end
         end
         validateAccuracy = validateScore/ numSampleInstance(targetDomain);
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
+        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f\n', lambda, gama, validateAccuracy);
         if validateScore > bestScore
             bestScore = validateScore;
             bestLambda = lambda;

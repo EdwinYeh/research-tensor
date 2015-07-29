@@ -10,12 +10,12 @@ isUpdateFi = false;
 isBinary = false;
 isSampleInstance = true;
 isSampleFeature = true;
-isRandom = false;
+isURandom = true;
 %numTime = 20;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'GCMF1_6000';
+exp_title = 'GCMF1_2000_random';
 datasetId = 1;
 numDom = 2;
 sourceDomain = 1;
@@ -31,7 +31,7 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numSampleInstance = [500 500];
-numSampleFeature = [6000 6000];
+numSampleFeature = [2000 2000];
 numInstanceCluster = [2 2];
 numFeatureCluster = [4 4];
 
@@ -41,7 +41,7 @@ beta = 0;
 delta = 0;
 numCVFold = 5;
 CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
-resultFile = fopen('result_GCMF1_random.txt', 'w');
+resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
 
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
 
@@ -94,21 +94,15 @@ for i = 1: numDom
             Y{i}(j, Labels{i}(j)) = 1;
         end
     end
-end
-
-if isSampleFeature == true
-    denseFeatures = findDenseFeature(X{1}, X{2}, numSampleFeature(i));
-end
-
-for i = 1:numDom
     if isSampleFeature == true
+        denseFeatures = findDenseFeature(X{i}, numSampleFeature(i));
         X{i} = X{i}(:, denseFeatures);
         numFeature(i) = numSampleFeature(i);
     end
 end
 
-disp('Train logistic regression');
-logisticCoefficient = glmfit(X{1}, Labels{1} - 1, 'binomial');
+% disp('Train logistic regression');
+% logisticCoefficient = glmfit(X{1}, Labels{1} - 1, 'binomial');
 
 for i = 1: numDom   
     W{i} = zeros(numInstance(i), numFeature(i));
@@ -180,7 +174,7 @@ for tuneGama = 0:6
             for i = 1:numDom
                 if(i == targetDomain)
 %                     disp('Assign U{target} with predict result of logistic regression')
-                    if isRandom == true
+                    if isURandom == true
                         U{i} = rand(numInstance(i), numInstanceCluster(i));
                     else
                         logisticPredictResult = glmval(logisticCoefficient, X{i}, 'probit');
@@ -295,7 +289,7 @@ for tuneGama = 0:6
             end
         end
         validateAccuracy = validateScore/ numSampleInstance(targetDomain);
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f\n', lambda, gama, validateAccuracy);
+        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
         if validateScore > bestScore
             bestScore = validateScore;
             bestLambda = lambda;
