@@ -199,7 +199,7 @@ for tuneGama = 0:6
                     %disp(sprintf('\tdomain #%d update...', i));
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                     %bestCPR = FindBestRank(threeMatrixB, 50)
-                    bestCPR = 4;
+                    bestCPR = 3;
                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
                     A = CP.U{1};
                     E = CP.U{2};
