@@ -1,0 +1,2 @@
+(BestLambda,BestGama): (0.010000, 0.010000)
+BestScore: 83.600000%

@@ -15,7 +15,7 @@ isURandom = true;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'Motar1_2000_random';
+exp_title = 'Motar1_3000_random';
 datasetId = 1;
 numDom = 2;
 sourceDomain = 1;
@@ -31,7 +31,7 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numSampleInstance = [500 500];
-numSampleFeature = [2000 2000];
+numSampleFeature = [3000 3000];
 numInstanceCluster = [3 3];
 numFeatureCluster = [5 5];
 
@@ -62,7 +62,6 @@ str = str(1:length(str)-1);
 randStr = eval(sprintf('rand(%s)', str), sprintf('[%s]', str));
 randStr = round(randStr);
 %Bcell = cell(1, numDom);
-X = cell(1, numDom);
 Y = cell(1, numDom);
 W = cell(1, numDom);
 V = cell(1, numDom);
@@ -98,16 +97,14 @@ for i = 1: numDom
         denseFeatures = findDenseFeature(X{i}, numSampleFeature(i));
         X{i} = X{i}(:, denseFeatures);
         numFeature(i) = numSampleFeature(i);
-        %denseFeatures = randperm(57312, numSampleFeature(1));
     end
 end
 
 % disp('Train logistic regression');
 % logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
 
-for i = 1: numDom   
+for i = 1: numDom
     W{i} = zeros(numInstance(i), numFeature(i));
-    
     Su{i} = zeros(numInstance(i), numInstance(i));
     Du{i} = zeros(numInstance(i), numInstance(i));
     Lu{i} = zeros(numInstance(i), numInstance(i));
@@ -157,31 +154,31 @@ disp('Start training')
 bestScore = 0;
 %reinitialize B, U, V
 for tuneGama = 0:6
-    gama = 0.001 * 10 ^ tuneGama;
+    gama = 0.000001 * 10 ^ tuneGama;
     for tuneLambda = 0:6
-        lambda = 0.001 * 10 ^ tuneLambda;
+        lambda = 0.000001 * 10 ^ tuneLambda;
         validateScore = 0;
         validateIndex = 1: CVFoldSize;
         fprintf('Use Lambda:%f, Gama:%f\n', lambda, gama);
         for fold = 1:numCVFold
             %re-initialize
-            B = tensor(randStr);
-            for i = 1:numDom
-                if(i == targetDomain)
-%                   disp('Assign U{target} with predict result of logistic regression')
-                    if isURandom == true
-                        U{i} = rand(numInstance(i), numInstanceCluster(i));
-                        U{i}(:, numInstanceCluster(i)) = 0;
-                    else
-                        logisticPredictResult = glmval(logisticCoefficient, X{i}, 'probit');
+            %B = tensor(randStr);
+            if isURandom == true
+                %U{i} = rand(numInstance(i), numInstanceCluster(i));
+                %U{i}(:, numInstanceCluster(i)) = 0;
+                [U,B,V] = getTheBestRandom(X, W, Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, label, validateIndex, numDom, targetDomain, 5, true);
+            else
+                B = tensor(randStr);
+                logisticPredictResult = glmval(logisticCoefficient, X{i}, 'probit');
+                for i = 1:numDom
+                    if i == targetDomain
                         U{i} = assignPredictResult(U{i}, logisticPredictResult, 1);
+                    else
+                        U{i} = Y{i};
                     end
-                    U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
-                else
-                    U{i} = Y{i};
+                    V{i} = rand(numFeature(i),numFeatureCluster(i));
+                    V{i}(:, numFeatureCluster(i)) = 0;
                 end
-                V{i} = rand(numFeature(i),numFeatureCluster(i));
-                V{i}(:, numFeatureCluster(i)) = 0;
             end
             %Iterative update
             newEmpError = Inf;
@@ -202,7 +199,7 @@ for tuneGama = 0:6
                     %disp(sprintf('\tdomain #%d update...', i));
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                     %bestCPR = FindBestRank(threeMatrixB, 50)
-                    bestCPR = 2;
+                    bestCPR = 4;
                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
                     A = CP.U{1};
                     E = CP.U{2};
@@ -245,7 +242,7 @@ for tuneGama = 0:6
                         end
                         U{i}(isnan(U{i})) = 0;
                         U{i}(~isfinite(U{i})) = 0;
-                        %U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
+                        U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
                     end
                     
                     %update fi

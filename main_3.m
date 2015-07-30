@@ -1,21 +1,18 @@
 clear;clc;
-if matlabpool('size') > 0
-    matlabpool close;
-end
-matlabpool('open', 'local', 4);
+% if matlabpool('size') > 0
+%     matlabpool close;
+% end
+% matlabpool('open', 'local', 4);
 %delete('HSTLog.txt');
 %diary('HSTLog.txt');
-datasetId = 20;
+datasetId = 1;
 if((datasetId == 7)||(datasetId == 8)||(datasetId == 9))
     prefix = 'Reuter/';
 elseif ((datasetId == 1)||(datasetId == 2)||(datasetId == 3)||(datasetId == 4)||(datasetId == 5)||(datasetId == 6))
-    prefix = '20-newsgroup/';
+    prefix = '../20-newsgroup/';
 else
     prefix = 'Animal_img/';  
 end
-createSparseTensor(datasetId, 2, 1);
-sourceLabel = load(sprintf('%ssource_label%d.csv', prefix, datasetId));
-targetLabel = load(sprintf('%starget_label%d.csv', prefix, datasetId));
 
 % configuration
 isUpdateAE = true;
@@ -27,6 +24,7 @@ maxIter = 100;
 numDom = 2;
 targetDomain = 2;
 sourceDomain = 1;
+domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 
 numSourceList = [3914 3907 3783 3954 3830 3823 1237 1016 897 24295 24295 24295 24295 24295 24295 24295 24294 24294 17422 17422];
 numTargetList = [3926 3910 3336 3961 3387 3371 1207 1043 897 6180 6180 6180 6180 6180 6180 6180 6180 6180 13052 13052];
@@ -54,14 +52,9 @@ delta = 0;
 numCVFold = 5;
 CVFoldSize = numSampleNews(targetDomain)/ numCVFold;
 resultFile = fopen(sprintf('result%d.txt', datasetId), 'w');
+sourceLabel = load(sprintf('%ssource%d_label.csv', prefix, datasetId));
+targetLabel = load(sprintf('%starget%d_label.csv', prefix, datasetId));
 
-% disp(numSampleFeature);
-%disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
-%disp(sprintf('#users:[%s]\n#items:[%s]\n#user_cluster:[%s]\n#item_cluster:[%s]', num2str(numInstance(1:numDom)), num2str(numFeature(1:numDom)), num2str(numInstanceCluster(1:numDom)), num2str(numFeatureCluster(1:numDom))));
-
-%[groundTruthX, snapshot, idx] = preprocessing(numDom, targetDomain);
-%bestLambda = 0.1;
-%bestAccuracy = 0;
 str = '';
 for i = 1:numDom
     str = sprintf('%s%d,%d,', str, numInstanceCluster(i), numFeatureCluster(i));
@@ -71,7 +64,7 @@ str = str(1:length(str)-1);
 %random initialize B
 randStr = eval(sprintf('rand(%s)', str), sprintf('[%s]', str));
 randStr = round(randStr);
-%Bcell = cell(1, numDom);
+
 X = cell(1, numDom);
 Y = cell(1, numDom);
 W = cell(1, numDom);
@@ -89,9 +82,9 @@ trueLabels = cell(1, 2);
 trueLabels{sourceDomain} = sourceLabel;
 trueLabels{targetDomain} = targetLabel;
 
+X = createSparseMatrix_multiple(prefix, domainNameList, numDom, 1);
 %sample & calculate Laplacian
-parfor i = 1: numDom
-    X{i} = importdata(sprintf('RealData/realX%d.mat', i));
+for i = 1: numDom
     %randomly sample news
     sampleNewsIndex = randperm(numInstance(i), numSampleNews(i));
     sampleNews = X{i}(sampleNewsIndex, :);
@@ -196,7 +189,7 @@ for tuneGama = 0:6
                     %disp(sprintf('\tdomain #%d update...', i));
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                     %bestCPR = FindBestRank(threeMatrixB, 50)
-                    bestCPR = 2;
+                    bestCPR = 4;
                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
                     A = CP.U{1};
                     E = CP.U{2};
@@ -239,7 +232,7 @@ for tuneGama = 0:6
                         end
                         U{i}(isnan(U{i})) = 0;
                         U{i}(~isfinite(U{i})) = 0;
-                        %U{i} = fixTrainingSet(U{i}, Labels{i}, -1, validateIndex);
+                        U{i} = fixTrainingSet(U{i}, Labels{i}, validateIndex);
                     end
                     
                     %update fi
@@ -312,12 +305,12 @@ for tuneGama = 0:6
             end
         end
         validateAccuracy = validateScore/ numSampleNews(targetDomain);
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f\n', lambda, gama, validateAccuracy);
         if validateScore > bestScore
             bestScore = validateScore;
             bestLambda = lambda;
             bestGama = gama;
         end
+        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy* 100, bestScore/ numSampleNews(targetDomain)* 100);
     end
 end
 fprintf(resultFile, sprintf('datasetId: %d\n', datasetId));

@@ -15,7 +15,7 @@ isURandom = true;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'GCMF1_2000_random';
+exp_title = 'GCMF1_3000_random';
 datasetId = 1;
 numDom = 2;
 sourceDomain = 1;
@@ -31,7 +31,7 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numSampleInstance = [500 500];
-numSampleFeature = [2000 2000];
+numSampleFeature = [3000 3000];
 numInstanceCluster = [2 2];
 numFeatureCluster = [4 4];
 
@@ -49,20 +49,7 @@ showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTarge
 %disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
 %disp(sprintf('#users:[%s]\n#items:[%s]\n#user_cluster:[%s]\n#item_cluster:[%s]', num2str(numInstance(1:numDom)), num2str(numFeature(1:numDom)), num2str(numInstanceCluster(1:numDom)), num2str(numFeatureCluster(1:numDom))));
 
-%[groundTruthX, snapshot, idx] = preprocessing(numDom, targetDomain);
-%bestLambda = 0.1;
-%bestAccuracy = 0;
-str = '';
-for i = 1:numDom
-    str = sprintf('%s%d,%d,', str, numInstanceCluster(i), numFeatureCluster(i));
-end
-
-str = str(1:length(str)-1);
-%random initialize B
-randStr = eval(sprintf('rand(%s)', str), sprintf('[%s]', str));
-randStr = round(randStr);
 %Bcell = cell(1, numDom);
-X = cell(1, numDom);
 Y = cell(1, numDom);
 W = cell(1, numDom);
 V = cell(1, numDom);
@@ -74,7 +61,7 @@ Lv = cell(1, numDom);
 Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);
-Labels = cell(1, numDom);
+label = cell(1, numDom);
 
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, 1);
 
@@ -88,10 +75,10 @@ for i = 1: numDom
         sampleInstanceIndex = randperm(numInstance(i), numSampleInstance(i));
         X{i} = X{i}(sampleInstanceIndex, :);
         numInstance(i) = numSampleInstance(i);
-        Labels{i} = trueLabel{i}(sampleInstanceIndex, :);
+        label{i} = trueLabel{i}(sampleInstanceIndex, :);
         Y{i} = zeros(numInstance(i), numInstanceCluster(i));
         for j = 1: numInstance(i)
-            Y{i}(j, Labels{i}(j)) = 1;
+            Y{i}(j, label{i}(j)) = 1;
         end
     end
     if isSampleFeature == true
@@ -106,7 +93,6 @@ end
 
 for i = 1: numDom   
     W{i} = zeros(numInstance(i), numFeature(i));
-    
     Su{i} = zeros(numInstance(i), numInstance(i));
     Du{i} = zeros(numInstance(i), numInstance(i));
     Lu{i} = zeros(numInstance(i), numInstance(i));
@@ -153,43 +139,37 @@ for i = 1: numDom
 end
 
 uTrack = cell(1,2);
-vTrack = cell(1,2);
-hTrack = cell(1,2);
 
 disp('Start training')
 bestScore = 0;
 %reinitialize B, U, V
 for tuneGama = 0:6
-    gama = 0.001 * 10 ^ tuneGama;
+    gama = 0.000001 * 10 ^ tuneGama;
     for tuneLambda = 0:6
-        lambda = 0.001 * 10 ^ tuneLambda;
+        lambda = 0.000001 * 10 ^ tuneLambda;
         validateScore = 0;
         validateIndex = 1: CVFoldSize;
         fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);
         for fold = 1:numCVFold
-%             fprintf('fold: %d(%d~%d)\n', fold, min(validateIndex), max(validateIndex));
             %re-initialize
-            
-            H = rand(numInstanceCluster(1), numFeatureCluster(1));
-            for i = 1:numDom
-                if(i == targetDomain)
-%                     disp('Assign U{target} with predict result of logistic regression')
-                    if isURandom == true
-                        U{i} = rand(numInstance(i), numInstanceCluster(i));
+            if isURandom == true
+                %U{i} = rand(numInstance(i), numInstanceCluster(i));
+                %U{i}(:, numInstanceCluster(i)) = 0;
+                [U,H,V] = getTheBestRandom(X, W, Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, label, validateIndex, numDom, targetDomain, 5, false);
+                Utrack = U;
+            else
+                H = tensor(randStr);
+                logisticPredictResult = glmval(logisticCoefficient, X{i}, 'probit');
+                for i = 1:numDom
+                    if i == targetDomain
+                        U{i} = assignPredictResult(U{i}, logisticPredictResult, 1);
+                        U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
                     else
-                        logisticPredictResult = glmval(logisticCoefficient, X{i}, 'probit');
-                        U{i} = assignPredictResult(U{i}, logisticPredictResult, 0);
+                        U{i} = Y{i};
                     end
-                    U{i} = fixTrainingSet(U{i}, Labels{i}, validateIndex);
-                else
-                    U{i} = Y{i};
+                    V{i} = rand(numFeature(i),numFeatureCluster(i));
                 end
-                V{i} = rand(numFeature(i),numFeatureCluster(i));
             end
-            
-            uTrack{1} = U{2};
-            vTrack{1} = V{2};
-            hTrack{1} = H;
             
             HChildCell = cell(1, numDom);
             HMotherCell = cell(1, numDom);
@@ -244,7 +224,7 @@ for tuneGama = 0:6
                         end
                         U{i}(isnan(U{i})) = 0;
                         U{i}(~isfinite(U{i})) = 0;
-                        U{i} = fixTrainingSet(U{i}, Labels{i}, validateIndex);
+                        U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
                     end
                     
                     %update H
@@ -280,7 +260,7 @@ for tuneGama = 0:6
             [maxValue, maxIndex] = max(U{targetDomain}');
             predictResult = maxIndex;
             for i = 1: CVFoldSize
-                if(predictResult(validateIndex(i)) == Labels{targetDomain}(validateIndex(i)))
+                if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
                     validateScore = validateScore + 1;
                 end
             end
@@ -289,12 +269,12 @@ for tuneGama = 0:6
             end
         end
         validateAccuracy = validateScore/ numSampleInstance(targetDomain);
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
         if validateScore > bestScore
             bestScore = validateScore;
             bestLambda = lambda;
             bestGama = gama;
         end
+        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
     end
 end
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
