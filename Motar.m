@@ -15,8 +15,8 @@ isURandom = true;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'Motar1_3000_random';
-datasetId = 1;
+exp_title = 'Motar1_6000_random';
+datasetId = 2;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
@@ -31,7 +31,7 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numSampleInstance = [500 500];
-numSampleFeature = [3000 3000];
+numSampleFeature = [6000 6000];
 numInstanceCluster = [3 3];
 numFeatureCluster = [5 5];
 
@@ -315,12 +315,12 @@ for tuneGama = 0:6
             end
         end
         validateAccuracy = validateScore/ numSampleInstance(targetDomain);
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
         if validateScore > bestScore
             bestScore = validateScore;
             bestLambda = lambda;
             bestGama = gama;
         end
+        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
     end
 end
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));

@@ -15,8 +15,8 @@ isURandom = true;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'GCMF1_3000_random';
-datasetId = 1;
+exp_title = 'GCMF1_6000_random';
+datasetId = 2;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
