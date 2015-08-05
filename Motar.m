@@ -15,8 +15,8 @@ isURandom = true;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'Motar1_6000_random';
-datasetId = 2;
+exp_title = 'Motar1_100_TheBestRandom';
+datasetId = 1;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
@@ -31,7 +31,7 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numSampleInstance = [500 500];
-numSampleFeature = [6000 6000];
+numSampleFeature = [100 100];
 numInstanceCluster = [3 3];
 numFeatureCluster = [5 5];
 
@@ -43,7 +43,7 @@ numCVFold = 5;
 CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
 resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
 
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
+showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 
 % disp(numSampleFeature);
 %disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
@@ -66,6 +66,8 @@ Y = cell(1, numDom);
 W = cell(1, numDom);
 V = cell(1, numDom);
 U = cell(1, numDom);
+initV = cell(1, numDom);
+initU = cell(1, numDom);
 uc = cell(1, numDom);
 Sv = cell(1, numDom);
 Dv = cell(1, numDom);
@@ -151,7 +153,7 @@ for i = 1: numDom
 end
 
 disp('Start training')
-bestScore = 0;
+bestAccuracy = 0;
 %reinitialize B, U, V
 for tuneGama = 0:6
     gama = 0.000001 * 10 ^ tuneGama;
@@ -160,172 +162,161 @@ for tuneGama = 0:6
         validateScore = 0;
         validateIndex = 1: CVFoldSize;
         fprintf('Use Lambda:%f, Gama:%f\n', lambda, gama);
-        for fold = 1:numCVFold
-            %re-initialize
-            %B = tensor(randStr);
+        for randomTryTime = 1: 5
             if isURandom == true
-                %U{i} = rand(numInstance(i), numInstanceCluster(i));
-                %U{i}(:, numInstanceCluster(i)) = 0;
-                [U,B,V] = getTheBestRandom(X, W, Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, label, validateIndex, numDom, targetDomain, 5, true);
-            else
-                B = tensor(randStr);
-                logisticPredictResult = glmval(logisticCoefficient, X{i}, 'probit');
-                for i = 1:numDom
-                    if i == targetDomain
-                        U{i} = assignPredictResult(U{i}, logisticPredictResult, 1);
-                    else
-                        U{i} = Y{i};
-                    end
-                    V{i} = rand(numFeature(i),numFeatureCluster(i));
-                    V{i}(:, numFeatureCluster(i)) = 0;
-                end
+                [initU,initB,initV] = randomInitialize(Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, label, validateIndex, numDom, targetDomain, true);
             end
-            %Iterative update
-            newEmpError = Inf;
-            empError = Inf;
-            iter = 0;
-            diff = -1;
-            empErrors = zeros(1,maxIter);
-            MAES = zeros(1,maxIter);
-            RMSES = zeros(1,maxIter);
-            %fprintf('Fold:%d(%d~%d), Iterative update\n', fold, min(validateIndex), max(validateIndex));
-            while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(empError - newEmpError) >= 0.1 && iter < maxIter)
-                iter = iter + 1;
-                empError = newEmpError;
-                %disp(sprintf('\t#Iterator:%d', iter));
-                %disp(newEmpError);
-                newEmpError = 0;
-                for i = 1:numDom
-                    %disp(sprintf('\tdomain #%d update...', i));
-                    [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
-                    %bestCPR = FindBestRank(threeMatrixB, 50)
-                    bestCPR = 3;
-                    CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
-                    A = CP.U{1};
-                    E = CP.U{2};
-                    U3 = CP.U{3};
-                    
-                    fi = cell(1, length(CP.U{3}));
-                    
-                    %disp(sprintf('\t\tupdate V...'));
-                    %update V
-                    V{i} = V{i}.*sqrt((X{i}'*U{i}*projB + gama*Sv{i}*V{i})./(V{i}*projB'*U{i}'*U{i}*projB + gama*Dv{i}*V{i}));
-                    V{i}(isnan(V{i})) = 0;
-                    V{i}(~isfinite(V{i})) = 0;
-                    %col normalize
-                    [r c] = size(V{i});
-                    for tmpI = 1:r
-                        bot = sum(abs(V{i}(tmpI,:)));
-                        if bot == 0
-                            bot = 1;
-                        end
-                        V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
-                    end
-                    V{i}(isnan(V{i})) = 0;
-                    V{i}(~isfinite(V{i})) = 0;
-                    
-                    %disp(sprintf('\t\tupdate U...'));
-                    %update U
-                    if(i == targetDomain)
-                        U{i} = U{i}.*sqrt((X{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
-                        U{i}(isnan(U{i})) = 0;
-                        U{i}(~isfinite(U{i})) = 0;
-                        [r c] = size(U{i});
+            for fold = 1:numCVFold
+                %Iterative update
+                U = initU; V = initV; B = initB;
+                newEmpError = Inf;
+                empError = Inf;
+                iter = 0;
+                diff = -1;
+                empErrors = zeros(1,maxIter);
+                MAES = zeros(1,maxIter);
+                RMSES = zeros(1,maxIter);
+                %fprintf('Fold:%d(%d~%d), Iterative update\n', fold, min(validateIndex), max(validateIndex));
+                while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(empError - newEmpError) >= 0.1 && iter < maxIter)
+                    iter = iter + 1;
+                    empError = newEmpError;
+                    %disp(sprintf('\t#Iterator:%d', iter));
+                    %disp(newEmpError);
+                    newEmpError = 0;
+                    for i = 1:numDom
+                        %disp(sprintf('\tdomain #%d update...', i));
+                        [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
+                        %bestCPR = FindBestRank(threeMatrixB, 50)
+                        bestCPR = 2;
+                        CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
+                        A = CP.U{1};
+                        E = CP.U{2};
+                        U3 = CP.U{3};
+                        
+                        fi = cell(1, length(CP.U{3}));
+                        
+                        %disp(sprintf('\t\tupdate V...'));
+                        %update V
+                        V{i} = V{i}.*sqrt((X{i}'*U{i}*projB + gama*Sv{i}*V{i})./(V{i}*projB'*U{i}'*U{i}*projB + gama*Dv{i}*V{i}));
+                        V{i}(isnan(V{i})) = 0;
+                        V{i}(~isfinite(V{i})) = 0;
                         %col normalize
-                        [r c] = size(U{i});
+                        [r c] = size(V{i});
                         for tmpI = 1:r
-                            bot = sum(abs(U{i}(tmpI,:)));
+                            bot = sum(abs(V{i}(tmpI,:)));
                             if bot == 0
                                 bot = 1;
                             end
-                            U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
+                            V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
                         end
-                        U{i}(isnan(U{i})) = 0;
-                        U{i}(~isfinite(U{i})) = 0;
-                        U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
-                    end
-                    
-                    %update fi
-                    [r, c] = size(U3);
-                    nextThreeB = zeros(numInstanceCluster(i), numFeatureCluster(i), r);
-                    sumFi = zeros(c, c);
-                    CPLamda = CP.lambda(:);
-                    parfor idx = 1:r
-                        %for idx = 1:r
-                        fi{idx} = diag(CPLamda.*U3(idx,:)');
-                        sumFi = sumFi + fi{idx};
-                    end
-                    if isUpdateAE
-                        %disp(sprintf('\t\tupdate A...'));
-                        [rA cA] = size(A);
-                        onesA = ones(rA, cA);
-                        A = A.*sqrt((U{i}'*X{i}*V{i}*E*sumFi + alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
-                        A(isnan(A)) = 0;
-                        A(~isfinite(A)) = 0;
-                        %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
-                        A(isnan(A)) = 0;
-                        A(~isfinite(A)) = 0;
+                        V{i}(isnan(V{i})) = 0;
+                        V{i}(~isfinite(V{i})) = 0;
                         
-                        %disp(sprintf('\t\tupdate E...'));
-                        [rE cE] = size(E);
-                        onesE = ones(rE, cE);
-                        E = E.*sqrt((V{i}'*X{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
-                        E(isnan(E)) = 0;
-                        E(~isfinite(E)) = 0;
-                        %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
-                        E(isnan(E)) = 0;
-                        E(~isfinite(E)) = 0;
+                        %disp(sprintf('\t\tupdate U...'));
+                        %update U
+                        if(i == targetDomain)
+                            U{i} = U{i}.*sqrt((X{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
+                            U{i}(isnan(U{i})) = 0;
+                            U{i}(~isfinite(U{i})) = 0;
+                            [r c] = size(U{i});
+                            %col normalize
+                            [r c] = size(U{i});
+                            for tmpI = 1:r
+                                bot = sum(abs(U{i}(tmpI,:)));
+                                if bot == 0
+                                    bot = 1;
+                                end
+                                U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
+                            end
+                            U{i}(isnan(U{i})) = 0;
+                            U{i}(~isfinite(U{i})) = 0;
+                            U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
+                        end
                         
-                        %disp(sprintf('\tcombine next iterator B...'));
+                        %update fi
+                        [r, c] = size(U3);
+                        nextThreeB = zeros(numInstanceCluster(i), numFeatureCluster(i), r);
+                        sumFi = zeros(c, c);
+                        CPLamda = CP.lambda(:);
                         parfor idx = 1:r
                             %for idx = 1:r
-                            nextThreeB(:,:,idx) = A*fi{idx}*E';
-                            nextB = nextThreeB(:,:,idx);
+                            fi{idx} = diag(CPLamda.*U3(idx,:)');
+                            sumFi = sumFi + fi{idx};
                         end
+                        if isUpdateAE
+                            %disp(sprintf('\t\tupdate A...'));
+                            [rA cA] = size(A);
+                            onesA = ones(rA, cA);
+                            A = A.*sqrt((U{i}'*X{i}*V{i}*E*sumFi + alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+                            A(isnan(A)) = 0;
+                            A(~isfinite(A)) = 0;
+                            %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
+                            A(isnan(A)) = 0;
+                            A(~isfinite(A)) = 0;
+                            
+                            %disp(sprintf('\t\tupdate E...'));
+                            [rE cE] = size(E);
+                            onesE = ones(rE, cE);
+                            E = E.*sqrt((V{i}'*X{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
+                            E(isnan(E)) = 0;
+                            E(~isfinite(E)) = 0;
+                            %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
+                            E(isnan(E)) = 0;
+                            E(~isfinite(E)) = 0;
+                            
+                            %disp(sprintf('\tcombine next iterator B...'));
+                            parfor idx = 1:r
+                                %for idx = 1:r
+                                nextThreeB(:,:,idx) = A*fi{idx}*E';
+                                nextB = nextThreeB(:,:,idx);
+                            end
+                        end
+                        B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, eval(sprintf('[%s]', str)));
                     end
-                    B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, eval(sprintf('[%s]', str)));
+                    %disp(sprintf('\tCalculate this iterator error'));
+                    parfor i = 1:numDom
+                        %for i = 1:numDom
+                        [projB, threeTensorB] = SumOfMatricize(B, 2*(i - 1)+1);
+                        result = U{i}*projB*V{i}';
+                        normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
+                        smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
+                        smoothV = gama*trace(V{i}'*Lv{i}*V{i});
+                        loss = normEmp + smoothU + smoothV;
+                        newEmpError = newEmpError + loss;
+                        %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
+                    end
+                    %disp(sprintf('\tEmperical Error:%f', newEmpError));
+                    empErrors(iter) = newEmpError;
+                    %fprintf('iter:%d, error = %f\n', iter, newEmpError);
+                    diff = empError - newEmpError;
                 end
-                %disp(sprintf('\tCalculate this iterator error'));
-                parfor i = 1:numDom
-                    %for i = 1:numDom
-                    [projB, threeTensorB] = SumOfMatricize(B, 2*(i - 1)+1);
-                    result = U{i}*projB*V{i}';
-                    normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
-                    smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
-                    smoothV = gama*trace(V{i}'*Lv{i}*V{i});
-                    loss = normEmp + smoothU + smoothV;
-                    newEmpError = newEmpError + loss;
-                    %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
+                %calculate validationScore
+                [maxValue, maxIndex] = max(U{targetDomain}');
+                predictResult = maxIndex;
+                for i = 1: CVFoldSize
+                    if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
+                        validateScore = validateScore + 1;
+                    end
                 end
-                %disp(sprintf('\tEmperical Error:%f', newEmpError));
-                empErrors(iter) = newEmpError;
-                %fprintf('iter:%d, error = %f\n', iter, newEmpError);
-                diff = empError - newEmpError;
-            end
-            %calculate validationScore
-            [maxValue, maxIndex] = max(U{targetDomain}');
-            predictResult = maxIndex;
-            for i = 1: CVFoldSize
-                if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
-                    validateScore = validateScore + 1;
+                for c = 1:CVFoldSize
+                    validateIndex(c) = validateIndex(c) + CVFoldSize;
                 end
             end
-            for c = 1:CVFoldSize
-                validateIndex(c) = validateIndex(c) + CVFoldSize;
+            validateAccuracy = validateScore/ numSampleInstance(targetDomain);
+            if validateAccuracy > bestAccuracy
+                bestAccuracy = validateAccuracy;
+                bestLambda = lambda;
+                bestGama = gama;
             end
+            fprintf('Initial try: %d, ValidateAccuracy:%f', validateAccuracy);
         end
-        validateAccuracy = validateScore/ numSampleInstance(targetDomain);
-        if validateScore > bestScore
-            bestScore = validateScore;
-            bestLambda = lambda;
-            bestGama = gama;
-        end
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
+        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestAccuracy);
+        fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     end
 end
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
 fprintf(resultFile, '(BestLambda,BestGama): (%f, %f)\n', bestLambda, bestGama);
-fprintf(resultFile, 'BestScore: %f%%', bestScore/ numSampleInstance(targetDomain)* 100);
+fprintf(resultFile, 'BestScore: %f%%', bestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
 % matlabpool close;

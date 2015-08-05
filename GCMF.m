@@ -15,8 +15,8 @@ isURandom = true;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'GCMF1_6000_random';
-datasetId = 2;
+exp_title = 'GCMF1_100_TheBestRandom';
+datasetId = 1;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
@@ -30,8 +30,8 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
-numSampleInstance = [500 500];
-numSampleFeature = [3000 3000];
+numSampleInstance = [100 100];
+numSampleFeature = [100 100];
 numInstanceCluster = [2 2];
 numFeatureCluster = [4 4];
 
@@ -91,7 +91,7 @@ end
 % disp('Train logistic regression');
 % logisticCoefficient = glmfit(X{1}, Labels{1} - 1, 'binomial');
 
-for i = 1: numDom   
+for i = 1: numDom
     W{i} = zeros(numInstance(i), numFeature(i));
     Su{i} = zeros(numInstance(i), numInstance(i));
     Du{i} = zeros(numInstance(i), numInstance(i));
@@ -138,10 +138,8 @@ for i = 1: numDom
     Lv{i} = Dv{i} - Sv{i};
 end
 
-uTrack = cell(1,2);
-
 disp('Start training')
-bestScore = 0;
+bestAccuracy = 0;
 %reinitialize B, U, V
 for tuneGama = 0:6
     gama = 0.000001 * 10 ^ tuneGama;
@@ -150,136 +148,123 @@ for tuneGama = 0:6
         validateScore = 0;
         validateIndex = 1: CVFoldSize;
         fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);
-        for fold = 1:numCVFold
-            %re-initialize
-            if isURandom == true
-                %U{i} = rand(numInstance(i), numInstanceCluster(i));
-                %U{i}(:, numInstanceCluster(i)) = 0;
-                [U,H,V] = getTheBestRandom(X, W, Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, label, validateIndex, numDom, targetDomain, 5, false);
-                Utrack = U;
-            else
-                H = tensor(randStr);
-                logisticPredictResult = glmval(logisticCoefficient, X{i}, 'probit');
-                for i = 1:numDom
-                    if i == targetDomain
-                        U{i} = assignPredictResult(U{i}, logisticPredictResult, 1);
-                        U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
-                    else
-                        U{i} = Y{i};
-                    end
-                    V{i} = rand(numFeature(i),numFeatureCluster(i));
+        for randomTryTime = 1: 5
+            for fold = 1:numCVFold
+                %re-initialize
+                if isURandom == true
+                    [U,H,V] = randomInitialize(X, W, Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, label, validateIndex, numDom, targetDomain, 5, false);
                 end
-            end
-            
-            HChildCell = cell(1, numDom);
-            HMotherCell = cell(1, numDom);
-            %Iterative update
-            newEmpError = Inf;
-            empError = Inf;
-            iter = 0;
-            diff = -1;
-            empErrors = zeros(1,maxIter);
-            MAES = zeros(1,maxIter);
-            RMSES = zeros(1,maxIter);
-            while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(empError - newEmpError) >= 0.1 && iter < maxIter)
-                iter = iter + 1;
-                empError = newEmpError;
-                %disp(sprintf('\t#Iterator:%d', iter));
-                %disp(newEmpError);
-                newEmpError = 0;
-                for i = 1:numDom
-                    %disp(sprintf('\t\tupdate V...'));
-                    %update V
-                    V{i} = V{i}.*sqrt((X{i}'*U{i}*H + gama*Sv{i}*V{i})./(V{i}*H'*U{i}'*U{i}*H + gama*Dv{i}*V{i}));
-                    vTrack{2} = V{2};
-                    V{i}(isnan(V{i})) = 0;
-                    V{i}(~isfinite(V{i})) = 0;
-                    %col normalize
-                    [r, ~] = size(V{i});
-                    for tmpI = 1:r
-                        bot = sum(abs(V{i}(tmpI,:)));
-                        if bot == 0
-                            bot = 1;
-                        end
-                        V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
-                    end
-                    V{i}(isnan(V{i})) = 0;
-                    V{i}(~isfinite(V{i})) = 0;
-                    
-                    %disp(sprintf('\t\tupdate U...'));
-                    %update U
-                    if(i == targetDomain)
-                        U{i} = U{i}.*sqrt((X{i}*V{i}*H' + lambda*Su{i}*U{i})./(U{i}*H*V{i}'*V{i}*H' + lambda*Du{i}*U{i}));
-                        uTrack{2} = U{2};
-                        U{i}(isnan(U{i})) = 0;
-                        U{i}(~isfinite(U{i})) = 0;
+                HChildCell = cell(1, numDom);
+                HMotherCell = cell(1, numDom);
+                %Iterative update
+                newEmpError = Inf;
+                empError = Inf;
+                iter = 0;
+                diff = -1;
+                empErrors = zeros(1,maxIter);
+                MAES = zeros(1,maxIter);
+                RMSES = zeros(1,maxIter);
+                while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(empError - newEmpError) >= 0.1 && iter < maxIter)
+                    iter = iter + 1;
+                    empError = newEmpError;
+                    %disp(sprintf('\t#Iterator:%d', iter));
+                    %disp(newEmpError);
+                    newEmpError = 0;
+                    for i = 1:numDom
+                        %disp(sprintf('\t\tupdate V...'));
+                        %update V
+                        V{i} = V{i}.*sqrt((X{i}'*U{i}*H + gama*Sv{i}*V{i})./(V{i}*H'*U{i}'*U{i}*H + gama*Dv{i}*V{i}));
+                        vTrack{2} = V{2};
+                        V{i}(isnan(V{i})) = 0;
+                        V{i}(~isfinite(V{i})) = 0;
                         %col normalize
-                        [r, ~] = size(U{i});
+                        [r, ~] = size(V{i});
                         for tmpI = 1:r
-                            bot = sum(abs(U{i}(tmpI,:)));
+                            bot = sum(abs(V{i}(tmpI,:)));
                             if bot == 0
                                 bot = 1;
                             end
-                            U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
+                            V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
                         end
-                        U{i}(isnan(U{i})) = 0;
-                        U{i}(~isfinite(U{i})) = 0;
-                        U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
+                        V{i}(isnan(V{i})) = 0;
+                        V{i}(~isfinite(V{i})) = 0;
+                        
+                        %disp(sprintf('\t\tupdate U...'));
+                        %update U
+                        if(i == targetDomain)
+                            U{i} = U{i}.*sqrt((X{i}*V{i}*H' + lambda*Su{i}*U{i})./(U{i}*H*V{i}'*V{i}*H' + lambda*Du{i}*U{i}));
+                            uTrack{2} = U{2};
+                            U{i}(isnan(U{i})) = 0;
+                            U{i}(~isfinite(U{i})) = 0;
+                            %col normalize
+                            [r, ~] = size(U{i});
+                            for tmpI = 1:r
+                                bot = sum(abs(U{i}(tmpI,:)));
+                                if bot == 0
+                                    bot = 1;
+                                end
+                                U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
+                            end
+                            U{i}(isnan(U{i})) = 0;
+                            U{i}(~isfinite(U{i})) = 0;
+                            U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
+                        end
+                        
+                        %update H
+                        HChild = zeros(numInstanceCluster(i), numFeatureCluster(i));
+                        HMother = zeros(numInstanceCluster(i), numFeatureCluster(i));
+                        parfor j = 1:numDom
+                            HChildCell{j} = U{j}'*X{j}*V{j};
+                            HMotherCell{j} = U{j}'*U{j}*H*V{j}'*V{j};
+                        end
+                        for j = 1:numDom
+                            HChild = HChild + HChildCell{j};
+                            HMother = HMother + HMotherCell{j};
+                        end
+                        H = H.*sqrt(HChild./HMother);
+                        hTrack{2} = H;
                     end
-                    
-                    %update H
-                    HChild = zeros(numInstanceCluster(i), numFeatureCluster(i));
-                    HMother = zeros(numInstanceCluster(i), numFeatureCluster(i));
-                    parfor j = 1:numDom
-                        HChildCell{j} = U{j}'*X{j}*V{j};
-                        HMotherCell{j} = U{j}'*U{j}*H*V{j}'*V{j};
+                    %disp(sprintf('\tCalculate this iterator error'));
+                    parfor i = 1:numDom
+                        result = U{i}*H*V{i}';
+                        normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
+                        smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
+                        smoothV = gama*trace(V{i}'*Lv{i}*V{i});
+                        loss = normEmp + smoothU + smoothV;
+                        newEmpError = newEmpError + loss;
+                        %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
                     end
-                    for j = 1:numDom
-                        HChild = HChild + HChildCell{j};
-                        HMother = HMother + HMotherCell{j};
+                    %disp(sprintf('\tEmperical Error:%f', newEmpError));
+                    empErrors(iter) = newEmpError;
+                    %fprintf('iter:%d, error = %f\n', iter, newEmpError);
+                    diff = empError - newEmpError;
+                end
+                %calculate validationScore
+                [maxValue, maxIndex] = max(U{targetDomain}');
+                predictResult = maxIndex;
+                for i = 1: CVFoldSize
+                    if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
+                        validateScore = validateScore + 1;
                     end
-                    H = H.*sqrt(HChild./HMother);
-                    hTrack{2} = H;
                 end
-                %disp(sprintf('\tCalculate this iterator error'));
-                parfor i = 1:numDom
-                    result = U{i}*H*V{i}';
-                    normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
-                    smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
-                    smoothV = gama*trace(V{i}'*Lv{i}*V{i});
-                    loss = normEmp + smoothU + smoothV;
-                    newEmpError = newEmpError + loss;
-                    %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
-                end
-                %disp(sprintf('\tEmperical Error:%f', newEmpError));
-                empErrors(iter) = newEmpError;
-                %fprintf('iter:%d, error = %f\n', iter, newEmpError);
-                diff = empError - newEmpError;
-            end
-            %calculate validationScore
-            [maxValue, maxIndex] = max(U{targetDomain}');
-            predictResult = maxIndex;
-            for i = 1: CVFoldSize
-                if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
-                    validateScore = validateScore + 1;
+                for c = 1:CVFoldSize
+                    validateIndex(c) = validateIndex(c) + CVFoldSize;
                 end
             end
-            for c = 1:CVFoldSize
-                validateIndex(c) = validateIndex(c) + CVFoldSize;
+            validateAccuracy = validateScore/ numSampleInstance(targetDomain);
+            if validateAccuracy > bestAccuracy
+                bestAccuracy = validateAccuracy;
+                bestLambda = lambda;
+                bestGama = gama;
             end
+            fprintf('Initial try: %d, ValidateAccuracy:%f', validateAccuracy);
         end
-        validateAccuracy = validateScore/ numSampleInstance(targetDomain);
-        if validateScore > bestScore
-            bestScore = validateScore;
-            bestLambda = lambda;
-            bestGama = gama;
-        end
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestScore/ numSampleInstance(targetDomain)* 100);
+        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestAccuracy);
     end
 end
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
 fprintf(resultFile, '(BestLambda,BestGama): (%f, %f)\n', bestLambda, bestGama);
-fprintf(resultFile, 'BestScore: %f%%', bestScore/ numSampleInstance(targetDomain)* 100);
+fprintf(resultFile, 'BestScore: %f%%', bestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
 %matlabpool close;

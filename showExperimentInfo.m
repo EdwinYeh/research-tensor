@@ -1,4 +1,6 @@
-function showExperimentInfo(experimentTitle, datasetId, prefix, numSourceList, numTargetList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, featureCluster)
+function showExperimentInfo(experimentTitle, datasetId, prefix, numSourceList, numTargetList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature)
+    time = round(clock);
+    fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Title: %s\n', experimentTitle);
     fprintf('Dataset: %s\n', prefix);
     fprintf('Source domain: source%d.csv\n', datasetId);
@@ -7,5 +9,4 @@ function showExperimentInfo(experimentTitle, datasetId, prefix, numSourceList, n
     fprintf('Number of features: [%d %d]\n', numSourceFeatureList(datasetId), numTargetFeatureList(datasetId));
     fprintf('Number of sample instances: [%d %d]\n', numSampleInstance(1), numSampleInstance(2));
     fprintf('Number of sample features: [%d %d]\n', numSampleFeature(1), numSampleFeature(2));
-    fprintf('featureCluster: %d\n', featureCluster);
 end
