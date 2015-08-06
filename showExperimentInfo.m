@@ -7,6 +7,6 @@ function showExperimentInfo(experimentTitle, datasetId, prefix, numSourceList, n
     fprintf('Target domain: target%d.csv\n', datasetId);
     fprintf('Number of instances: [%d %d]\n', numSourceList(datasetId), numTargetList(datasetId));
     fprintf('Number of features: [%d %d]\n', numSourceFeatureList(datasetId), numTargetFeatureList(datasetId));
-    fprintf('Number of sample instances: [%d %d]\n', numSampleInstance(1), numSampleInstance(2));
-    fprintf('Number of sample features: [%d %d]\n', numSampleFeature(1), numSampleFeature(2));
+    fprintf('Number of sample instances: %d\n', numSampleInstance);
+    fprintf('Number of sample features: %d\n', numSampleFeature);
 end

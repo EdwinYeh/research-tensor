@@ -1,13 +1,11 @@
-clear;clc;
+function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
+clc;
 % if matlabpool('size') > 0
 %     matlabpool close;
 % end
 % matlabpool('open', 'local', 4);
 
 % configuration
-isUpdateAE = true;
-isUpdateFi = false;
-isBinary = false;
 isSampleInstance = true;
 isSampleFeature = true;
 isURandom = true;
@@ -15,11 +13,10 @@ isURandom = true;
 maxIter = 100;
 
 prefix = '../20-newsgroup/';
-exp_title = 'GCMF1_100_TheBestRandom';
-datasetId = 1;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
+randomTryTime = 5;
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 trueLabel = cell(1, numDom);
 
@@ -30,20 +27,15 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
-numSampleInstance = [100 100];
-numSampleFeature = [100 100];
 numInstanceCluster = [2 2];
 numFeatureCluster = [4 4];
 
 sigma = 1;
-alpha = 0;
-beta = 0;
-delta = 0;
 numCVFold = 5;
-CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
+CVFoldSize = numSampleInstance/ numCVFold;
 resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
 
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
+showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 
 % disp(numSampleFeature);
 %disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
@@ -52,8 +44,6 @@ showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTarge
 %Bcell = cell(1, numDom);
 Y = cell(1, numDom);
 W = cell(1, numDom);
-V = cell(1, numDom);
-U = cell(1, numDom);
 uc = cell(1, numDom);
 Sv = cell(1, numDom);
 Dv = cell(1, numDom);
@@ -72,9 +62,9 @@ end
 
 for i = 1: numDom
     if isSampleInstance == true
-        sampleInstanceIndex = randperm(numInstance(i), numSampleInstance(i));
+        sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
         X{i} = X{i}(sampleInstanceIndex, :);
-        numInstance(i) = numSampleInstance(i);
+        numInstance(i) = numSampleInstance;
         label{i} = trueLabel{i}(sampleInstanceIndex, :);
         Y{i} = zeros(numInstance(i), numInstanceCluster(i));
         for j = 1: numInstance(i)
@@ -82,16 +72,16 @@ for i = 1: numDom
         end
     end
     if isSampleFeature == true
-        denseFeatures = findDenseFeature(X{i}, numSampleFeature(i));
+        denseFeatures = findDenseFeature(X{i}, numSampleFeature);
         X{i} = X{i}(:, denseFeatures);
-        numFeature(i) = numSampleFeature(i);
+        numFeature(i) = numSampleFeature;
     end
 end
 
 % disp('Train logistic regression');
 % logisticCoefficient = glmfit(X{1}, Labels{1} - 1, 'binomial');
 
-for i = 1: numDom
+parfor i = 1: numDom
     W{i} = zeros(numInstance(i), numFeature(i));
     Su{i} = zeros(numInstance(i), numInstance(i));
     Du{i} = zeros(numInstance(i), numInstance(i));
@@ -107,11 +97,11 @@ for i = 1: numDom
     for useri = 1:numInstance(i)
         for userj = 1:numInstance(i)
             %ndsparse does not support norm()
-            %dif = norm((X{i}(useri, :) - X{1}(userj,:)));
-            difVector = X{i}(useri, :) - X{i}(userj, :);
-            %ndsparse to normal value
-            dif = [0];
-            dif(1) = difVector* difVector';
+            dif = norm((X{i}(useri, :) - X{1}(userj,:)));
+            %                 difVector = X{i}(useri, :) - X{i}(userj, :);
+            %                 %ndsparse to normal value
+            %                 dif = [0];
+            %                 dif(1) = difVector* difVector';
             Su{i}(useri, userj) = exp(-(dif*dif)/(2*sigma));
         end
     end
@@ -124,11 +114,11 @@ for i = 1: numDom
     for itemi = 1:numFeature(i)
         for itemj = 1:numFeature(i)
             %ndsparse does not support norm()
-            %dif = norm((X{i}(:,itemi) - itemTime(:,itemj)));
-            difVector = X{i}(:, itemi) - X{i}(:, itemj);
-            %ndsparse to normal value
-            dif = [0];
-            dif(1) = difVector'* difVector;
+            dif = norm((X{i}(:,itemi) - X{i}(:,itemj)));
+            %                 difVector = X{i}(:, itemi) - X{i}(:, itemj);
+            %                 %ndsparse to normal value
+            %                 dif = [0];
+            %                 dif(1) = difVector'* difVector;
             Sv{i}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
         end
     end
@@ -139,20 +129,40 @@ for i = 1: numDom
 end
 
 disp('Start training')
-bestAccuracy = 0;
-%reinitialize B, U, V
-for tuneGama = 0:6
-    gama = 0.000001 * 10 ^ tuneGama;
-    for tuneLambda = 0:6
-        lambda = 0.000001 * 10 ^ tuneLambda;
-        validateScore = 0;
-        validateIndex = 1: CVFoldSize;
+%initialize B, U, V
+initU = cell(randomTryTime, numDom);
+initV = cell(randomTryTime, numDom);
+initH = cell(randomTryTime);
+globalBestError = Inf;
+globalBestAccuracy = 0;
+if isURandom == true
+    for t = 1: randomTryTime
+        [initU(t,:),initH{t},initV(t,:)] = randomInitialize(Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
+    end
+end
+for tuneGama = 0:2
+    gama = 0.01 * 10 ^ tuneGama;
+    for tuneLambda = 0:2
+        lambda = 100 * 10 ^ tuneLambda;
+        time = round(clock);
+        fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);
-        for randomTryTime = 1: 5
+        localBestError = Inf;
+        localBestAccuracy = 0;
+        for t = 1: randomTryTime
+            validateScore = 0;
+            validateIndex = 1: CVFoldSize;
             for fold = 1:numCVFold
                 %re-initialize
-                if isURandom == true
-                    [U,H,V] = randomInitialize(X, W, Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, label, validateIndex, numDom, targetDomain, 5, false);
+                U = initU(t, :);
+                V = initV(t, :);
+                H = initH{t};
+                for i = 1:numDom
+                    if i == targetDomain
+                        U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
+                    else
+                        U{i} = Y{i};
+                    end
                 end
                 HChildCell = cell(1, numDom);
                 HMotherCell = cell(1, numDom);
@@ -174,7 +184,6 @@ for tuneGama = 0:6
                         %disp(sprintf('\t\tupdate V...'));
                         %update V
                         V{i} = V{i}.*sqrt((X{i}'*U{i}*H + gama*Sv{i}*V{i})./(V{i}*H'*U{i}'*U{i}*H + gama*Dv{i}*V{i}));
-                        vTrack{2} = V{2};
                         V{i}(isnan(V{i})) = 0;
                         V{i}(~isfinite(V{i})) = 0;
                         %col normalize
@@ -193,7 +202,6 @@ for tuneGama = 0:6
                         %update U
                         if(i == targetDomain)
                             U{i} = U{i}.*sqrt((X{i}*V{i}*H' + lambda*Su{i}*U{i})./(U{i}*H*V{i}'*V{i}*H' + lambda*Du{i}*U{i}));
-                            uTrack{2} = U{2};
                             U{i}(isnan(U{i})) = 0;
                             U{i}(~isfinite(U{i})) = 0;
                             %col normalize
@@ -213,7 +221,7 @@ for tuneGama = 0:6
                         %update H
                         HChild = zeros(numInstanceCluster(i), numFeatureCluster(i));
                         HMother = zeros(numInstanceCluster(i), numFeatureCluster(i));
-                        parfor j = 1:numDom
+                        for j = 1:numDom
                             HChildCell{j} = U{j}'*X{j}*V{j};
                             HMotherCell{j} = U{j}'*U{j}*H*V{j}'*V{j};
                         end
@@ -222,10 +230,9 @@ for tuneGama = 0:6
                             HMother = HMother + HMotherCell{j};
                         end
                         H = H.*sqrt(HChild./HMother);
-                        hTrack{2} = H;
                     end
                     %disp(sprintf('\tCalculate this iterator error'));
-                    parfor i = 1:numDom
+                    for i = 1:numDom
                         result = U{i}*H*V{i}';
                         normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
                         smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
@@ -240,31 +247,41 @@ for tuneGama = 0:6
                     diff = empError - newEmpError;
                 end
                 %calculate validationScore
-                [maxValue, maxIndex] = max(U{targetDomain}');
+                [~, maxIndex] = max(U{targetDomain}');
                 predictResult = maxIndex;
                 for i = 1: CVFoldSize
                     if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
                         validateScore = validateScore + 1;
                     end
                 end
-                for c = 1:CVFoldSize
-                    validateIndex(c) = validateIndex(c) + CVFoldSize;
+                for i = 1:CVFoldSize
+                    validateIndex(i) = validateIndex(i) + CVFoldSize;
                 end
             end
-            validateAccuracy = validateScore/ numSampleInstance(targetDomain);
-            if validateAccuracy > bestAccuracy
-                bestAccuracy = validateAccuracy;
+            validateAccuracy = validateScore/ numSampleInstance;
+            if validateAccuracy > globalBestAccuracy
+                globalBestAccuracy = validateAccuracy;
                 bestLambda = lambda;
                 bestGama = gama;
             end
-            fprintf('Initial try: %d, ValidateAccuracy:%f', validateAccuracy);
+            if validateAccuracy > localBestAccuracy
+                localBestAccuracy = validateAccuracy;
+            end
+            if newEmpError < globalBestError
+                globalBestError = newEmpError;
+            end
+            if newEmpError < localBestError
+                localBestError = newEmpError;
+            end
+            fprintf('Initial try: %d, ValidateError:%f, ValidateAccuracy:%f\n', t, newEmpError, validateAccuracy);
         end
-        fprintf('Lambda:%f, Gama:%f, ValidateAccuracy:%f, TheBest: %f\n', lambda, gama, validateAccuracy, bestAccuracy);
+        fprintf('LocalBestError:%f, LocalBestAccuracy:%f%%\nGlobalBestError:%f, GlobalBestAccuracy: %f%%\n\n', localBestError, localBestAccuracy*100, globalBestError, globalBestAccuracy*100);
     end
 end
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
+
+showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 fprintf(resultFile, '(BestLambda,BestGama): (%f, %f)\n', bestLambda, bestGama);
-fprintf(resultFile, 'BestScore: %f%%', bestAccuracy* 100);
+fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
 %matlabpool close;
