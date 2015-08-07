@@ -154,9 +154,9 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
     globalBestAccuracy = 0;
     globalBestError = Inf;
     for tuneGama = 0:2
-        gama = 0.01 * 100 ^ tuneGama;
+        gama = 0.001 * 1000 ^ tuneGama;
         for tuneLambda = 0:2
-            lambda = 0.01 * 100 ^ tuneLambda;
+            lambda = 0.001 * 1000 ^ tuneLambda;
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
             fprintf('Use Lambda:%f, Gama:%f\n', lambda, gama);
