@@ -1,4 +1,4 @@
-function [U, B, V] = randomInitialize(Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, isMotar)
+function [U, B, V] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, isMotar)
 
     V = cell(1, numDom);
     U = cell(1, numDom);

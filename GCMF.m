@@ -137,7 +137,7 @@ globalBestError = Inf;
 globalBestAccuracy = 0;
 if isURandom == true
     for t = 1: randomTryTime
-        [initU(t,:),initH{t},initV(t,:)] = randomInitialize(Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
+        [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
     end
 end
 for tuneGama = 0:2

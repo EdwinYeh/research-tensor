@@ -148,15 +148,15 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
     initB = cell(randomTryTime);
     if isURandom == true
         for t = 1: randomTryTime
-            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
+            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(Y, numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
         end
     end
     globalBestAccuracy = 0;
     globalBestError = Inf;
-    for tuneGama = 0:2
-        gama = 0.01 * 100 ^ tuneGama;
-        for tuneLambda = 0:2
-            lambda = 0.01 * 100 ^ tuneLambda;
+    for tuneGama = 0:3
+        gama = 1 * 10 ^ tuneGama;
+        for tuneLambda = 0:3
+            lambda = 1 * 10 ^ tuneLambda;
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
             fprintf('Use Lambda:%f, Gama:%f\n', lambda, gama);
@@ -194,7 +194,7 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
                             [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                             %bestCPR = FindBestRank(threeMatrixB, 50)
                             bestCPR = 2;
-                            CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'pqnr');%parafac_als(tensor(threeMatrixB), bestCPR);
+                            CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
                             A = CP.U{1};
                             E = CP.U{2};
                             U3 = CP.U{3};
