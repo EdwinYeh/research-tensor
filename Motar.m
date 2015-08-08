@@ -331,7 +331,7 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
             fprintf('LocalBestError:%f, LocalBestAccuracy:%f%%\nGlobalBestError:%f, GlobalBestAccuracy:%f%%\n\n',localBestError, localBestAccuracy*100, globalBestError, globalBestAccuracy*100);
         end
     end
-    showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature, numFeatureCluster(1));
+    showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
     fprintf(resultFile, '(BestLambda,BestGama): (%f, %f)\n', bestLambda, bestGama);
     fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
     fprintf('done\n');
