@@ -12,12 +12,13 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
     isURandom = true;
     %numTime = 20;
     maxIter = 100;
+    randomTryTime = 5;
 
     prefix = '../20-newsgroup/';
     numDom = 2;
     sourceDomain = 1;
     targetDomain = 2;
-    randomTryTime = 5;
+    
     domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
     allLabel = cell(1, numDom);
 
@@ -68,6 +69,7 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
     end
 
     for i = 1: numDom
+        %Randomly sample instances & the corresponding labels
         if isSampleInstance == true
             sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
             X{i} = X{i}(sampleInstanceIndex, :);
@@ -104,7 +106,7 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
         for useri = 1:numInstance(i)
             for userj = 1:numInstance(i)
                 %ndsparse does not support norm()
-                dif = norm((X{i}(useri, :) - X{1}(userj,:)));
+                dif = norm((X{i}(useri, :) - X{i}(userj,:)));
 %                 difVector = X{i}(useri, :) - X{i}(userj, :);
 %                 %ndsparse to normal value
 %                 dif = [0];
@@ -167,7 +169,9 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
                 validateIndex = 1: CVFoldSize;
                 for fold = 1:numCVFold
                     %Iterative update
-                    U = initU(t, :); V = initV(t, :); B = initB{t};
+                    U = initU(t, :);
+                    V = initV(t, :);
+                    B = initB{t};
                     for i = 1:numDom
                         if i == targetDomain
                             U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
