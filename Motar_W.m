@@ -1,4 +1,4 @@
-function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
+function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
     clc;
     % if matlabpool('size') > 0
     %     matlabpool close;
@@ -197,7 +197,7 @@ function Motar(exp_title, datasetId, numSampleInstance, numSampleFeature)
                             %disp(sprintf('\tdomain #%d update...', i));
                             [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                             %bestCPR = FindBestRank(threeMatrixB, 50)
-                            bestCPR = 20;
+                            bestCPR = 2;
                             CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
                             A = CP.U{1};
                             E = CP.U{2};
