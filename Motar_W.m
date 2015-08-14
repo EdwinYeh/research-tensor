@@ -38,6 +38,7 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
     numCVFold = 5;
     CVFoldSize = numSampleInstance/ numCVFold;
     resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
+    resultFile2 = fopen(sprintf('plot_data_%s.csv', exp_title), 'w');
 
     showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 
@@ -190,7 +191,7 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
                         iter = iter + 1;
                         oldObjectiveScore = newObjectiveScore;
                         fprintf('\t#Iterator:%d', iter);
-                        disp(newObjectiveScore);
+                        disp([newObjectiveScore, diff]);
                         newObjectiveScore = 0;
                         for i = 1:numDom
                             %disp(sprintf('\tdomain #%d update...', i));
@@ -309,19 +310,20 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
                         validateIndex(c) = validateIndex(c) + CVFoldSize;
                     end
                 end
-                validateAccuracy = validateScore/ numSampleInstance;
+                Accuracy = validateScore/ numSampleInstance;
                 
                 if newObjectiveScore < globalBestScore
                     globalBestScore = newObjectiveScore;
-                    globalBestAccuracy = validateAccuracy;
+                    globalBestAccuracy = Accuracy;
                     bestLambda = lambda;
                     bestGama = gama;
                 end
                 if newObjectiveScore < localBestScore
-                    localBestAccuracy = validateAccuracy;
+                    localBestAccuracy = Accuracy;
                     localBestScore = newObjectiveScore;
                 end
-                fprintf('Initial try: %d, ValidateError:%f, ValidateAccuracy:%f%%\n', t, newObjectiveScore, validateAccuracy*100);
+                fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, newObjectiveScore, Accuracy*100);
+                fprintf(resultFile2, '%f,%f\n', newObjectiveScore, Accuracy);
             end
             fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy:%f%%\n\n',localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
         end
@@ -331,5 +333,6 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
     fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
     fprintf('done\n');
     fclose(resultFile);
+    fclose(resultFile2);
     % matlabpool close;
 end

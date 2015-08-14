@@ -35,6 +35,7 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
     numCVFold = 5;
     CVFoldSize = numSampleInstance/ numCVFold;
     resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
+    resultFile2 = fopen(sprintf('plot_data_%s.csv', exp_title), 'w');
 
     showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 
@@ -139,7 +140,7 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
             [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
         end
     end
-    globalBestError = Inf;
+    globalBestScore = Inf;
     globalBestAccuracy = 0;
     for tuneGama = 0:2
         gama = 0.001 * 1000 ^ tuneGama;
@@ -148,7 +149,7 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
             fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);
-            localBestError = Inf;
+            localBestScore = Inf;
             localBestAccuracy = 0;
             for t = 1: randomTryTime
                 validateScore = 0;
@@ -168,19 +169,19 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
                     HChildCell = cell(1, numDom);
                     HMotherCell = cell(1, numDom);
                     %Iterative update
-                    newEmpError = Inf;
-                    empError = Inf;
+                    newObjectiveScore = Inf;
+                    ObjectiveScore = Inf;
                     iter = 0;
                     diff = -1;
-                    empErrors = zeros(1,maxIter);
+                    ObjectiveScores = zeros(1,maxIter);
                     MAES = zeros(1,maxIter);
                     RMSES = zeros(1,maxIter);
-                    while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(empError - newEmpError) >= 0.1 && iter < maxIter)
+                    while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(ObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
                         iter = iter + 1;
-                        empError = newEmpError;
+                        ObjectiveScore = newObjectiveScore;
                         %disp(sprintf('\t#Iterator:%d', iter));
-                        %disp(newEmpError);
-                        newEmpError = 0;
+                        %disp(newObjectiveScore);
+                        newObjectiveScore = 0;
                         for i = 1:numDom
                             %disp(sprintf('\t\tupdate V...'));
                             %update V
@@ -239,13 +240,13 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
                             smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                             smoothV = gama*trace(V{i}'*Lv{i}*V{i});
                             loss = normEmp + smoothU + smoothV;
-                            newEmpError = newEmpError + loss;
+                            newObjectiveScore = newObjectiveScore + loss;
                             %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
                         end
-                        %disp(sprintf('\tEmperical Error:%f', newEmpError));
-                        empErrors(iter) = newEmpError;
-                        %fprintf('iter:%d, error = %f\n', iter, newEmpError);
-                        diff = empError - newEmpError;
+                        %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
+                        ObjectiveScores(iter) = newObjectiveScore;
+                        %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
+                        diff = ObjectiveScore - newObjectiveScore;
                     end
                     %calculate validationScore
                     [~, maxIndex] = max(U{targetDomain}');
@@ -259,24 +260,21 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
                         validateIndex(i) = validateIndex(i) + CVFoldSize;
                     end
                 end
-                validateAccuracy = validateScore/ numSampleInstance;
-                if validateAccuracy > globalBestAccuracy
-                    globalBestAccuracy = validateAccuracy;
+                Accuracy = validateScore/ numSampleInstance;
+                if newObjectiveScore < globalBestScore
+                    globalBestScore = newObjectiveScore;
+                    globalBestAccuracy = Accuracy;
                     bestLambda = lambda;
                     bestGama = gama;
                 end
-                if validateAccuracy > localBestAccuracy
-                    localBestAccuracy = validateAccuracy;
+                if newObjectiveScore < localBestScore
+                    localBestScore = newObjectiveScore;
+                    localBestAccuracy = Accuracy;
                 end
-                if newEmpError < globalBestError
-                    globalBestError = newEmpError;
-                end
-                if newEmpError < localBestError
-                    localBestError = newEmpError;
-                end
-                fprintf('Initial try: %d, ValidateError:%f, ValidateAccuracy:%f\n', t, newEmpError, validateAccuracy);
+                fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f\n', t, newObjectiveScore, Accuracy);
+                fprintf(resultFile2, '%f,%f\n', newObjectiveScore, Accuracy);
             end
-            fprintf('LocalBestError:%f, LocalBestAccuracy:%f%%\nGlobalBestError:%f, GlobalBestAccuracy: %f%%\n\n', localBestError, localBestAccuracy*100, globalBestError, globalBestAccuracy*100);
+            fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy: %f%%\n\n', localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
         end
     end
 
@@ -285,5 +283,6 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
     fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
     fprintf('done\n');
     fclose(resultFile);
+    fclose(resultFile2);
     %matlabpool close;
 end
