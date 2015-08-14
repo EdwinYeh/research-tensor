@@ -11,7 +11,7 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
     isURandom = true;
     %numTime = 20;
     maxIter = 100;
-    randomTryTime = 5;
+    randomTryTime = 10;
 
     prefix = '../20-newsgroup/';
     numDom = 2;
@@ -142,9 +142,9 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
     globalBestError = Inf;
     globalBestAccuracy = 0;
     for tuneGama = 0:2
-        gama = 0.01 * 10 ^ tuneGama;
+        gama = 0.001 * 1000 ^ tuneGama;
         for tuneLambda = 0:2
-            lambda = 100 * 10 ^ tuneLambda;
+            lambda = 0.001 * 1000 ^ tuneLambda;
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
             fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);

@@ -154,16 +154,16 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
         end
     end
     globalBestAccuracy = 0;
-    globalBestError = Inf;
-    for tuneGama = 0:2
+    globalBestScore = Inf;
+    for tuneGama = 0:0
         gama = 0.001 * 1000 ^ tuneGama;
-        for tuneLambda = 0:2
-            lambda = 0.001 * 1000 ^ tuneLambda;
+        for tuneLambda = 0:0
+            lambda = 1 * 1000 ^ tuneLambda;
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
             fprintf('Use Lambda:%f, Gama:%f\n', lambda, gama);
             localBestAccuracy = 0;
-            localBestError = Inf;
+            localBestScore = Inf;
             for t = 1: randomTryTime
                 validateScore = 0;
                 validateIndex = 1: CVFoldSize;
@@ -179,25 +179,24 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
                             U{i} = Y{i};
                         end
                     end
-                    newEmpError = Inf;
-                    empError = Inf;
+                    newObjectiveScore = Inf;
                     iter = 0;
                     diff = -1;
-                    empErrors = zeros(1,maxIter);
+                    oldObjectiveScores = zeros(1,maxIter);
                     MAES = zeros(1,maxIter);
                     RMSES = zeros(1,maxIter);
                     %fprintf('Fold:%d(%d~%d), Iterative update\n', fold, min(validateIndex), max(validateIndex));
-                    while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(empError - newEmpError) >= 0.1 && iter < maxIter)
+                    while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(oldObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
                         iter = iter + 1;
-                        empError = newEmpError;
-                        %disp(sprintf('\t#Iterator:%d', iter));
-                        %disp(newEmpError);
-                        newEmpError = 0;
+                        oldObjectiveScore = newObjectiveScore;
+                        fprintf('\t#Iterator:%d', iter);
+                        disp(newObjectiveScore);
+                        newObjectiveScore = 0;
                         for i = 1:numDom
                             %disp(sprintf('\tdomain #%d update...', i));
                             [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                             %bestCPR = FindBestRank(threeMatrixB, 50)
-                            bestCPR = 2;
+                            bestCPR = 20;
                             CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
                             A = CP.U{1};
                             E = CP.U{2};
@@ -207,7 +206,7 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
 
                             %disp(sprintf('\t\tupdate V...'));
                             %update V
-                            V{i} = V{i}.*sqrt((X{i}'*U{i}*projB + gama*Sv{i}*V{i})./(V{i}*projB'*U{i}'*U{i}*projB + gama*Dv{i}*V{i}));
+                            V{i} = V{i}.*sqrt((X{i}'*U{i}*projB + gama*Sv{i}*V{i})./((V{i}*projB'*U{i}'.*W{i}')*U{i}*projB + gama*Dv{i}*V{i}));
                             V{i}(isnan(V{i})) = 0;
                             V{i}(~isfinite(V{i})) = 0;
                             %col normalize
@@ -225,7 +224,7 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
                             %disp(sprintf('\t\tupdate U...'));
                             %update U
                             if(i == targetDomain)
-                                U{i} = U{i}.*sqrt((X{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
+                                U{i} = U{i}.*sqrt((X{i}*V{i}*projB' + lambda*Su{i}*U{i})./((U{i}*projB*V{i}'.*W{i})*V{i}*projB' + lambda*Du{i}*U{i}));
                                 U{i}(isnan(U{i})) = 0;
                                 U{i}(~isfinite(U{i})) = 0;
                                 [r c] = size(U{i});
@@ -277,7 +276,6 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
                                 %disp(sprintf('\tcombine next iterator B...'));
                                 parfor idx = 1:r
                                     nextThreeB(:,:,idx) = A*fi{idx}*E';
-                                    nextB = nextThreeB(:,:,idx);
                                 end
                             end
                             B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, eval(sprintf('[%s]', str)));
@@ -290,14 +288,14 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
                             normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
                             smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                             smoothV = gama*trace(V{i}'*Lv{i}*V{i});
-                            loss = normEmp + smoothU + smoothV;
-                            newEmpError = newEmpError + loss;
-                            %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
+                            objectiveScore = normEmp + smoothU + smoothV;
+                            newObjectiveScore = newObjectiveScore + objectiveScore;
+                            %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, objectiveScore));
                         end
-                        %disp(sprintf('\tEmperical Error:%f', newEmpError));
-                        empErrors(iter) = newEmpError;
-                        %fprintf('iter:%d, error = %f\n', iter, newEmpError);
-                        diff = empError - newEmpError;
+                        %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
+                        oldObjectiveScores(iter) = newObjectiveScore;
+                        %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
+                        diff = oldObjectiveScore - newObjectiveScore;
                     end
                     %calculate validationScore
                     [~, maxIndex] = max(U{targetDomain}');
@@ -312,23 +310,20 @@ function Motar_W(exp_title, datasetId, numSampleInstance, numSampleFeature)
                     end
                 end
                 validateAccuracy = validateScore/ numSampleInstance;
-                if validateAccuracy > globalBestAccuracy
+                
+                if newObjectiveScore < globalBestScore
+                    globalBestScore = newObjectiveScore;
                     globalBestAccuracy = validateAccuracy;
                     bestLambda = lambda;
                     bestGama = gama;
                 end
-                if validateAccuracy > localBestAccuracy
+                if newObjectiveScore < localBestScore
                     localBestAccuracy = validateAccuracy;
+                    localBestScore = newObjectiveScore;
                 end
-                if newEmpError < globalBestError
-                    globalBestError = newEmpError;
-                end
-                if newEmpError < localBestError
-                    localBestError = newEmpError;
-                end
-                fprintf('Initial try: %d, ValidateError:%f, ValidateAccuracy:%f%%\n', t, newEmpError, validateAccuracy*100);
+                fprintf('Initial try: %d, ValidateError:%f, ValidateAccuracy:%f%%\n', t, newObjectiveScore, validateAccuracy*100);
             end
-            fprintf('LocalBestError:%f, LocalBestAccuracy:%f%%\nGlobalBestError:%f, GlobalBestAccuracy:%f%%\n\n',localBestError, localBestAccuracy*100, globalBestError, globalBestAccuracy*100);
+            fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy:%f%%\n\n',localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
         end
     end
     showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
