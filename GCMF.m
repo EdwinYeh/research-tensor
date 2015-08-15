@@ -142,9 +142,9 @@ function GCMF(exp_title, datasetId, numSampleInstance, numSampleFeature)
     end
     globalBestScore = Inf;
     globalBestAccuracy = 0;
-    for tuneGama = 0:2
+    for tuneGama = 0:0
         gama = 0.001 * 1000 ^ tuneGama;
-        for tuneLambda = 0:2
+        for tuneLambda = 0:0
             lambda = 0.001 * 1000 ^ tuneLambda;
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
