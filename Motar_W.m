@@ -8,7 +8,7 @@ clc;
 % configuration
 exp_title = 'Motar_W';
 datasetId = 1;
-numSampleInstanc = 500;
+numSampleInstance = 500;
 numSampleFeature = 2000;
 isUpdateAE = true;
 isSampleInstance = true;

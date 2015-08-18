@@ -8,13 +8,12 @@ clc;
 % configuration
 exp_title = 'Motar2';
 isUpdateAE = true;
-isSampleInstance = false;
+isSampleInstance = true;
 isSampleFeature = false;
 isURandom = true;
 datasetId = 1;
 numSampleInstance = 500;
 numSampleFeature = 2000;
-gaussianConnectionRate = 0.03;
 maxIter = 100;
 randomTryTime = 10;
 
@@ -100,7 +99,7 @@ parfor i = 1: numDom
     
     %user
     fprintf('Domain%d: calculating Su, Du, Lu\n', i);
-    Su{i} = bestGaussianSimilarity(X{i}, gaussianConnectionRate);
+    Su{i} = bestGaussianSimilarity(X{i});
     for useri = 1:numInstance(i)
         Du{i}(useri,useri) = sum(Su{i}(useri,:));
     end
@@ -128,8 +127,8 @@ if isURandom == true
 end
 globalBestAccuracy = 0;
 globalBestScore = Inf;
-for tuneLambda = 0:0
-    lambda = 0.000001 * 1000 ^ tuneLambda;
+for tuneLambda = 0:4
+    lambda = 0.001 * 1000 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -154,7 +153,7 @@ for tuneLambda = 0:0
             newObjectiveScore = Inf;
             MAES = zeros(1,maxIter);
             RMSES = zeros(1,maxIter);
-            while (abs(diff) >= 0.001  && iter < maxIter)
+            while (abs(diff) >= 0.0001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
                 %                         fprintf('\t#Iterator:%d', iter);

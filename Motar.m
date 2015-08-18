@@ -1,152 +1,152 @@
-clear;
-clc;
-% if matlabpool('size') > 0
-%     matlabpool close;
+% clear;
+% clc;
+% % if matlabpool('size') > 0
+% %     matlabpool close;
+% % end
+% % matlabpool('open', 'local', 4);
+% 
+% % configuration
+% exp_title = 'Motar';
+% datasetId = 1;
+% numSampleInstance = 500;
+% numSampleFeature = 2000;
+% isUpdateAE = true;
+% isSampleInstance = true;
+% isSampleFeature = true;
+% isURandom = true;
+% %numTime = 20;
+% maxIter = 100;
+% randomTryTime = 15;
+% 
+% prefix = '../20-newsgroup/';
+% numDom = 2;
+% sourceDomain = 1;
+% targetDomain = 2;
+% 
+% domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
+% allLabel = cell(1, numDom);
+% 
+% numSourceInstanceList = [3913 3907 3783 3954 3830 3823 1237 1016 897 5000 5000 5000 5000 5000 5000 5000];
+% numTargetInstanceList = [3925 3910 3336 3961 3387 3371 1207 1043 897 5000 5000 5000 5000 5000 5000 5000];
+% numSourceFeatureList = [57312 59470 60800 58470 60800 60800 4771 4415 4563 10940 2688 2000 252 2000 2000 2000];
+% numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940];
+% 
+% numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
+% numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
+% numInstanceCluster = [3 3];
+% numFeatureCluster = [5 5];
+% 
+% sigma = 14;
+% alpha = 0;
+% beta = 0;
+% numCVFold = 5;
+% CVFoldSize = numSampleInstance/ numCVFold;
+% resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
+% resultFile2 = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
+% 
+% showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
+% 
+% % disp(numSampleFeature);
+% %disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
+% %disp(sprintf('#users:[%s]\n#items:[%s]\n#user_cluster:[%s]\n#item_cluster:[%s]', num2str(numInstance(1:numDom)), num2str(numFeature(1:numDom)), num2str(numInstanceCluster(1:numDom)), num2str(numFeatureCluster(1:numDom))));
+% 
+% %[groundTruthX, snapshot, idx] = preprocessing(numDom, targetDomain);
+% %bestLambda = 0.1;
+% %bestAccuracy = 0;
+% 
+% %Bcell = cell(1, numDom);
+% Y = cell(1, numDom);
+% W = cell(1, numDom);
+% uc = cell(1, numDom);
+% Sv = cell(1, numDom);
+% Dv = cell(1, numDom);
+% Lv = cell(1, numDom);
+% Su = cell(1, numDom);
+% Du = cell(1, numDom);
+% Lu = cell(1, numDom);
+% label = cell(1, numDom);
+% 
+% X = createSparseMatrix_multiple(prefix, domainNameList, numDom, 1);
+% 
+% for i = 1:numDom
+%     domainName = domainNameList{i};
+%     allLabel{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
 % end
-% matlabpool('open', 'local', 4);
-
-% configuration
-exp_title = 'Motar';
-datasetId = 1;
-numSampleInstance = 500;
-numSampleFeature = 2000;
-isUpdateAE = true;
-isSampleInstance = true;
-isSampleFeature = true;
-isURandom = true;
-%numTime = 20;
-maxIter = 100;
-randomTryTime = 15;
-
-prefix = '../20-newsgroup/';
-numDom = 2;
-sourceDomain = 1;
-targetDomain = 2;
-
-domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
-allLabel = cell(1, numDom);
-
-numSourceInstanceList = [3913 3907 3783 3954 3830 3823 1237 1016 897 5000 5000 5000 5000 5000 5000 5000];
-numTargetInstanceList = [3925 3910 3336 3961 3387 3371 1207 1043 897 5000 5000 5000 5000 5000 5000 5000];
-numSourceFeatureList = [57312 59470 60800 58470 60800 60800 4771 4415 4563 10940 2688 2000 252 2000 2000 2000];
-numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940];
-
-numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
-numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
-numInstanceCluster = [3 3];
-numFeatureCluster = [5 5];
-
-sigma = 14;
-alpha = 0;
-beta = 0;
-numCVFold = 5;
-CVFoldSize = numSampleInstance/ numCVFold;
-resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
-resultFile2 = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
-
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
-
-% disp(numSampleFeature);
-%disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
-%disp(sprintf('#users:[%s]\n#items:[%s]\n#user_cluster:[%s]\n#item_cluster:[%s]', num2str(numInstance(1:numDom)), num2str(numFeature(1:numDom)), num2str(numInstanceCluster(1:numDom)), num2str(numFeatureCluster(1:numDom))));
-
-%[groundTruthX, snapshot, idx] = preprocessing(numDom, targetDomain);
-%bestLambda = 0.1;
-%bestAccuracy = 0;
-
-%Bcell = cell(1, numDom);
-Y = cell(1, numDom);
-W = cell(1, numDom);
-uc = cell(1, numDom);
-Sv = cell(1, numDom);
-Dv = cell(1, numDom);
-Lv = cell(1, numDom);
-Su = cell(1, numDom);
-Du = cell(1, numDom);
-Lu = cell(1, numDom);
-label = cell(1, numDom);
-
-X = createSparseMatrix_multiple(prefix, domainNameList, numDom, 1);
-
-for i = 1:numDom
-    domainName = domainNameList{i};
-    allLabel{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-end
-
-for i = 1: numDom
-    %Randomly sample instances & the corresponding labels
-    if isSampleInstance == true
-        sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
-        X{i} = X{i}(sampleInstanceIndex, :);
-        numInstance(i) = numSampleInstance;
-        label{i} = allLabel{i}(sampleInstanceIndex, :);
-        Y{i} = zeros(numInstance(i), numInstanceCluster(i));
-        for j = 1: numInstance(i)
-            Y{i}(j, label{i}(j)) = 1;
-        end
-    end
-    if isSampleFeature == true
-        denseFeatures = findDenseFeature(X{i}, numSampleFeature);
-        X{i} = X{i}(:, denseFeatures);
-        numFeature(i) = numSampleFeature;
-    end
-end
-
-% disp('Train logistic regression');
-% logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
-
-parfor i = 1: numDom
-    W{i} = zeros(numInstance(i), numFeature(i));
-    Su{i} = zeros(numInstance(i), numInstance(i));
-    Du{i} = zeros(numInstance(i), numInstance(i));
-    Lu{i} = zeros(numInstance(i), numInstance(i));
-    Sv{i} = zeros(numFeature(i), numFeature(i));
-    Dv{i} = zeros(numFeature(i), numFeature(i));
-    Lv{i} = zeros(numFeature(i), numFeature(i));
-
-    W{i}(X{i}~=0) = 1;
-
-    %user
-    fprintf('Domain%d: calculating Su, Du, Lu\n', i);
-    for useri = 1:numInstance(i)
-        for userj = 1:numInstance(i)
-            %ndsparse does not support norm()
-            dif = norm((X{i}(useri, :) - X{i}(userj,:)));
-%                 difVector = X{i}(useri, :) - X{i}(userj, :);
-%                 %ndsparse to normal value
-%                 dif = [0];
-%                 dif(1) = difVector* difVector';
-            Su{i}(useri, userj) = exp(-(dif*dif)/(2*sigma));
-        end
-    end
-    for useri = 1:numInstance(i)
-        Du{i}(useri,useri) = sum(Su{i}(useri,:));
-    end
-    Lu{i} = Du{i} - Su{i};
-    %item
-    fprintf('Domain%d: calculating Sv, Dv, Lv\n', i);
-    for itemi = 1:numFeature(i)
-        for itemj = 1:numFeature(i)
-            %ndsparse does not support norm()
-            dif = norm((X{i}(:,itemi) - X{i}(:,itemj)));
-%                 difVector = X{i}(:, itemi) - X{i}(:, itemj);
-%                 %ndsparse to normal value
-%                 dif = [0];
-%                 dif(1) = difVector'* difVector;
-            Sv{i}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
-        end
-    end
-    for itemi = 1:numFeature(i)
-        Dv{i}(itemi,itemi) = sum(Sv{i}(itemi,:));
-    end
-    Lv{i} = Dv{i} - Sv{i};
-end
-
-str = '';
-for i = 1:numDom
-    str = sprintf('%s%d,%d,', str, numInstanceCluster(i), numFeatureCluster(i));
-end
-str = str(1:length(str)-1);
+% 
+% for i = 1: numDom
+%     %Randomly sample instances & the corresponding labels
+%     if isSampleInstance == true
+%         sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
+%         X{i} = X{i}(sampleInstanceIndex, :);
+%         numInstance(i) = numSampleInstance;
+%         label{i} = allLabel{i}(sampleInstanceIndex, :);
+%         Y{i} = zeros(numInstance(i), numInstanceCluster(i));
+%         for j = 1: numInstance(i)
+%             Y{i}(j, label{i}(j)) = 1;
+%         end
+%     end
+%     if isSampleFeature == true
+%         denseFeatures = findDenseFeature(X{i}, numSampleFeature);
+%         X{i} = X{i}(:, denseFeatures);
+%         numFeature(i) = numSampleFeature;
+%     end
+% end
+% 
+% % disp('Train logistic regression');
+% % logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
+% 
+% parfor i = 1: numDom
+%     W{i} = zeros(numInstance(i), numFeature(i));
+%     Su{i} = zeros(numInstance(i), numInstance(i));
+%     Du{i} = zeros(numInstance(i), numInstance(i));
+%     Lu{i} = zeros(numInstance(i), numInstance(i));
+%     Sv{i} = zeros(numFeature(i), numFeature(i));
+%     Dv{i} = zeros(numFeature(i), numFeature(i));
+%     Lv{i} = zeros(numFeature(i), numFeature(i));
+% 
+%     W{i}(X{i}~=0) = 1;
+% 
+%     %user
+%     fprintf('Domain%d: calculating Su, Du, Lu\n', i);
+%     for useri = 1:numInstance(i)
+%         for userj = 1:numInstance(i)
+%             %ndsparse does not support norm()
+%             dif = norm((X{i}(useri, :) - X{i}(userj,:)));
+% %                 difVector = X{i}(useri, :) - X{i}(userj, :);
+% %                 %ndsparse to normal value
+% %                 dif = [0];
+% %                 dif(1) = difVector* difVector';
+%             Su{i}(useri, userj) = exp(-(dif*dif)/(2*sigma));
+%         end
+%     end
+%     for useri = 1:numInstance(i)
+%         Du{i}(useri,useri) = sum(Su{i}(useri,:));
+%     end
+%     Lu{i} = Du{i} - Su{i};
+%     %item
+%     fprintf('Domain%d: calculating Sv, Dv, Lv\n', i);
+%     for itemi = 1:numFeature(i)
+%         for itemj = 1:numFeature(i)
+%             %ndsparse does not support norm()
+%             dif = norm((X{i}(:,itemi) - X{i}(:,itemj)));
+% %                 difVector = X{i}(:, itemi) - X{i}(:, itemj);
+% %                 %ndsparse to normal value
+% %                 dif = [0];
+% %                 dif(1) = difVector'* difVector;
+%             Sv{i}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
+%         end
+%     end
+%     for itemi = 1:numFeature(i)
+%         Dv{i}(itemi,itemi) = sum(Sv{i}(itemi,:));
+%     end
+%     Lv{i} = Dv{i} - Sv{i};
+% end
+% 
+% str = '';
+% for i = 1:numDom
+%     str = sprintf('%s%d,%d,', str, numInstanceCluster(i), numFeatureCluster(i));
+% end
+% str = str(1:length(str)-1);
 
 disp('Start training')
 %initialize B, U, V
@@ -315,7 +315,7 @@ for tuneGama = 0:0
                 end
             end
             Accuracy = validateScore/ numSampleInstance;
-            avgObjectiveScore = sum(foldObjectiveScore)/ numCVFold;
+            avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
             if avgObjectiveScore < globalBestScore
                 fprintf('best socre!\n');
                 globalBestScore = avgObjectiveScore;
