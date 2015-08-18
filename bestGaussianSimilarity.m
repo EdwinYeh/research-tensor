@@ -1,26 +1,26 @@
 function S = bestGaussianSimilarity(X)
-    k = 10;
+%     k = 10;
     [numInstance, ~] = size(X);
     numNodePair = (1 + numInstance)*numInstance/2;
     SVector = zeros(1, numNodePair);
     SMatrix = zeros(numInstance, numInstance);
-    distMatrix = zeros(numInstance, numInstance);
-    sumOfKNearest = 0;
-    for i = 1:numInstance
-        for j = 1:numInstance
-            distMatrix(i, j) = norm(X(i, :) - X(j, :));
-        end
-    end
-    
-    for i = 1:numInstance
-        [sortDist, ~] = sort(distMatrix(:, i));
-        for j = 1:k
-            sumOfKNearest = sumOfKNearest + sortDist(j);
-        end
-    end
-    sigma = sumOfKNearest/ (k*numInstance);
-    fprintf('Best sigma: %f\n', sigma);
-% sigma = 14;
+%     distMatrix = zeros(numInstance, numInstance);
+%     sumOfKNearest = 0;
+%     for i = 1:numInstance
+%         for j = 1:numInstance
+%             distMatrix(i, j) = norm(X(i, :) - X(j, :));
+%         end
+%     end
+%     
+%     for i = 1:numInstance
+%         [sortDist, ~] = sort(distMatrix(:, i));
+%         for j = 1:k
+%             sumOfKNearest = sumOfKNearest + sortDist(j);
+%         end
+%     end
+%     sigma = sumOfKNearest/ (k*numInstance);
+%     fprintf('Best sigma: %f\n', sigma);
+ sigma = 40;
     index = 1;
     for i = 1:numInstance
         for j = 1:numInstance
@@ -37,8 +37,8 @@ function S = bestGaussianSimilarity(X)
 
     sortVector = sort(SVector);
     save('sortVector.mat', 'sortVector');
-%     connectionThreshold = sortVector(numNodePair - round(numNodePair*gaussianConnectionRate) + 1);
-%     fprintf('connection threshold = %f\n', connectionThreshold);
+    connectionThreshold = sortVector(numNodePair - round(numNodePair*0.03) + 1);
+    fprintf('connection threshold = %f\n', connectionThreshold);
 %     
 %     for i = 1:numInstance
 %         for j = 1:numInstance

@@ -1,9 +1,9 @@
 clear;
 clc;
-% if matlabpool('size') > 0
-%     matlabpool close;
-% end
-% matlabpool('open', 'local', 4);
+if matlabpool('size') > 0
+    matlabpool close;
+end
+matlabpool('open', 'local', 4);
 
 % configuration
 exp_title = 'Motar2';
@@ -15,7 +15,7 @@ datasetId = 1;
 numSampleInstance = 500;
 numSampleFeature = 2000;
 maxIter = 100;
-randomTryTime = 10;
+randomTryTime = 3;
 
 prefix = '../20-newsgroup/';
 numDom = 2;
@@ -32,7 +32,7 @@ numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numClass = 2;
-numInstanceCluster = [5 5];
+numInstanceCluster = [3 3];
 numFeatureCluster = [5 5];
 
 alpha = 0;
@@ -89,21 +89,21 @@ end
 % disp('Train logistic regression');
 % logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
 
-parfor i = 1: numDom
-    W{i} = zeros(numInstance(i), numClass);
-    Su{i} = zeros(numInstance(i), numInstance(i));
-    Du{i} = zeros(numInstance(i), numInstance(i));
-    Lu{i} = zeros(numInstance(i), numInstance(i));
+parfor dom = 1: numDom
+    W{dom} = zeros(numInstance(dom), numClass);
+    Su{dom} = zeros(numInstance(dom), numInstance(dom));
+    Du{dom} = zeros(numInstance(dom), numInstance(dom));
+    Lu{dom} = zeros(numInstance(dom), numInstance(dom));
     
-    W{i}(YTrue{i}~=0) = 1;
+    W{dom}(YTrue{dom}~=0) = 1;
     
     %user
-    fprintf('Domain%d: calculating Su, Du, Lu\n', i);
-    Su{i} = bestGaussianSimilarity(X{i});
-    for useri = 1:numInstance(i)
-        Du{i}(useri,useri) = sum(Su{i}(useri,:));
+    fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
+    Su{dom} = bestGaussianSimilarity(X{dom});
+    for useri = 1:numInstance(dom)
+        Du{dom}(useri,useri) = sum(Su{dom}(useri,:));
     end
-    Lu{i} = Du{i} - Su{i};
+    Lu{dom} = Du{dom} - Su{dom};
 end
 
 str = '';
@@ -145,7 +145,7 @@ for tuneLambda = 0:4
             V = initV(t, :);
             B = initB{t};
             Y = YTrue;
-            for i = numDom
+            if i == targetDomain;
                 Y{i}(validateIndex, :) = 0;
             end
             iter = 0;
@@ -153,7 +153,7 @@ for tuneLambda = 0:4
             newObjectiveScore = Inf;
             MAES = zeros(1,maxIter);
             RMSES = zeros(1,maxIter);
-            while (abs(diff) >= 0.0001  && iter < maxIter)
+            while (abs(diff) >= 0.001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
                 %                         fprintf('\t#Iterator:%d', iter);
@@ -253,7 +253,6 @@ for tuneLambda = 0:4
                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                     objectiveScore = normEmp + smoothU;
                     newObjectiveScore = newObjectiveScore + objectiveScore;
-%                     fprintf('domain #%d => empTerm:%f, smoothU:%f ==> objective score:%f\n', i, normEmp, smoothU, objectiveScore);
 %                     fprintf('rank U: %d, rank V: %d\n', rank(U{i}), rank(V{i}));
                 end
                 %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
@@ -262,6 +261,7 @@ for tuneLambda = 0:4
 %                 disp(diff);
             end
             foldObjectiveScores(fold) = newObjectiveScore;
+            fprintf('domain #%d => empTerm:%f, smoothU:%f ==> objective score:%f\n', i, normEmp, smoothU, objectiveScore);
             fprintf('rank U: %d, rank V: %d\n', rank(U{1}), rank(V{1}));
             fprintf('rank U: %d, rank V: %d\n', rank(U{2}), rank(V{2}));
             %calculate validationScore
@@ -302,4 +302,4 @@ fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
 fclose(resultFile2);
-% matlabpool close;
+matlabpool close;

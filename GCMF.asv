@@ -177,7 +177,7 @@ for tuneGama = 0:0
                 ObjectiveScore = Inf;
                 iter = 0;
                 diff = -1;
-                foldObjectiveScores = zeros(1,numCVFold);
+                ObjectiveScores = zeros(1,numCVFold);
                 MAES = zeros(1,maxIter);
                 RMSES = zeros(1,maxIter);
                 while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(ObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
@@ -248,7 +248,7 @@ for tuneGama = 0:0
                         %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
                     end
                     %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
-                    foldObjectiveScores(fold) = newObjectiveScore;
+                    ObjectiveScores(iter) = newObjectiveScore;
                     %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
                     diff = ObjectiveScore - newObjectiveScore;
                 end
@@ -264,20 +264,19 @@ for tuneGama = 0:0
                     validateIndex(i) = validateIndex(i) + CVFoldSize;
                 end
             end
-            avgObjectivecore = sum(foldObjectiveScore)/ numCVFold;
             Accuracy = validateScore/ numSampleInstance;
-            if avgObjectivecore < globalBestScore
-                globalBestScore = avgObjectivecore;
+            if newObjectiveScore < globalBestScore
+                globalBestScore = newObjectiveScore;
                 globalBestAccuracy = Accuracy;
                 bestLambda = lambda;
                 bestGama = gama;
             end
-            if avgObjectivecore < localBestScore
-                localBestScore = avgObjectivecore;
+            if newObjectiveScore < localBestScore
+                localBestScore = newObjectiveScore;
                 localBestAccuracy = Accuracy;
             end
-            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f\n', t,avgObjectivecore, Accuracy);
-            fprintf(resultFile2, '%f,%f\n', avgObjectivecore, Accuracy);
+            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f\n', t, newObjectiveScore, Accuracy);
+            fprintf(resultFile2, '%f,%f\n', newObjectiveScore, Accuracy);
         end
         fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy: %f%%\n\n', localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
     end
