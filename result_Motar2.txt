@@ -1,2 +1,0 @@
-BestLambda: 0.001000
-BestScore: 100.000000%
