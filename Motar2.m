@@ -9,13 +9,13 @@ clc;
 exp_title = 'Motar2';
 isUpdateAE = true;
 isSampleInstance = true;
-isSampleFeature = false;
+isSampleFeature = true;
 isURandom = true;
 datasetId = 1;
 numSampleInstance = 500;
 numSampleFeature = 2000;
 maxIter = 100;
-randomTryTime = 3;
+randomTryTime = 25;
 
 prefix = '../20-newsgroup/';
 numDom = 2;
@@ -105,202 +105,202 @@ parfor dom = 1: numDom
     end
     Lu{dom} = Du{dom} - Su{dom};
 end
-% 
-% str = '';
-% for i = 1:numDom
-%     str = sprintf('%s%d,%d,', str, numInstanceCluster(i), numFeatureCluster(i));
-% end
-% str = str(1:length(str)-1);
-% 
-% resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
-% resultFile2 = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
-% disp('Start training')
-% %initialize B, U, V
-% initV = cell(randomTryTime, numDom);
-% initU = cell(randomTryTime, numDom);
-% initB = cell(randomTryTime);
-% if isURandom == true
-%     for t = 1: randomTryTime
-% %         [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
-%         [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [2, 2], numInstanceCluster, numFeatureCluster, numDom, true);
-%     end
-% end
-% globalBestAccuracy = 0;
-% globalBestScore = Inf;
-% 
-% for tuneLambda = 0:4
-%     lambda = 0.001 * 1000 ^ tuneLambda;
-%     time = round(clock);
-%     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-%     fprintf('Use Lambda:%f\n', lambda);
-%     localBestAccuracy = 0;
-%     localBestScore = Inf;
-%     for t = 1: randomTryTime
-%         validateScore = 0;
-%         validateIndex = 1: CVFoldSize;
-%         foldObjectiveScores = zeros(1,numCVFold);
-%         for fold = 1:numCVFold
-%             %Iterative update
-% %             fprintf('fold: %d\n', fold);
-%             U = initU(t, :);
-%             V = initV(t, :);
-%             B = initB{t};
-%             Y = YTrue;
-%             if i == targetDomain;
-%                 Y{i}(validateIndex, :) = 0;
-%             end
-%             iter = 0;
-%             diff = -1;
-%             newObjectiveScore = Inf;
-%             MAES = zeros(1,maxIter);
-%             RMSES = zeros(1,maxIter);
-%             while (abs(diff) >= 0.001  && iter < maxIter)
-%                 iter = iter + 1;
-%                 oldObjectiveScore = newObjectiveScore;
-%                 %                         fprintf('\t#Iterator:%d', iter);
-%                 %                         disp([newObjectiveScore, diff]);
-%                 newObjectiveScore = 0;
-%                 for i = 1:numDom
-%                     %disp(sprintf('\tdomain #%d update...', i));
-%                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
-%                     %bestCPR = FindBestRank(threeMatrixB, 50)
-%                     bestCPR = 20;
-%                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
-%                     A = CP.U{1};
-%                     E = CP.U{2};
-%                     U3 = CP.U{3};
-% 
-%                     fi = cell(1, length(CP.U{3}));
-% 
-%                     %disp(sprintf('\t\tupdate V...'));
-%                     %update V
-%                     V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./(V{i}*projB'*U{i}'*U{i}*projB));
-%                     V{i}(isnan(V{i})) = 0;
-%                     V{i}(~isfinite(V{i})) = 0;
-%                     %col normalize
-%                     [r, ~] = size(V{i});
-%                     for tmpI = 1:r
-%                         bot = sum(abs(V{i}(tmpI,:)));
-%                         if bot == 0
-%                             bot = 1;
-%                         end
-%                         V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
-%                     end
-%                     V{i}(isnan(V{i})) = 0;
-%                     V{i}(~isfinite(V{i})) = 0;
-% 
-%                     %disp(sprintf('\t\tupdate U...'));
-%                     %update U
-%                     U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
-%                     U{i}(isnan(U{i})) = 0;
-%                     U{i}(~isfinite(U{i})) = 0;
-%                     [r c] = size(U{i});
-%                     %col normalize
-%                     [r c] = size(U{i});
-%                     for tmpI = 1:r
-%                         bot = sum(abs(U{i}(tmpI,:)));
-%                         if bot == 0
-%                             bot = 1;
-%                         end
-%                         U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
-%                     end
-%                     U{i}(isnan(U{i})) = 0;
-%                     U{i}(~isfinite(U{i})) = 0;
-% 
-%                     %update fi
-%                     [r, c] = size(U3);
-%                     nextThreeB = zeros(numInstanceCluster(i), numFeatureCluster(i), r);
-%                     sumFi = zeros(c, c);
-%                     CPLamda = CP.lambda(:);
-%                     parfor idx = 1:r
-%                         %for idx = 1:r
-%                         fi{idx} = diag(CPLamda.*U3(idx,:)');
-%                         sumFi = sumFi + fi{idx};
-%                     end
-%                     if isUpdateAE
-%                         %disp(sprintf('\t\tupdate A...'));
-%                         [rA, cA] = size(A);
-%                         onesA = ones(rA, cA);
-%                         A = A.*sqrt((U{i}'*Y{i}*V{i}*E*sumFi + alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
-%                         A(isnan(A)) = 0;
-%                         A(~isfinite(A)) = 0;
-%                         %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
-%                         A(isnan(A)) = 0;
-%                         A(~isfinite(A)) = 0;
-% 
-%                         %disp(sprintf('\t\tupdate E...'));
-%                         [rE ,cE] = size(E);
-%                         onesE = ones(rE, cE);
-%                         E = E.*sqrt((V{i}'*Y{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
-%                         E(isnan(E)) = 0;
-%                         E(~isfinite(E)) = 0;
-%                         %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
-%                         E(isnan(E)) = 0;
-%                         E(~isfinite(E)) = 0;
-% 
-%                         %disp(sprintf('\tcombine next iterator B...'));
-%                         parfor idx = 1:r
-%                             nextThreeB(:,:,idx) = A*fi{idx}*E';
-%                         end
-%                     end
-%                     B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, eval(sprintf('[%s]', str)));
-%                 end
-%                 %disp(sprintf('\tCalculate this iterator error'));
-%                 for i = 1:numDom
-%                     %for i = 1:numDom
-%                     [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
-%                     result = U{i}*projB*V{i}';
-%                     normEmp = norm((Y{i} - result))*norm((Y{i} - result));
-%                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
-%                     objectiveScore = normEmp + smoothU;
-%                     newObjectiveScore = newObjectiveScore + objectiveScore;
-% %                     fprintf('rank U: %d, rank V: %d\n', rank(U{i}), rank(V{i}));
-%                 end
-%                 %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
-%                 %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
-%                 diff = oldObjectiveScore - newObjectiveScore;
-% %                 disp(diff);
-%             end
-%             foldObjectiveScores(fold) = newObjectiveScore;
-% %             fprintf('domain #%d => empTerm:%f, smoothU:%f ==> objective score:%f\n', i, normEmp, smoothU, objectiveScore);
-% %             fprintf('rank U: %d, rank V: %d\n', rank(U{1}), rank(V{1}));
-% %             fprintf('rank U: %d, rank V: %d\n', rank(U{2}), rank(V{2}));
-%             %calculate validationScore
-%             [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
-%             result = U{targetDomain}*projB*V{targetDomain}';
-%             [~, maxIndex] = max(result');
-%             predictResult = maxIndex;
-%             for i = 1: CVFoldSize
-%                 if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
-%                     validateScore = validateScore + 1;
-%                 end
-%             end
-%             for c = 1:CVFoldSize
-%                 validateIndex(c) = validateIndex(c) + CVFoldSize;
-%             end
-%         end
-%         Accuracy = validateScore/ numSampleInstance;
-%         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
-%         
-%         if avgObjectiveScore < globalBestScore
-%             fprintf('best socre!\n');
-%             globalBestScore = avgObjectiveScore;
-%             globalBestAccuracy = Accuracy;
-%             bestLambda = lambda;
-%         end
-%         if avgObjectiveScore < localBestScore
-%             localBestAccuracy = Accuracy;
-%             localBestScore = avgObjectiveScore;
-%         end
-%         fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, Accuracy*100);
-%         fprintf(resultFile2, '%f,%f\n', avgObjectiveScore, Accuracy);
-%     end
-%     fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy:%f%%\n\n',localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
-% end
-% showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
-% fprintf(resultFile, 'BestLambda: %f\n', bestLambda);
-% fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
-% fprintf('done\n');
-% fclose(resultFile);
-% fclose(resultFile2);
+
+str = '';
+for i = 1:numDom
+    str = sprintf('%s%d,%d,', str, numInstanceCluster(i), numFeatureCluster(i));
+end
+str = str(1:length(str)-1);
+
+resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
+resultFile2 = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
+disp('Start training')
+%initialize B, U, V
+initV = cell(randomTryTime, numDom);
+initU = cell(randomTryTime, numDom);
+initB = cell(randomTryTime);
+if isURandom == true
+    for t = 1: randomTryTime
+%         [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
+        [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [2, 2], numInstanceCluster, numFeatureCluster, numDom, true);
+    end
+end
+globalBestAccuracy = 0;
+globalBestScore = Inf;
+
+for tuneLambda = 0:0
+    lambda = 0.001 * 1000 ^ tuneLambda;
+    time = round(clock);
+    fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
+    fprintf('Use Lambda:%f\n', lambda);
+    localBestAccuracy = 0;
+    localBestScore = Inf;
+    for t = 1: randomTryTime
+        validateScore = 0;
+        validateIndex = 1: CVFoldSize;
+        foldObjectiveScores = zeros(1,numCVFold);
+        for fold = 1:numCVFold
+            %Iterative update
+%             fprintf('fold: %d\n', fold);
+            U = initU(t, :);
+            V = initV(t, :);
+            B = initB{t};
+            Y = YTrue;
+            if i == targetDomain;
+                Y{i}(validateIndex, :) = 0;
+            end
+            iter = 0;
+            diff = -1;
+            newObjectiveScore = Inf;
+            MAES = zeros(1,maxIter);
+            RMSES = zeros(1,maxIter);
+            while (abs(diff) >= 0.001  && iter < maxIter)
+                iter = iter + 1;
+                oldObjectiveScore = newObjectiveScore;
+                %                         fprintf('\t#Iterator:%d', iter);
+                %                         disp([newObjectiveScore, diff]);
+                newObjectiveScore = 0;
+                for i = 1:numDom
+                    %disp(sprintf('\tdomain #%d update...', i));
+                    [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
+                    %bestCPR = FindBestRank(threeMatrixB, 50)
+                    bestCPR = 20;
+                    CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
+                    A = CP.U{1};
+                    E = CP.U{2};
+                    U3 = CP.U{3};
+
+                    fi = cell(1, length(CP.U{3}));
+
+                    %disp(sprintf('\t\tupdate V...'));
+                    %update V
+                    V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./(V{i}*projB'*U{i}'*U{i}*projB));
+                    V{i}(isnan(V{i})) = 0;
+                    V{i}(~isfinite(V{i})) = 0;
+                    %col normalize
+                    [r, ~] = size(V{i});
+                    for tmpI = 1:r
+                        bot = sum(abs(V{i}(tmpI,:)));
+                        if bot == 0
+                            bot = 1;
+                        end
+                        V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
+                    end
+                    V{i}(isnan(V{i})) = 0;
+                    V{i}(~isfinite(V{i})) = 0;
+
+                    %disp(sprintf('\t\tupdate U...'));
+                    %update U
+                    U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
+                    U{i}(isnan(U{i})) = 0;
+                    U{i}(~isfinite(U{i})) = 0;
+                    [r c] = size(U{i});
+                    %col normalize
+                    [r c] = size(U{i});
+                    for tmpI = 1:r
+                        bot = sum(abs(U{i}(tmpI,:)));
+                        if bot == 0
+                            bot = 1;
+                        end
+                        U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
+                    end
+                    U{i}(isnan(U{i})) = 0;
+                    U{i}(~isfinite(U{i})) = 0;
+
+                    %update fi
+                    [r, c] = size(U3);
+                    nextThreeB = zeros(numInstanceCluster(i), numFeatureCluster(i), r);
+                    sumFi = zeros(c, c);
+                    CPLamda = CP.lambda(:);
+                    parfor idx = 1:r
+                        %for idx = 1:r
+                        fi{idx} = diag(CPLamda.*U3(idx,:)');
+                        sumFi = sumFi + fi{idx};
+                    end
+                    if isUpdateAE
+                        %disp(sprintf('\t\tupdate A...'));
+                        [rA, cA] = size(A);
+                        onesA = ones(rA, cA);
+                        A = A.*sqrt((U{i}'*Y{i}*V{i}*E*sumFi + alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+                        A(isnan(A)) = 0;
+                        A(~isfinite(A)) = 0;
+                        %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
+                        A(isnan(A)) = 0;
+                        A(~isfinite(A)) = 0;
+
+                        %disp(sprintf('\t\tupdate E...'));
+                        [rE ,cE] = size(E);
+                        onesE = ones(rE, cE);
+                        E = E.*sqrt((V{i}'*Y{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
+                        E(isnan(E)) = 0;
+                        E(~isfinite(E)) = 0;
+                        %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
+                        E(isnan(E)) = 0;
+                        E(~isfinite(E)) = 0;
+
+                        %disp(sprintf('\tcombine next iterator B...'));
+                        parfor idx = 1:r
+                            nextThreeB(:,:,idx) = A*fi{idx}*E';
+                        end
+                    end
+                    B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, eval(sprintf('[%s]', str)));
+                end
+                %disp(sprintf('\tCalculate this iterator error'));
+                for i = 1:numDom
+                    %for i = 1:numDom
+                    [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
+                    result = U{i}*projB*V{i}';
+                    normEmp = norm((Y{i} - result))*norm((Y{i} - result));
+                    smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
+                    objectiveScore = normEmp + smoothU;
+                    newObjectiveScore = newObjectiveScore + objectiveScore;
+%                     fprintf('rank U: %d, rank V: %d\n', rank(U{i}), rank(V{i}));
+                end
+                %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
+                %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
+                diff = oldObjectiveScore - newObjectiveScore;
+%                 disp(diff);
+            end
+            foldObjectiveScores(fold) = newObjectiveScore;
+%             fprintf('domain #%d => empTerm:%f, smoothU:%f ==> objective score:%f\n', i, normEmp, smoothU, objectiveScore);
+%             fprintf('rank U: %d, rank V: %d\n', rank(U{1}), rank(V{1}));
+%             fprintf('rank U: %d, rank V: %d\n', rank(U{2}), rank(V{2}));
+            %calculate validationScore
+            [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
+            result = U{targetDomain}*projB*V{targetDomain}';
+            [~, maxIndex] = max(result');
+            predictResult = maxIndex;
+            for i = 1: CVFoldSize
+                if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
+                    validateScore = validateScore + 1;
+                end
+            end
+            for c = 1:CVFoldSize
+                validateIndex(c) = validateIndex(c) + CVFoldSize;
+            end
+        end
+        Accuracy = validateScore/ numSampleInstance;
+        avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
+        
+        if avgObjectiveScore < globalBestScore
+            fprintf('best socre!\n');
+            globalBestScore = avgObjectiveScore;
+            globalBestAccuracy = Accuracy;
+            bestLambda = lambda;
+        end
+        if avgObjectiveScore < localBestScore
+            localBestAccuracy = Accuracy;
+            localBestScore = avgObjectiveScore;
+        end
+        fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, Accuracy*100);
+        fprintf(resultFile2, '%f,%f\n', avgObjectiveScore, Accuracy);
+    end
+    fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy:%f%%\n\n',localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
+end
+showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
+fprintf(resultFile, 'BestLambda: %f\n', bestLambda);
+fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
+fprintf('done\n');
+fclose(resultFile);
+fclose(resultFile2);
 % matlabpool close;

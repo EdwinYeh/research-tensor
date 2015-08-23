@@ -15,7 +15,7 @@ isSampleFeature = true;
 isURandom = true;
 %numTime = 20;
 maxIter = 100;
-randomTryTime = 15;
+randomTryTime = 25;
 
 prefix = '../20-newsgroup/';
 numDom = 2;
@@ -39,7 +39,7 @@ sigma = 14;
 numCVFold = 5;
 CVFoldSize = numSampleInstance/ numCVFold;
 resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
-resultFile2 = fopen(sprintf('plot_data_%s.csv', exp_title), 'w');
+resultFile2 = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
 
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 

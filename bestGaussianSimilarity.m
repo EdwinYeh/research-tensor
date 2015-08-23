@@ -35,10 +35,10 @@ function S = bestGaussianSimilarity(X)
         end
     end
 
-    sortVector = sort(SVector);
-    save('sortVector.mat', 'sortVector');
-    connectionThreshold = sortVector(numNodePair - round(numNodePair*0.03) + 1);
-    fprintf('connection threshold = %f\n', connectionThreshold);
+%     sortVector = sort(SVector);
+%     save('sortVector.mat', 'sortVector');
+%     connectionThreshold = sortVector(numNodePair - round(numNodePair*0.03) + 1);
+%     fprintf('connection threshold = %f\n', connectionThreshold);
 %     
 %     for i = 1:numInstance
 %         for j = 1:numInstance
