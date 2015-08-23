@@ -264,7 +264,7 @@ for tuneGama = 0:0
                     validateIndex(i) = validateIndex(i) + CVFoldSize;
                 end
             end
-            avgObjectivecore = sum(foldObjectiveScore)/ numCVFold;
+            avgObjectivecore = sum(foldObjectiveScores)/ numCVFold;
             Accuracy = validateScore/ numSampleInstance;
             if avgObjectivecore < globalBestScore
                 globalBestScore = avgObjectivecore;
