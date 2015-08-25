@@ -15,7 +15,7 @@ datasetId = 9;
 numSampleInstance = 500;
 numSampleFeature = 2000;
 maxIter = 100;
-randomTryTime = 5;
+randomTryTime = 2;
 
 if datasetId <= 6
     prefix = '../20-newsgroup/';
@@ -137,8 +137,8 @@ end
 globalBestAccuracy = 0;
 globalBestScore = Inf;
 
-for tuneLambda = 0:3
-    lambda = 0.001 * 0.001 ^ tuneLambda;
+for tuneLambda = 0:0
+    lambda = 0.001 * 1000 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -156,6 +156,7 @@ for tuneLambda = 0:3
             B = initB{t};
             Y = YTrue;
             Y{targetDomain}(validateIndex, :) = 0;
+            save('Y.mat', 'Y');
             iter = 0;
             diff = -1;
             newObjectiveScore = Inf;
@@ -277,12 +278,13 @@ for tuneLambda = 0:3
             result = U{targetDomain}*projB*V{targetDomain}';
             [~, maxIndex] = max(result');
             predictResult = maxIndex;
+            save('predictResult.mat', 'predictResult');
             for i = 1: CVFoldSize
                 if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
                     validateScore = validateScore + 1;
                 end
             end
-            validateIndex = validateIndex + CVFoldSize;
+                validateIndex = validateIndex + CVFoldSize;
         end
         Accuracy = validateScore/ numSampleInstance;
         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
@@ -297,8 +299,6 @@ for tuneLambda = 0:3
             localBestAccuracy = Accuracy;
             localBestScore = avgObjectiveScore;
         end
-        time = round(clock);
-        fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, Accuracy*100);
         fprintf(resultFile2, '%f,%f\n', avgObjectiveScore, Accuracy);
     end

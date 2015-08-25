@@ -1,4 +1,4 @@
-function S = bestGaussianSimilarity(X)
+function S = gaussianSimilarityMatrix(X, sigma)
 %     k = 10;
     [numInstance, ~] = size(X);
     numNodePair = (1 + numInstance)*numInstance/2;
@@ -20,7 +20,6 @@ function S = bestGaussianSimilarity(X)
 %     end
 %     sigma = sumOfKNearest/ (k*numInstance);
 %     fprintf('Best sigma: %f\n', sigma);
- sigma = 40;
     index = 1;
     for i = 1:numInstance
         for j = 1:numInstance
@@ -35,18 +34,21 @@ function S = bestGaussianSimilarity(X)
         end
     end
 
-%     sortVector = sort(SVector);
-%     save('sortVector.mat', 'sortVector');
-%     connectionThreshold = sortVector(numNodePair - round(numNodePair*0.03) + 1);
-%     fprintf('connection threshold = %f\n', connectionThreshold);
-%     
-%     for i = 1:numInstance
-%         for j = 1:numInstance
-%             if SMatrix(i, j) < connectionThreshold
-%                 SMatrix(i, j) = 0;
-%             end
-%         end
-%     end
+     sortVector = sort(SVector);
+     connectionThresholdIndex = numNodePair - round(numNodePair*0.03) + 1;
+     connectionThreshold = sortVector(connectionThresholdIndex);
+     fprintf('connection threshold = %f\n', connectionThreshold);
+     plot(sortVector);
+     hold on;
+     plot(connectionThresholdIndex, connectionThreshold, 'X', 'color', 'r');
+     
+     for i = 1:numInstance
+         for j = 1:numInstance
+             if SMatrix(i, j) < connectionThreshold
+                 SMatrix(i, j) = 0;
+             end
+         end
+     end
     
     S = SMatrix;
 end
