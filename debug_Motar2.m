@@ -1,12 +1,12 @@
 clear;
 clc;
-% if matlabpool('size') > 0
-%     matlabpool close;
-% end
-% matlabpool('open', 'local', 4);
+%  if matlabpool('size') > 0
+%      matlabpool close;
+%  end
+%  matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'Motar2_9';
+exp_title = 'Motar2_9_CP5';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
@@ -15,7 +15,7 @@ datasetId = 9;
 numSampleInstance = 500;
 numSampleFeature = 2000;
 maxIter = 100;
-randomTryTime = 2;
+randomTryTime = 3;
 
 if datasetId <= 6
     prefix = '../20-newsgroup/';
@@ -137,8 +137,8 @@ end
 globalBestAccuracy = 0;
 globalBestScore = Inf;
 
-for tuneLambda = 0:0
-    lambda = 0.001 * 1000 ^ tuneLambda;
+for tuneLambda = 0:3
+    lambda = 0.001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -150,7 +150,7 @@ for tuneLambda = 0:0
         foldObjectiveScores = zeros(1,numCVFold);
         for fold = 1:numCVFold
             %Iterative update
-%             fprintf('fold: %d\n', fold);
+            fprintf('fold: %d\n', fold);
             U = initU(t, :);
             V = initV(t, :);
             B = initB{t};
@@ -165,14 +165,16 @@ for tuneLambda = 0:0
             while (abs(diff) >= 0.001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
-                %                         fprintf('\t#Iterator:%d', iter);
-                %                         disp([newObjectiveScore, diff]);
+                if mod(iter, 10) == 0
+                    fprintf('\t#Iterator:%d, ', iter);
+                    disp([newObjectiveScore, diff]);
+                end
                 newObjectiveScore = 0;
                 for i = 1:numDom
                     %disp(sprintf('\tdomain #%d update...', i));
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                     %bestCPR = FindBestRank(threeMatrixB, 50)
-                    bestCPR = 20;
+                    bestCPR = 5;
                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
                     A = CP.U{1};
                     E = CP.U{2};
@@ -264,7 +266,6 @@ for tuneLambda = 0:0
                     newObjectiveScore = newObjectiveScore + objectiveScore;
 %                     fprintf('rank U: %d, rank V: %d\n', rank(U{i}), rank(V{i}));
                 end
-                %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
                 %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
                 diff = oldObjectiveScore - newObjectiveScore;
 %                 disp(diff);

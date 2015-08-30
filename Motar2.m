@@ -6,13 +6,13 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'Motar2_9';
+exp_title = 'Motar2_8';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isURandom = true;
-datasetId = 9;
-numSampleInstance = 500;
+datasetId = 8;
+numSampleInstance = 250;
 numSampleFeature = 2000;
 maxIter = 100;
 randomTryTime = 5;
@@ -137,8 +137,8 @@ end
 globalBestAccuracy = 0;
 globalBestScore = Inf;
 
-for tuneLambda = 0:3
-    lambda = 0.001 * 0.001 ^ tuneLambda;
+for tuneLambda = 0:4
+    lambda = 0.0001 * 100 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -168,11 +168,15 @@ for tuneLambda = 0:3
                 %                         disp([newObjectiveScore, diff]);
                 newObjectiveScore = 0;
                 for i = 1:numDom
+                    time = round(clock);
+                    fprintf('New iteration: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     %disp(sprintf('\tdomain #%d update...', i));
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                     %bestCPR = FindBestRank(threeMatrixB, 50)
                     bestCPR = 20;
                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
+                    time = round(clock);
+                    fprintf('Cp complete: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     A = CP.U{1};
                     E = CP.U{2};
                     U3 = CP.U{3};
@@ -195,7 +199,8 @@ for tuneLambda = 0:3
                     end
                     V{i}(isnan(V{i})) = 0;
                     V{i}(~isfinite(V{i})) = 0;
-
+                    time = round(clock);
+                    fprintf('V updated: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     %disp(sprintf('\t\tupdate U...'));
                     %update U
                     U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
@@ -213,7 +218,8 @@ for tuneLambda = 0:3
                     end
                     U{i}(isnan(U{i})) = 0;
                     U{i}(~isfinite(U{i})) = 0;
-
+                    time = round(clock);
+                    fprintf('U updated: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     %update fi
                     [r, c] = size(U3);
                     nextThreeB = zeros(numInstanceCluster(i), numFeatureCluster(i), r);
@@ -251,6 +257,8 @@ for tuneLambda = 0:3
                         end
                     end
                     B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, eval(sprintf('[%s]', str)));
+                    time = round(clock);
+                    fprintf('AE updated: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                 end
                 %disp(sprintf('\tCalculate this iterator error'));
                 for i = 1:numDom
@@ -267,6 +275,8 @@ for tuneLambda = 0:3
                 %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
                 diff = oldObjectiveScore - newObjectiveScore;
 %                 disp(diff);
+                time = round(clock);
+                fprintf('Objective score: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
             end
             foldObjectiveScores(fold) = newObjectiveScore;
 %             fprintf('domain #%d => empTerm:%f, smoothU:%f ==> objective score:%f\n', i, normEmp, smoothU, objectiveScore);
