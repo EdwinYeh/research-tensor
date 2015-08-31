@@ -6,13 +6,13 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'Motar2_1_1250';
+exp_title = 'Motar2_W_1_500';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isURandom = true;
 datasetId = 1;
-numSampleInstance = 1250;
+numSampleInstance = 500;
 numSampleFeature = 2000;
 maxIter = 100;
 randomTryTime = 5;
@@ -42,7 +42,7 @@ numFeatureCluster = [5 5];
 if datasetId <= 6
     sigma = 0.1;
 else
-    sigma = 20;
+    sigma = 0.1;
 end
 alpha = 0;
 beta = 0;
@@ -157,11 +157,14 @@ for tuneLambda = 0:4
             B = initB{t};
             Y = YTrue;
             Y{targetDomain}(validateIndex, :) = 0;
+            W = ones(numSampleInstance, 2);
+            W(validateIndex, :) = 0;
             iter = 0;
             diff = -1;
             newObjectiveScore = Inf;
             MAES = zeros(1,maxIter);
             RMSES = zeros(1,maxIter);
+            
             while (abs(diff) >= 0.001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
@@ -186,7 +189,7 @@ for tuneLambda = 0:4
 
                     %disp(sprintf('\t\tupdate V...'));
                     %update V
-                    V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./(V{i}*projB'*U{i}'*U{i}*projB));
+                    V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
                     V{i}(isnan(V{i})) = 0;
                     V{i}(~isfinite(V{i})) = 0;
                     %col normalize
@@ -204,7 +207,7 @@ for tuneLambda = 0:4
 %                     fprintf('V updated: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     %disp(sprintf('\t\tupdate U...'));
                     %update U
-                    U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
+                    U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./((U{i}*projB*V{i}'.*W)*V{i}*projB' + lambda*Du{i}*U{i}));
                     U{i}(isnan(U{i})) = 0;
                     U{i}(~isfinite(U{i})) = 0;
                     [r c] = size(U{i});
@@ -266,7 +269,7 @@ for tuneLambda = 0:4
                     %for i = 1:numDom
                     [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
                     result = U{i}*projB*V{i}';
-                    normEmp = norm((Y{i} - result))*norm((Y{i} - result));
+                    normEmp = norm((Y{i} - result).*W)*norm((Y{i} - result).*W);
                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                     objectiveScore = normEmp + smoothU;
                     newObjectiveScore = newObjectiveScore + objectiveScore;
