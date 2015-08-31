@@ -6,13 +6,13 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'Motar2_1_500';
+exp_title = 'Motar2_1_1250';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isURandom = true;
 datasetId = 1;
-numSampleInstance = 500;
+numSampleInstance = 1250;
 numSampleFeature = 2000;
 maxIter = 100;
 randomTryTime = 5;
