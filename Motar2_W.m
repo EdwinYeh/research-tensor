@@ -207,7 +207,11 @@ for tuneLambda = 0:4
 %                     fprintf('V updated: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     %disp(sprintf('\t\tupdate U...'));
                     %update U
-                    U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./((U{i}*projB*V{i}'.*W)*V{i}*projB' + lambda*Du{i}*U{i}));
+                    if i == targetDomain
+                        U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./((U{i}*projB*V{i}'.*W)*V{i}*projB' + lambda*Du{i}*U{i}));
+                    else
+                        U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
+                    end
                     U{i}(isnan(U{i})) = 0;
                     U{i}(~isfinite(U{i})) = 0;
                     [r c] = size(U{i});
