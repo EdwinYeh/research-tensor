@@ -6,8 +6,8 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF';
-datasetId = 1;
+exp_title = 'GCMF_5';
+datasetId = 5;
 numSampleInstance = 500;
 numSampleFeature = 2000;
 isSampleInstance = true;
@@ -15,7 +15,7 @@ isSampleFeature = true;
 isURandom = true;
 %numTime = 20;
 maxIter = 100;
-randomTryTime = 25;
+randomTryTime = 10;
 
 prefix = '../20-newsgroup/';
 numDom = 2;
@@ -35,7 +35,7 @@ numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numInstanceCluster = [2 2];
 numFeatureCluster = [4 4];
 
-sigma = 14;
+sigma = 0.1;
 numCVFold = 5;
 CVFoldSize = numSampleInstance/ numCVFold;
 resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
@@ -67,6 +67,7 @@ for i = 1:numDom
 end
 
 for i = 1: numDom
+    X{i} = normr(X{i});
     if isSampleInstance == true
         sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
         X{i} = X{i}(sampleInstanceIndex, :);
@@ -104,10 +105,6 @@ parfor i = 1: numDom
         for userj = 1:numInstance(i)
             %ndsparse does not support norm()
             dif = norm((X{i}(useri, :) - X{i}(userj,:)));
-            %                 difVector = X{i}(useri, :) - X{i}(userj, :);
-            %                 %ndsparse to normal value
-            %                 dif = [0];
-            %                 dif(1) = difVector* difVector';
             Su{i}(useri, userj) = exp(-(dif*dif)/(2*sigma));
         end
     end
@@ -121,10 +118,6 @@ parfor i = 1: numDom
         for itemj = 1:numFeature(i)
             %ndsparse does not support norm()
             dif = norm((X{i}(:,itemi) - X{i}(:,itemj)));
-            %                 difVector = X{i}(:, itemi) - X{i}(:, itemj);
-            %                 %ndsparse to normal value
-            %                 dif = [0];
-            %                 dif(1) = difVector'* difVector;
             Sv{i}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
         end
     end
@@ -146,10 +139,10 @@ if isURandom == true
 end
 globalBestScore = Inf;
 globalBestAccuracy = 0;
-for tuneGama = 0:0
-    gama = 0.001 * 1000 ^ tuneGama;
-    for tuneLambda = 0:0
-        lambda = 1 * 1000 ^ tuneLambda;
+for tuneGama = 0:3
+    gama = 0.000001 * 100 ^ tuneGama;
+    for tuneLambda = 0:3
+        lambda = 0.000001 * 100 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);

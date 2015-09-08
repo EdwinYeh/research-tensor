@@ -15,7 +15,7 @@ datasetId = 1;
 numSampleInstance = 500;
 numSampleFeature = 2000;
 maxIter = 100;
-randomTryTime = 5;
+randomTryTime = 10;
 
 if datasetId <= 6
     prefix = '../20-newsgroup/';
@@ -138,8 +138,8 @@ end
 globalBestAccuracy = 0;
 globalBestScore = Inf;
 
-for tuneLambda = 0:4
-    lambda = 0.0001 * 100 ^ tuneLambda;
+for tuneLambda = 0:3
+    lambda = 0.000001 * 100 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
