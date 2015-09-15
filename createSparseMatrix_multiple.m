@@ -1,4 +1,4 @@
-function X = createSparseTensor_multiple(prefix, domainNameList, numDomain, dataType)
+function X = createSparseMatrix_multiple(prefix, domainNameList, numDomain, dataType)
 outputCell = cell(1,2);
 for i = 1:numDomain
     fprintf('Create sparse matrix: %s\n', [prefix, domainNameList{i}]);

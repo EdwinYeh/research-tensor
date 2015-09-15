@@ -17,7 +17,7 @@ function [U, B, V] = randomInitialize(numInstance, numFeature, numInstanceCluste
         B = rand(numInstanceCluster(1), numFeatureCluster(1));
     end
 
-    parfor i = 1:numDom
+    for i = 1:numDom
         V{i} = rand(numFeature(i),numFeatureCluster(i));
         U{i} = rand(numInstance(i), numInstanceCluster(i));
     end

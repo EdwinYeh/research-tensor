@@ -1,26 +1,40 @@
 clear;
 clc;
-% if matlabpool('size') > 0
-%     matlabpool close;
-% end
-% matlabpool('open', 'local', 4);
+if matlabpool('size') > 0
+    matlabpool close;
+end
+matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'Motar2_1_500';
+exp_title = 'Motar2_10';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isURandom = true;
-datasetId = 1;
+datasetId = 10;
 numSampleInstance = 500;
-numSampleFeature = 2000;
+numSampleFeature = 4940;
 maxIter = 100;
 randomTryTime = 5;
 
 if datasetId <= 6
+    dataType = 1;
     prefix = '../20-newsgroup/';
-else
+    numInstanceCluster = [3 3];
+    numFeatureCluster = [5 5];
+    sigma = 0.1;
+elseif datasetId > 6 && datasetId <=9
+    dataType = 1;
     prefix = '../Reuter/';
+    numInstanceCluster = [3 3];
+    numFeatureCluster = [5 5];
+    sigma = 0.1;
+else
+    dataType = 2;
+    prefix = '../Animal_img/';
+    numInstanceCluster = [41 11];
+    numFeatureCluster = [5 5];
+    sigma = 0.1;
 end
 numDom = 2;
 %sourceDomain = 1;
@@ -28,22 +42,15 @@ targetDomain = 2;
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 
-numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 5000 5000 5000 5000 5000 5000 5000];
-numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 5000 5000 5000 5000 5000 5000 5000];
-numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 10940 2688 2000 252 2000 2000 2000];
-numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 10940];
+numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 24295];
+numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 6180];
+numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940];
+numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940];
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 numClass = 2;
-numInstanceCluster = [3 3];
-numFeatureCluster = [5 5];
 
-if datasetId <= 6
-    sigma = 0.1;
-else
-    sigma = 20;
-end
 alpha = 0;
 beta = 0;
 numCVFold = 5;
@@ -69,7 +76,7 @@ Du = cell(1, numDom);
 Lu = cell(1, numDom);
 label = cell(1, numDom);
 
-X = createSparseMatrix_multiple(prefix, domainNameList, numDom, 1);
+X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 
 for i = 1:numDom
     domainName = domainNameList{i};
@@ -132,14 +139,18 @@ initB = cell(randomTryTime);
 if isURandom == true
     for t = 1: randomTryTime
 %         [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
-        [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [2, 2], numInstanceCluster, numFeatureCluster, numDom, true);
+        if datasetId <=9
+            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [2, 2], numInstanceCluster, numFeatureCluster, numDom, true);
+        else
+            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [40, 10], numInstanceCluster, numFeatureCluster, numDom, true);
+        end
     end
 end
 globalBestAccuracy = 0;
 globalBestScore = Inf;
 
-for tuneLambda = 0:4
-    lambda = 0.0001 * 100 ^ tuneLambda;
+for tuneLambda = 0:6
+    lambda = 0.000001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -321,4 +332,4 @@ fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
 fclose(resultFile2);
-% matlabpool close;
+matlabpool close;

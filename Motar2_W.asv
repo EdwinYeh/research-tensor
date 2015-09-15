@@ -13,7 +13,7 @@ isSampleFeature = true;
 isURandom = true;
 datasetId = 10;
 numSampleInstance = 500;
-numSampleFeature = 2000;
+numSampleFeature = 4940;
 maxIter = 100;
 randomTryTime = 10;
 
@@ -34,7 +34,7 @@ elseif datasetId > 6 && datasetId <=9
 else
     dataType = 2;
     prefix = '../Animal_img/';
-    numInstanceCluster = [3 3];
+    numInstanceCluster = [41 11];
     numFeatureCluster = [5 5];
     numClass = [40, 10];
     sigma = 0.1;
@@ -52,6 +52,7 @@ numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940]
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
+numClass = 2;
 
 alpha = 0;
 beta = 0;
@@ -94,7 +95,7 @@ for i = 1: numDom
         numInstance(i) = numSampleInstance;
         label{i} = label{i}(sampleInstanceIndex, :);
     end
-    YTrue{i} = zeros(numInstance(i), numClass(i));
+    YTrue{i} = zeros(numInstance(i), numClass);
     for j = 1: numInstance(i)        
         YTrue{i}(j, label{i}(j)) = 1;
     end
@@ -109,7 +110,7 @@ end
 % logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
 
 parfor dom = 1: numDom
-    W{dom} = zeros(numInstance(dom), numClass(dom));
+    W{dom} = zeros(numInstance(dom), numClass);
     Su{dom} = zeros(numInstance(dom), numInstance(dom));
     Du{dom} = zeros(numInstance(dom), numInstance(dom));
     Lu{dom} = zeros(numInstance(dom), numInstance(dom));
@@ -140,7 +141,11 @@ initU = cell(randomTryTime, numDom);
 initB = cell(randomTryTime);
 if isURandom == true
     for t = 1: randomTryTime
-        [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, numClass, numInstanceCluster, numFeatureCluster, numDom, true);
+        if datasetId <=9
+            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [2, 2], numInstanceCluster, numFeatureCluster, numDom, true);
+        else
+            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [40, 10], numInstanceCluster, numFeatureCluster, numDom, true);
+        end
     end
 end
 globalBestAccuracy = 0;
@@ -165,7 +170,7 @@ for tuneLambda = 0:6
             B = initB{t};
             Y = YTrue;
             Y{targetDomain}(validateIndex, :) = 0;
-            W = ones(numSampleInstance, numClass(targetDomain));
+            W = ones(numSampleInstance, 2);
             W(validateIndex, :) = 0;
             iter = 0;
             diff = -1;
@@ -197,11 +202,7 @@ for tuneLambda = 0:6
 
                     %disp(sprintf('\t\tupdate V...'));
                     %update V
-                    if i == targetDomain
-                        V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
-                    else
-                        V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}')*U{i}*projB));
-                    end
+                    V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
                     V{i}(isnan(V{i})) = 0;
                     V{i}(~isfinite(V{i})) = 0;
                     %col normalize
@@ -285,11 +286,7 @@ for tuneLambda = 0:6
                     %for i = 1:numDom
                     [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
                     result = U{i}*projB*V{i}';
-                    if i == targetDomain
-                        normEmp = norm((Y{i} - result).*W)*norm((Y{i} - result).*W);
-                    else
-                        normEmp = norm((Y{i} - result))*norm((Y{i} - result));
-                    end
+                    normEmp = norm((Y{i} - result).*W)*norm((Y{i} - result).*W);
                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                     objectiveScore = normEmp + smoothU;
                     newObjectiveScore = newObjectiveScore + objectiveScore;

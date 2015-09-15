@@ -6,10 +6,10 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF_5';
-datasetId = 5;
+exp_title = 'GCMF_1_dense_feature';
+datasetId = 1;
 numSampleInstance = 500;
-numSampleFeature = 2000;
+numSampleFeature = 6000;
 isSampleInstance = true;
 isSampleFeature = true;
 isURandom = true;
@@ -25,10 +25,10 @@ targetDomain = 2;
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 allLabel = cell(1, numDom);
 
-numSourceInstanceList = [3913 3907 3783 3954 3830 3823 1237 1016 897 5000 5000 5000 5000 5000 5000 5000];
-numTargetInstanceList = [3925 3910 3336 3961 3387 3371 1207 1043 897 5000 5000 5000 5000 5000 5000 5000];
-numSourceFeatureList = [57312 59470 60800 58470 60800 60800 4771 4415 4563 10940 2688 2000 252 2000 2000 2000];
-numTargetFeatureList = [57914 59474 61188 59474 61188 61188 4771 4415 4563 10940];
+numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 5000 5000 5000 5000 5000 5000 5000];
+numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 5000 5000 5000 5000 5000 5000 5000];
+numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 10940 2688 2000 252 2000 2000 2000];
+numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 10940];
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
@@ -80,6 +80,7 @@ for i = 1: numDom
     end
     if isSampleFeature == true
         denseFeatures = findDenseFeature(X{i}, numSampleFeature);
+        %denseFeatures = randperm(numFeature(i), numSampleFeature);
         X{i} = X{i}(:, denseFeatures);
         numFeature(i) = numSampleFeature;
     end
@@ -214,7 +215,6 @@ for tuneGama = 0:3
                             end
                             U{i}(isnan(U{i})) = 0;
                             U{i}(~isfinite(U{i})) = 0;
-                            U{i} = fixTrainingSet(U{i}, label{i}, validateIndex);
                         end
 
                         %update H
