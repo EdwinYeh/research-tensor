@@ -1,42 +1,49 @@
 clear;
 clc;
-% if matlabpool('size') > 0
-%     matlabpool close;
-% end
-% matlabpool('open', 'local', 4);
+if matlabpool('size') > 0
+    matlabpool close;
+end
+matlabpool(4);
 
 % configuration
 exp_title = 'Motar2_W_10';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
-isURandom = true;
+isRandom = true;
 datasetId = 10;
 numSampleInstance = 500;
-numSampleFeature = 4940;
+numSampleFeature = 2000;
 maxIter = 100;
 randomTryTime = 10;
 
 if datasetId <= 6
     dataType = 1;
     prefix = '../20-newsgroup/';
-    numInstanceCluster = [3 3];
-    numFeatureCluster = [5 5];
-    numClass = [2, 2];
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
     sigma = 0.1;
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
     prefix = '../Reuter/';
-    numInstanceCluster = [3 3];
-    numFeatureCluster = [5 5];
-    numClass = [2, 2];
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
     sigma = 0.1;
-else
+elseif datasetId == 10
     dataType = 2;
     prefix = '../Animal_img/';
-    numInstanceCluster = [41 11];
-    numFeatureCluster = [5 5];
-    numClass = [40, 10];
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
+    sigma = 0.1;
+elseif datasetId == 11
+    dataType = 1;
+    prefix = '../song/';
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
     sigma = 0.1;
 end
 numDom = 2;
@@ -45,14 +52,13 @@ targetDomain = 2;
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 
-numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 24295];
-numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 6180];
-numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940];
-numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940];
+numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 4460 229];
+numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 4601 223];
+numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940 10783];
+numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 10783];
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
-numClass = 2;
 
 alpha = 0;
 beta = 0;
@@ -80,6 +86,8 @@ Lu = cell(1, numDom);
 label = cell(1, numDom);
 
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
+% X = load(sprintf('%sdataset%d.mat', prefix, datasetId));
+% X = X.X;
 
 for i = 1:numDom
     domainName = domainNameList{i};
@@ -128,28 +136,23 @@ end
 
 str = '';
 for i = 1:numDom
-    str = sprintf('%s%d,%d,', str, numInstanceCluster(i), numFeatureCluster(i));
+    str = sprintf('%s%d,%d,', str, numInstanceCluster, numFeatureCluster);
 end
 str = str(1:length(str)-1);
+eval(sprintf('originalSize = [%s];', str));
 
-resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
-resultFile2 = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
+resultFile = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
 disp('Start training')
 %initialize B, U, V
 initV = cell(randomTryTime, numDom);
 initU = cell(randomTryTime, numDom);
 initB = cell(randomTryTime);
-if isURandom == true
+
+if isRandom == true
     for t = 1: randomTryTime
-        if datasetId <=9
-            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [2, 2], numInstanceCluster, numFeatureCluster, numDom, true);
-        else
-            [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, [40, 10], numInstanceCluster, numFeatureCluster, numDom, true);
-        end
+        [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, numClass, numInstanceCluster, numFeatureCluster, numDom, true);
     end
 end
-globalBestAccuracy = 0;
-globalBestScore = Inf;
 
 for tuneLambda = 0:6
     lambda = 0.000001 * 10 ^ tuneLambda;
@@ -158,7 +161,10 @@ for tuneLambda = 0:6
     fprintf('Use Lambda:%f\n', lambda);
     localBestAccuracy = 0;
     localBestScore = Inf;
-    for t = 1: randomTryTime
+    fileIsOpened = false;
+    %each pair is (objective score, accuracy);
+    resultCellArray = cell(randomTryTime, 2);
+    parfor t = 1: randomTryTime
         validateScore = 0;
         validateIndex = 1: CVFoldSize;
         foldObjectiveScores = zeros(1,numCVFold);
@@ -170,7 +176,7 @@ for tuneLambda = 0:6
             B = initB{t};
             Y = YTrue;
             Y{targetDomain}(validateIndex, :) = 0;
-            W = ones(numSampleInstance, 2);
+            W = ones(numSampleInstance, numClass);
             W(validateIndex, :) = 0;
             iter = 0;
             diff = -1;
@@ -202,7 +208,11 @@ for tuneLambda = 0:6
 
                     %disp(sprintf('\t\tupdate V...'));
                     %update V
-                    V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
+                    if i == targetDomain
+                        V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
+                    else
+                        V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}')*U{i}*projB));
+                    end
                     V{i}(isnan(V{i})) = 0;
                     V{i}(~isfinite(V{i})) = 0;
                     %col normalize
@@ -227,7 +237,6 @@ for tuneLambda = 0:6
                     end
                     U{i}(isnan(U{i})) = 0;
                     U{i}(~isfinite(U{i})) = 0;
-                    [r c] = size(U{i});
                     %col normalize
                     [r c] = size(U{i});
                     for tmpI = 1:r
@@ -243,10 +252,10 @@ for tuneLambda = 0:6
 %                     fprintf('U updated: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     %update fi
                     [r, c] = size(U3);
-                    nextThreeB = zeros(numInstanceCluster(i), numFeatureCluster(i), r);
+                    nextThreeB = zeros(numInstanceCluster, numFeatureCluster, r);
                     sumFi = zeros(c, c);
                     CPLamda = CP.lambda(:);
-                    parfor idx = 1:r
+                    for idx = 1:r
                         %for idx = 1:r
                         fi{idx} = diag(CPLamda.*U3(idx,:)');
                         sumFi = sumFi + fi{idx};
@@ -273,11 +282,12 @@ for tuneLambda = 0:6
                         E(~isfinite(E)) = 0;
 
                         %disp(sprintf('\tcombine next iterator B...'));
-                        parfor idx = 1:r
+                        for idx = 1:r
                             nextThreeB(:,:,idx) = A*fi{idx}*E';
                         end
                     end
-                    B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, eval(sprintf('[%s]', str)));
+                    
+                    B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, originalSize);
 %                     time = round(clock);
 %                     fprintf('AE updated: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                 end
@@ -286,7 +296,11 @@ for tuneLambda = 0:6
                     %for i = 1:numDom
                     [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
                     result = U{i}*projB*V{i}';
-                    normEmp = norm((Y{i} - result).*W)*norm((Y{i} - result).*W);
+                    if i == targetDomain
+                        normEmp = norm((Y{i} - result).*W)*norm((Y{i} - result).*W);
+                    else
+                        normEmp = norm((Y{i} - result))*norm((Y{i} - result));
+                    end
                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                     objectiveScore = normEmp + smoothU;
                     newObjectiveScore = newObjectiveScore + objectiveScore;
@@ -318,27 +332,15 @@ for tuneLambda = 0:6
         Accuracy = validateScore/ numSampleInstance;
         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
         
-        if avgObjectiveScore < globalBestScore
-            fprintf('best socre!\n');
-            globalBestScore = avgObjectiveScore;
-            globalBestAccuracy = Accuracy;
-            bestLambda = lambda;
-        end
-        if avgObjectiveScore < localBestScore
-            localBestAccuracy = Accuracy;
-            localBestScore = avgObjectiveScore;
-        end
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, Accuracy*100);
-        fprintf(resultFile2, '%f,%f\n', avgObjectiveScore, Accuracy);
+        resultCellArray{t}{1} = avgObjectiveScore;
+        resultCellArray{t}{2} = avgObjectiveScore;
+        fprintf(resultFile, '%f,%f\n', avgObjectiveScore, Accuracy);
     end
-    fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy:%f%%\n\n',localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
 end
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
-fprintf(resultFile, 'BestLambda: %f\n', bestLambda);
-fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
-fclose(resultFile2);
-% matlabpool close;
+matlabpool close;
