@@ -15,7 +15,7 @@ datasetId = 10;
 numSampleInstance = 500;
 numSampleFeature = 2000;
 maxIter = 100;
-randomTryTime = 10;
+randomTryTime = 20;
 
 if datasetId <= 6
     dataType = 1;
@@ -329,14 +329,14 @@ for tuneLambda = 0:6
             end
             validateIndex = validateIndex + CVFoldSize;
         end
-        Accuracy = validateScore/ numSampleInstance;
+        accuracy = validateScore/ numSampleInstance;
         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
         
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-        fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, Accuracy*100);
+        fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
         resultCellArray{t}{1} = avgObjectiveScore;
-        resultCellArray{t}{2} = avgObjectiveScore;
+        resultCellArray{t}{2} = accuracy*100;
     end
     for numResult = 1:randomTryTime
         fprintf(resultFile, '%f,%f\n', resultCellArray{numResult}{1}, resultCellArray{numResult}{2});
