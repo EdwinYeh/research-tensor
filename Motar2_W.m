@@ -1,21 +1,21 @@
 clear;
 clc;
-if matlabpool('size') > 0
-    matlabpool close;
-end
-matlabpool(4);
+% if matlabpool('size') > 0
+%     matlabpool close;
+% end
+% matlabpool(4);
 
 % configuration
-exp_title = 'Motar2_W_10';
+exp_title = 'Motar2_W_11';
 isUpdateAE = true;
-isSampleInstance = true;
-isSampleFeature = true;
+isSampleInstance = false;
+isSampleFeature = false;
 isRandom = true;
-datasetId = 10;
-numSampleInstance = 500;
-numSampleFeature = 2000;
+datasetId = 11;
+numSampleInstance = 30;
+numSampleFeature = 39;
 maxIter = 100;
-randomTryTime = 20;
+randomTryTime = 10;
 
 if datasetId <= 6
     dataType = 1;
@@ -39,12 +39,12 @@ elseif datasetId == 10
     numClass = 2;
     sigma = 0.1;
 elseif datasetId == 11
-    dataType = 1;
+    dataType = 2;
     prefix = '../song/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = 2;
-    sigma = 0.1;
+    sigma = 0.01;
 end
 numDom = 2;
 %sourceDomain = 1;
@@ -52,10 +52,10 @@ targetDomain = 2;
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 
-numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 4460 229];
-numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 4601 223];
-numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940 10783];
-numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 10783];
+numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 4460 60];
+numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 4601 30];
+numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940 39];
+numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 39];
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
@@ -89,12 +89,9 @@ X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 % X = load(sprintf('%sdataset%d.mat', prefix, datasetId));
 % X = X.X;
 
-for i = 1:numDom
+for i = 1: numDom
     domainName = domainNameList{i};
     label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-end
-
-for i = 1: numDom
     X{i} = normr(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
@@ -164,7 +161,7 @@ for tuneLambda = 0:6
     fileIsOpened = false;
     %each pair is (objective score, accuracy);
     resultCellArray = cell(randomTryTime, 2);
-    parfor t = 1: randomTryTime
+    for t = 1: randomTryTime
         validateScore = 0;
         validateIndex = 1: CVFoldSize;
         foldObjectiveScores = zeros(1,numCVFold);

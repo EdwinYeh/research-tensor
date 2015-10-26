@@ -1,4 +1,4 @@
-function [U, B, V] = randomInitialize(numInstance, numClass, numInstanceCluster, numFeatureCluster, numDom, isMotar)
+function [U, B, V] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, isMotar)
 
     V = cell(1, numDom);
     U = cell(1, numDom);
@@ -18,7 +18,7 @@ function [U, B, V] = randomInitialize(numInstance, numClass, numInstanceCluster,
     end
 
     for i = 1:numDom
-        V{i} = rand(numClass,numFeatureCluster);
+        V{i} = rand(numFeature,numFeatureCluster);
         U{i} = rand(numInstance(i), numInstanceCluster);
     end
 end

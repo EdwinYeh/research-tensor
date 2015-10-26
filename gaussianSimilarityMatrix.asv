@@ -34,6 +34,7 @@ function S = gaussianSimilarityMatrix(X, sigma)
             end
         end
     end
+
      sortVector = sort(SVector);
      connectionThresholdIndex = numNodePair - round(numNodePair*0.03) + 1;
      connectionThreshold = sortVector(connectionThresholdIndex);
@@ -42,5 +43,13 @@ function S = gaussianSimilarityMatrix(X, sigma)
      hold on;
      plot(connectionThresholdIndex, connectionThreshold, 'X', 'color', 'r');
      
+     for i = 1:numInstance
+         for j = 1:numInstance
+             if SMatrix(i, j) < connectionThreshold
+                 SMatrix(i, j) = 0;
+             end
+         end
+     end
+    SMatrix
     S = SMatrix;
 end

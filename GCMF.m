@@ -6,18 +6,46 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF_1_dense_feature';
-datasetId = 1;
-numSampleInstance = 500;
-numSampleFeature = 6000;
-isSampleInstance = true;
-isSampleFeature = true;
+exp_title = 'GCMF_11';
+datasetId = 11;
+numSampleInstance = 30;
+numSampleFeature = 39;
+isSampleInstance = false;
+isSampleFeature = false;
 isURandom = true;
 %numTime = 20;
 maxIter = 100;
 randomTryTime = 10;
 
-prefix = '../20-newsgroup/';
+if datasetId <= 6
+    dataType = 1;
+    prefix = '../20-newsgroup/';
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
+    sigma = 0.1;
+elseif datasetId > 6 && datasetId <=9
+    dataType = 1;
+    prefix = '../Reuter/';
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
+    sigma = 0.1;
+elseif datasetId == 10
+    dataType = 2;
+    prefix = '../Animal_img/';
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
+    sigma = 0.1;
+elseif datasetId == 11
+    dataType = 2;
+    prefix = '../song/';
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = 2;
+    sigma = 0.01;
+end
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
@@ -25,21 +53,16 @@ targetDomain = 2;
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 allLabel = cell(1, numDom);
 
-numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 5000 5000 5000 5000 5000 5000 5000];
-numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 5000 5000 5000 5000 5000 5000 5000];
-numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 10940 2688 2000 252 2000 2000 2000];
-numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 10940];
+numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 4460 60];
+numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 4601 30];
+numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940 39];
+numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 39];
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
-numInstanceCluster = [2 2];
-numFeatureCluster = [4 4];
-
-sigma = 0.1;
 numCVFold = 5;
 CVFoldSize = numSampleInstance/ numCVFold;
-resultFile = fopen(sprintf('result_%s.txt', exp_title), 'w');
-resultFile2 = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
+resultFile = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
 
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 
@@ -59,24 +82,22 @@ Du = cell(1, numDom);
 Lu = cell(1, numDom);
 label = cell(1, numDom);
 
-X = createSparseMatrix_multiple(prefix, domainNameList, numDom, 1);
-
-for i = 1:numDom
-    domainName = domainNameList{i};
-    allLabel{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-end
+X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 
 for i = 1: numDom
+    domainName = domainNameList{i};
+    allLabel{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
+    label{i} = allLabel{i};
     X{i} = normr(X{i});
     if isSampleInstance == true
         sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
         X{i} = X{i}(sampleInstanceIndex, :);
         numInstance(i) = numSampleInstance;
         label{i} = allLabel{i}(sampleInstanceIndex, :);
-        Y{i} = zeros(numInstance(i), numInstanceCluster(i));
-        for j = 1: numInstance(i)
-            Y{i}(j, label{i}(j)) = 1;
-        end
+    end
+    Y{i} = zeros(numInstance(i), numInstanceCluster);
+    for j = 1: numInstance(i)
+        Y{i}(j, label{i}(j)) = 1;
     end
     if isSampleFeature == true
         denseFeatures = findDenseFeature(X{i}, numSampleFeature);
@@ -135,15 +156,15 @@ initV = cell(randomTryTime, numDom);
 initH = cell(randomTryTime);
 if isURandom == true
     for t = 1: randomTryTime
-        [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
+        [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, numDom, false);
     end
 end
 globalBestScore = Inf;
 globalBestAccuracy = 0;
-for tuneGama = 0:3
-    gama = 0.000001 * 100 ^ tuneGama;
-    for tuneLambda = 0:3
-        lambda = 0.000001 * 100 ^ tuneLambda;
+for tuneGama = 0:6
+    gama = 0.000001 * 10 ^ tuneGama;
+    for tuneLambda = 0:6
+        lambda = 0.000001 * 10 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);
@@ -218,8 +239,8 @@ for tuneGama = 0:3
                         end
 
                         %update H
-                        HChild = zeros(numInstanceCluster(i), numFeatureCluster(i));
-                        HMother = zeros(numInstanceCluster(i), numFeatureCluster(i));
+                        HChild = zeros(numInstanceCluster, numFeatureCluster);
+                        HMother = zeros(numInstanceCluster, numFeatureCluster);
                         for j = 1:numDom
                             HChildCell{j} = U{j}'*X{j}*V{j};
                             HMotherCell{j} = U{j}'*U{j}*H*V{j}'*V{j};
@@ -270,16 +291,13 @@ for tuneGama = 0:3
                 localBestAccuracy = Accuracy;
             end
             fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f\n', t,avgObjectivecore, Accuracy);
-            fprintf(resultFile2, '%f,%f\n', avgObjectivecore, Accuracy);
+            fprintf(resultFile, '%f,%f\n', avgObjectivecore, Accuracy);
         end
         fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy: %f%%\n\n', localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
     end
 end
 
 showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
-fprintf(resultFile, '(BestLambda,BestGama): (%f, %f)\n', bestLambda, bestGama);
-fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
-fclose(resultFile2);
 %matlabpool close;
