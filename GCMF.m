@@ -8,8 +8,8 @@ clc;
 % configuration
 exp_title = 'GCMF_11';
 datasetId = 11;
-numSampleInstance = 30;
-numSampleFeature = 39;
+numSampleInstance = [60, 30];
+numSampleFeature = [39, 39];
 isSampleInstance = false;
 isSampleFeature = false;
 isURandom = true;
@@ -60,11 +60,20 @@ numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
+
+if isSampleInstance == true
+    numInstance = numSampleInstance;
+end
+
+if isSampleFeature ==true
+    numFeature = numSampleFeature;
+end
+
 numCVFold = 5;
-CVFoldSize = numSampleInstance/ numCVFold;
+CVFoldSize = numInstance(targetDomain)/ numCVFold;
 resultFile = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
 
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
+showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList);
 
 % disp(numSampleFeature);
 %disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
@@ -90,20 +99,18 @@ for i = 1: numDom
     label{i} = allLabel{i};
     X{i} = normr(X{i});
     if isSampleInstance == true
-        sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
+        sampleInstanceIndex = randperm(numInstance(i), numSampleInstance(i));
         X{i} = X{i}(sampleInstanceIndex, :);
-        numInstance(i) = numSampleInstance;
         label{i} = allLabel{i}(sampleInstanceIndex, :);
+    end
+    if isSampleFeature == true
+        denseFeatures = findDenseFeature(X{i}, numSampleFeature(i));
+        %denseFeatures = randperm(numFeature(i), numSampleFeature);
+        X{i} = X{i}(:, denseFeatures);
     end
     Y{i} = zeros(numInstance(i), numInstanceCluster);
     for j = 1: numInstance(i)
         Y{i}(j, label{i}(j)) = 1;
-    end
-    if isSampleFeature == true
-        denseFeatures = findDenseFeature(X{i}, numSampleFeature);
-        %denseFeatures = randperm(numFeature(i), numSampleFeature);
-        X{i} = X{i}(:, denseFeatures);
-        numFeature(i) = numSampleFeature;
     end
 end
 
@@ -156,7 +163,7 @@ initV = cell(randomTryTime, numDom);
 initH = cell(randomTryTime);
 if isURandom == true
     for t = 1: randomTryTime
-        [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, numDom, false);
+        [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
     end
 end
 globalBestScore = Inf;
@@ -195,7 +202,7 @@ for tuneGama = 0:6
                 foldObjectiveScores = zeros(1,numCVFold);
                 MAES = zeros(1,maxIter);
                 RMSES = zeros(1,maxIter);
-                while (abs(diff) >= 0.0001  && iter < maxIter)%(abs(ObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
+                while (diff >= 0.0001  && iter < maxIter)%(abs(ObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
                     iter = iter + 1;
                     ObjectiveScore = newObjectiveScore;
                     %disp(sprintf('\t#Iterator:%d', iter));
@@ -254,7 +261,11 @@ for tuneGama = 0:6
                     %disp(sprintf('\tCalculate this iterator error'));
                     parfor i = 1:numDom
                         result = U{i}*H*V{i}';
-                        normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
+                        if i == targetDomain
+                            normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
+                        else
+                            normEmp = norm((X{i} - result))*norm((X{i} - result));
+                        end
                         smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                         smoothV = gama*trace(V{i}'*Lv{i}*V{i});
                         loss = normEmp + smoothU + smoothV;
@@ -267,7 +278,7 @@ for tuneGama = 0:6
                     diff = ObjectiveScore - newObjectiveScore;
                 end
                 %calculate validationScore
-                [~, maxIndex] = max(U{targetDomain}');
+                [~, maxIndex] = max(U{targetDomain}, [], 2);
                 predictResult = maxIndex;
                 for i = 1: CVFoldSize
                     if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
@@ -279,7 +290,7 @@ for tuneGama = 0:6
                 end
             end
             avgObjectivecore = sum(foldObjectiveScores)/ numCVFold;
-            Accuracy = validateScore/ numSampleInstance;
+            Accuracy = validateScore/ numInstance(targetDomain);
             if avgObjectivecore < globalBestScore
                 globalBestScore = avgObjectivecore;
                 globalBestAccuracy = Accuracy;
@@ -297,7 +308,7 @@ for tuneGama = 0:6
     end
 end
 
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
+showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList);
 fprintf('done\n');
 fclose(resultFile);
 %matlabpool close;

@@ -6,16 +6,16 @@ clc;
 % matlabpool(4);
 
 % configuration
-exp_title = 'Motar2_W_11';
+exp_title = 'Motar2_W_1';
 isUpdateAE = true;
-isSampleInstance = false;
-isSampleFeature = false;
+isSampleInstance = true;
+isSampleFeature = true;
 isRandom = true;
-datasetId = 11;
-numSampleInstance = 30;
-numSampleFeature = 39;
+datasetId = 1;
+numSampleInstance = [500, 500];
+numSampleFeature = [2000, 2000];
 maxIter = 100;
-randomTryTime = 10;
+randomTryTime = 5;
 
 if datasetId <= 6
     dataType = 1;
@@ -54,18 +54,26 @@ domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', da
 
 numSourceInstanceList = [3913 3906 3782 3953 3829 3822 1237 1016 897 4460 60];
 numTargetInstanceList = [3925 3909 3338 3960 3389 3373 1207 1043 897 4601 30];
-numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940 39];
-numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 39];
+numSourceFeatureList = [57309 59463 60800 58463 60800 60800 4771 4415 4563 4940 26];
+numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 26];
 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 
+if isSampleInstance == true
+    numInstance = numSampleInstance;
+end
+
+if isSampleFeature == true
+    numFeature = numSampleFeature;
+end
+
 alpha = 0;
 beta = 0;
 numCVFold = 5;
-CVFoldSize = numSampleInstance/ numCVFold;
+CVFoldSize = numInstance(targetDomain)/ numCVFold;
 
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
+showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 
 % disp(numSampleFeature);
 %disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
@@ -95,19 +103,18 @@ for i = 1: numDom
     X{i} = normr(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
-        sampleInstanceIndex = randperm(numInstance(i), numSampleInstance);
+        [originNumInstance, ~ ] = size(X{i});
+        sampleInstanceIndex = randperm(originNumInstance, numInstance(i));
         X{i} = X{i}(sampleInstanceIndex, :);
-        numInstance(i) = numSampleInstance;
         label{i} = label{i}(sampleInstanceIndex, :);
+    end
+    if isSampleFeature == true
+        denseFeatures = findDenseFeature(X{i}, numFeature(i));
+        X{i} = X{i}(:, denseFeatures);
     end
     YTrue{i} = zeros(numInstance(i), numClass);
     for j = 1: numInstance(i)        
         YTrue{i}(j, label{i}(j)) = 1;
-    end
-    if isSampleFeature == true
-        denseFeatures = findDenseFeature(X{i}, numSampleFeature);
-        X{i} = X{i}(:, denseFeatures);
-        numFeature(i) = numSampleFeature;
     end
 end
 
@@ -152,7 +159,7 @@ if isRandom == true
 end
 
 for tuneLambda = 0:6
-    lambda = 0.000001 * 10 ^ tuneLambda;
+    lambda = 0.001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -161,31 +168,29 @@ for tuneLambda = 0:6
     fileIsOpened = false;
     %each pair is (objective score, accuracy);
     resultCellArray = cell(randomTryTime, 2);
-    for t = 1: randomTryTime
+    parfor t = 1: randomTryTime
         validateScore = 0;
         validateIndex = 1: CVFoldSize;
         foldObjectiveScores = zeros(1,numCVFold);
         for fold = 1:numCVFold
-            %Iterative update
-%             fprintf('fold: %d\n', fold);
             U = initU(t, :);
             V = initV(t, :);
             B = initB{t};
             Y = YTrue;
-            Y{targetDomain}(validateIndex, :) = 0;
-            W = ones(numSampleInstance, numClass);
+            Y{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass);
+            W = ones(numInstance(targetDomain), numClass);
             W(validateIndex, :) = 0;
             iter = 0;
-            diff = -1;
+            diff = Inf;
             newObjectiveScore = Inf;
             MAES = zeros(1,maxIter);
             RMSES = zeros(1,maxIter);
             
-            while (abs(diff) >= 0.001  && iter < maxIter)
+            while (diff >= 0.001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
-                %                         fprintf('\t#Iterator:%d', iter);
-                %                         disp([newObjectiveScore, diff]);
+%                 fprintf('\t#Iterator:%d', iter);
+%                 disp([newObjectiveScore, diff]);
                 newObjectiveScore = 0;
                 for i = 1:numDom
 %                     time = round(clock);
@@ -306,10 +311,10 @@ for tuneLambda = 0:6
                 %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
                 %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
                 diff = oldObjectiveScore - newObjectiveScore;
-%                 disp(diff);
 %                 time = round(clock);
 %                 fprintf('Objective score: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
             end
+            fprintf('iteration used: %d\n', iter);
             foldObjectiveScores(fold) = newObjectiveScore;
 %             fprintf('domain #%d => empTerm:%f, smoothU:%f ==> objective score:%f\n', i, normEmp, smoothU, objectiveScore);
 %             fprintf('rank U: %d, rank V: %d\n', rank(U{1}), rank(V{1}));
@@ -317,7 +322,8 @@ for tuneLambda = 0:6
             %calculate validationScore
             [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
             result = U{targetDomain}*projB*V{targetDomain}';
-            [~, maxIndex] = max(result');
+%             result
+            [~, maxIndex] = max(result, [], 2);
             predictResult = maxIndex;
             for i = 1: CVFoldSize
                 if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
@@ -326,7 +332,7 @@ for tuneLambda = 0:6
             end
             validateIndex = validateIndex + CVFoldSize;
         end
-        accuracy = validateScore/ numSampleInstance;
+        accuracy = validateScore/ numInstance(targetDomain);
         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
         
         time = round(clock);
@@ -339,7 +345,7 @@ for tuneLambda = 0:6
         fprintf(resultFile, '%f,%f\n', resultCellArray{numResult}{1}, resultCellArray{numResult}{2});
     end
 end
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
+showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 fprintf('done\n');
 fclose(resultFile);
 matlabpool close;
