@@ -1,21 +1,21 @@
 clear;
 clc;
-% if matlabpool('size') > 0
-%     matlabpool close;
-% end
-% matlabpool(4);
+if matlabpool('size') > 0
+    matlabpool close;
+end
+matlabpool(10);
 
 % configuration
-exp_title = 'Motar2_W_1';
+exp_title = 'Motar2_W_11';
 isUpdateAE = true;
-isSampleInstance = true;
-isSampleFeature = true;
+isSampleInstance = false;
+isSampleFeature = false;
 isRandom = true;
 datasetId = 1;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 100;
-randomTryTime = 5;
+randomTryTime = 10;
 
 if datasetId <= 6
     dataType = 1;
@@ -88,7 +88,7 @@ YTrue = cell(1, numDom);
 Y = cell(1, numDom);
 W = cell(1, numDom);
 uc = cell(1, numDom);
-Su = cell(1, numDom);
+% Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);
 label = cell(1, numDom);
@@ -100,7 +100,7 @@ X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 for i = 1: numDom
     domainName = domainNameList{i};
     label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-    X{i} = normr(X{i});
+%     X{i} = normr(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
         [originNumInstance, ~ ] = size(X{i});
@@ -120,7 +120,7 @@ end
 
 % disp('Train logistic regression');
 % logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
-
+load('../song/Su.mat')
 parfor dom = 1: numDom
     W{dom} = zeros(numInstance(dom), numClass);
     Su{dom} = zeros(numInstance(dom), numInstance(dom));
@@ -131,7 +131,7 @@ parfor dom = 1: numDom
     
     %user
     fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
-    Su{dom} = gaussianSimilarityMatrix(X{dom}, sigma);
+%     Su{dom} = gaussianSimilarityMatrix(X{dom}, sigma);
     for useri = 1:numInstance(dom)
         Du{dom}(useri,useri) = sum(Su{dom}(useri,:));
     end
