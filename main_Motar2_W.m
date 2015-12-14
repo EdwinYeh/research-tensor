@@ -22,28 +22,28 @@ if datasetId <= 6
     prefix = '../20-newsgroup/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
-    numClass = 2;
+    numClass = [2, 2];
     sigma = 0.1;
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
     prefix = '../Reuter/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
-    numClass = 2;
+    numClass = [2, 2];
     sigma = 0.1;
 elseif datasetId == 10
     dataType = 2;
     prefix = '../Animal_img/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
-    numClass = 2;
+    numClass = [2, 2];
     sigma = 0.1;
 elseif datasetId == 11
     dataType = 2;
     prefix = '../song/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
-    numClass = 2;
+    numClass = [2, 2];
     sigma = 0.1;
 end
 numDom = 2;
@@ -111,7 +111,7 @@ for i = 1: numDom
         denseFeatures = findDenseFeature(X{i}, numFeature(i));
         X{i} = X{i}(:, denseFeatures);
     end
-    YTrue{i} = zeros(numInstance(i), numClass);
+    YTrue{i} = zeros(numInstance(i), numClass(i));
     for j = 1: numInstance(i)        
         YTrue{i}(j, label{i}(j)) = 1;
     end
@@ -121,7 +121,7 @@ end
 % logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
 % load('../song/Su(1).mat');
 parfor dom = 1: numDom
-    W{dom} = zeros(numInstance(dom), numClass);
+    W{dom} = zeros(numInstance(dom), numClass(dom));
     Su{dom} = zeros(numInstance(dom), numInstance(dom));
     Du{dom} = zeros(numInstance(dom), numInstance(dom));
     Lu{dom} = zeros(numInstance(dom), numInstance(dom));
@@ -171,8 +171,8 @@ for tuneLambda = 0:6
             V = initV(t, :);
             B = initB{t};
             Y = YTrue;
-            Y{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass);
-            W = ones(numInstance(targetDomain), numClass);
+            Y{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(1));
+            W = ones(numInstance(targetDomain), numClass(1));
             W(validateIndex, :) = 0;
             iter = 0;
             diff = Inf;
