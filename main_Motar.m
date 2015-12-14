@@ -166,7 +166,7 @@ initU = cell(randomTryTime, numDom);
 initB = cell(randomTryTime);
 if isRandom == true
     for t = 1: randomTryTime
-        [initU(t,:),initB{t},initV(t,:)] = randomInitialize(X, lable, numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
+        [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
     end
 end
 

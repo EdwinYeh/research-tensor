@@ -37,7 +37,7 @@ elseif datasetId == 10
     numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
-    sigma = 10;
+    sigma = 0.1;
 elseif datasetId == 11
     dataType = 2;
     prefix = '../song/';
