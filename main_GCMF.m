@@ -20,28 +20,28 @@ randomTryTime = 2;
 if datasetId <= 6
     dataType = 1;
     prefix = '../20-newsgroup/';
-    numInstanceCluster = 4;
+    numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
     sigma = 0.1;
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
     prefix = '../Reuter/';
-    numInstanceCluster = 4;
+    numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
     sigma = 0.1;
 elseif datasetId == 10
     dataType = 2;
     prefix = '../Animal_img/';
-    numInstanceCluster = 4;
+    numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
     sigma = 10;
 elseif datasetId == 11
     dataType = 2;
     prefix = '../song/';
-    numInstanceCluster = 4;
+    numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
     sigma = 0.01;
@@ -81,7 +81,6 @@ showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 
 %Bcell = cell(1, numDom);
 Y = cell(1, numDom);
-W = cell(1, numDom);
 uc = cell(1, numDom);
 Sv = cell(1, numDom);
 Dv = cell(1, numDom);
@@ -118,15 +117,12 @@ end
 % logisticCoefficient = glmfit(X{1}, Labels{1} - 1, 'binomial');
 
 parfor i = 1: numDom
-    W{i} = zeros(numInstance(i), numFeature(i));
     Su{i} = zeros(numInstance(i), numInstance(i));
     Du{i} = zeros(numInstance(i), numInstance(i));
     Lu{i} = zeros(numInstance(i), numInstance(i));
     Sv{i} = zeros(numFeature(i), numFeature(i));
     Dv{i} = zeros(numFeature(i), numFeature(i));
     Lv{i} = zeros(numFeature(i), numFeature(i));
-
-    W{i}(X{i}~=0) = 1;
 
     %user
     fprintf('Domain%d: calculating Su, Du, Lu\n', i);
@@ -166,8 +162,6 @@ if isURandom == true
         [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
     end
 end
-globalBestScore = Inf;
-globalBestAccuracy = 0;
 for tuneGama = 0:6
     gama = 0.000001 * 10 ^ tuneGama;
     for tuneLambda = 0:6
@@ -262,7 +256,7 @@ for tuneGama = 0:6
                     parfor i = 1:numDom
                         result = U{i}*H*V{i}';
                         if i == targetDomain
-                            normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
+                            normEmp = norm((X{i} - result))*norm((X{i} - result));
                         else
                             normEmp = norm((X{i} - result))*norm((X{i} - result));
                         end
@@ -290,19 +284,9 @@ for tuneGama = 0:6
                 end
             end
             avgObjectivecore = sum(foldObjectiveScores)/ numCVFold;
-            Accuracy = validateScore/ numInstance(targetDomain);
-            if avgObjectivecore < globalBestScore
-                globalBestScore = avgObjectivecore;
-                globalBestAccuracy = Accuracy;
-                bestLambda = lambda;
-                bestGama = gama;
-            end
-            if avgObjectivecore < localBestScore
-                localBestScore = avgObjectivecore;
-                localBestAccuracy = Accuracy;
-            end
-            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f\n', t,avgObjectivecore, Accuracy);
-            fprintf(resultFile, '%f,%f\n', avgObjectivecore, Accuracy);
+            accuracy = validateScore/ numInstance(targetDomain);
+            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f\n', t,avgObjectivecore, accuracy);
+            fprintf(resultFile, '%f,%f\n', avgObjectivecore, accuracy);
         end
         fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy: %f%%\n\n', localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
     end
