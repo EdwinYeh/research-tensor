@@ -285,10 +285,9 @@ for tuneGama = 0:6
             end
             avgObjectivecore = sum(foldObjectiveScores)/ numCVFold;
             accuracy = validateScore/ numInstance(targetDomain);
-            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f\n', t,avgObjectivecore, accuracy);
+            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t,avgObjectivecore, accuracy*100);
             fprintf(resultFile, '%f,%f\n', avgObjectivecore, accuracy);
         end
-        fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy: %f%%\n\n', localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
     end
 end
 
