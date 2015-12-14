@@ -1,21 +1,21 @@
 clear;
 clc;
-if matlabpool('size') > 0
-    matlabpool close;
-end
-matlabpool(10);
+% if matlabpool('size') > 0
+%     matlabpool close;
+% end
+% matlabpool(4);
 
 % configuration
-exp_title = 'Motar2_W_11';
+exp_title = 'Motar2_W_10_sigma30';
 isUpdateAE = true;
-isSampleInstance = false;
-isSampleFeature = false;
+isSampleInstance = true;
+isSampleFeature = true;
 isRandom = true;
-datasetId = 1;
+datasetId = 10;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 100;
-randomTryTime = 10;
+randomTryTime = 3;
 
 if datasetId <= 6
     dataType = 1;
@@ -37,14 +37,14 @@ elseif datasetId == 10
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = 2;
-    sigma = 0.1;
+    sigma = 30;
 elseif datasetId == 11
     dataType = 2;
     prefix = '../song/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = 2;
-    sigma = 0.01;
+    sigma = 0.1;
 end
 numDom = 2;
 %sourceDomain = 1;
@@ -86,12 +86,12 @@ showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 %Bcell = cell(1, numDom);
 YTrue = cell(1, numDom);
 Y = cell(1, numDom);
+label = cell(1, numDom);
 W = cell(1, numDom);
 uc = cell(1, numDom);
 % Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);
-label = cell(1, numDom);
 
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 % X = load(sprintf('%sdataset%d.mat', prefix, datasetId));
@@ -120,18 +120,16 @@ end
 
 % disp('Train logistic regression');
 % logisticCoefficient = glmfit(X{1}, label{1} - 1, 'binomial');
-load('../song/Su.mat')
+% load('../song/Su(1).mat');
 parfor dom = 1: numDom
     W{dom} = zeros(numInstance(dom), numClass);
     Su{dom} = zeros(numInstance(dom), numInstance(dom));
     Du{dom} = zeros(numInstance(dom), numInstance(dom));
     Lu{dom} = zeros(numInstance(dom), numInstance(dom));
     
-    W{dom}(YTrue{dom}~=0) = 1;
-    
     %user
     fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
-%     Su{dom} = gaussianSimilarityMatrix(X{dom}, sigma);
+    Su{dom} = gaussianSimilarityMatrix(X{dom}, sigma);
     for useri = 1:numInstance(dom)
         Du{dom}(useri,useri) = sum(Su{dom}(useri,:));
     end
@@ -159,17 +157,16 @@ if isRandom == true
 end
 
 for tuneLambda = 0:6
-    lambda = 0.001 * 10 ^ tuneLambda;
+    lambda = 0.000001 * 100 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
     localBestAccuracy = 0;
     localBestScore = Inf;
-    fileIsOpened = false;
     %each pair is (objective score, accuracy);
     resultCellArray = cell(randomTryTime, 2);
-    parfor t = 1: randomTryTime
-        validateScore = 0;
+    for t = 1: randomTryTime
+        numCorrectPredict = 0;
         validateIndex = 1: CVFoldSize;
         foldObjectiveScores = zeros(1,numCVFold);
         for fold = 1:numCVFold
@@ -327,12 +324,12 @@ for tuneLambda = 0:6
             predictResult = maxIndex;
             for i = 1: CVFoldSize
                 if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
-                    validateScore = validateScore + 1;
+                    numCorrectPredict = numCorrectPredict + 1;
                 end
             end
             validateIndex = validateIndex + CVFoldSize;
         end
-        accuracy = validateScore/ numInstance(targetDomain);
+        accuracy = numCorrectPredict/ numInstance(targetDomain);
         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
         
         time = round(clock);
@@ -348,4 +345,4 @@ end
 showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 fprintf('done\n');
 fclose(resultFile);
-matlabpool close;
+% % matlabpool close;

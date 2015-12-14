@@ -6,16 +6,16 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF_11';
-datasetId = 11;
-numSampleInstance = [60, 30];
-numSampleFeature = [39, 39];
-isSampleInstance = false;
-isSampleFeature = false;
+exp_title = 'GCMF_10';
+datasetId = 10;
+numSampleInstance = [500, 500];
+numSampleFeature = [2000, 2000];
+isSampleInstance = true;
+isSampleFeature = true;
 isURandom = true;
 %numTime = 20;
 maxIter = 100;
-randomTryTime = 10;
+randomTryTime = 2;
 
 if datasetId <= 6
     dataType = 1;
@@ -37,7 +37,7 @@ elseif datasetId == 10
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = 2;
-    sigma = 0.1;
+    sigma = 10;
 elseif datasetId == 11
     dataType = 2;
     prefix = '../song/';
@@ -73,7 +73,7 @@ numCVFold = 5;
 CVFoldSize = numInstance(targetDomain)/ numCVFold;
 resultFile = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
 
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList);
+showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 
 % disp(numSampleFeature);
 %disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
@@ -308,7 +308,7 @@ for tuneGama = 0:6
     end
 end
 
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList);
+showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 fprintf('done\n');
 fclose(resultFile);
 %matlabpool close;
