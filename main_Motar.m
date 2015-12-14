@@ -60,6 +60,14 @@ numTargetFeatureList = [57913 59474 61188 59474 61188 61188 4771 4415 4563 4940 
 numInstance = [numSourceInstanceList(datasetId) numTargetInstanceList(datasetId)];
 numFeature = [numSourceFeatureList(datasetId) numTargetFeatureList(datasetId)];
 
+if isSampleInstance == true
+    numInstance = numSampleInstance;
+end
+
+if isSampleFeature == true
+    numFeature = numSampleFeature;
+end
+
 alpha = 0;
 beta = 0;
 numCVFold = 5;
@@ -156,7 +164,7 @@ disp('Start training')
 initV = cell(randomTryTime, numDom);
 initU = cell(randomTryTime, numDom);
 initB = cell(randomTryTime);
-if isURandom == true
+if isRandom == true
     for t = 1: randomTryTime
         [initU(t,:),initB{t},initV(t,:)] = randomInitialize(X, lable, numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
     end

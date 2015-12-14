@@ -6,12 +6,12 @@ clc;
 % matlabpool(4);
 
 %configuration
-exp_title = 'Motar2_W_10_sigma10_abs_-6to0';
+exp_title = 'Motar2_W_7';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
-datasetId = 10;
+datasetId = 7;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 100;
