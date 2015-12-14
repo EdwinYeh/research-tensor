@@ -1,9 +1,9 @@
 clear;
 clc;
-if matlabpool('size') > 0
-    matlabpool close;
-end
-matlabpool('open', 'local', 4);
+% if matlabpool('size') > 0
+%     matlabpool close;
+% end
+% matlabpool('open', 'local', 4);
 
 % configuration
 exp_title = 'Motar2_10';

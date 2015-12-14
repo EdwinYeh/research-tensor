@@ -15,19 +15,19 @@ datasetId = 10;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 100;
-randomTryTime = 3;
+randomTryTime = 5;
 
 if datasetId <= 6
     dataType = 1;
     prefix = '../20-newsgroup/';
-    numInstanceCluster = 4;
+    numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
     sigma = 0.1;
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
     prefix = '../Reuter/';
-    numInstanceCluster = 4;
+    numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
     sigma = 0.1;
@@ -37,11 +37,11 @@ elseif datasetId == 10
     numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
-    sigma = 10;
+    sigma = 0.1;
 elseif datasetId == 11
     dataType = 2;
     prefix = '../song/';
-    numInstanceCluster = 4;
+    numInstanceCluster = 2;
     numFeatureCluster = 5;
     numClass = 2;
     sigma = 0.1;
@@ -87,6 +87,7 @@ for i = 1:numDom
 end
 
 for i = 1: numDom
+    X{i} = normr(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
         sampleInstanceIndex = randperm(numInstance(i), numSampleInstance(i));
@@ -122,10 +123,6 @@ parfor i = 1: numDom
         for userj = 1:numInstance(i)
             %ndsparse does not support norm()
             dif = norm((X{i}(useri, :) - X{i}(userj,:)));
-%                 difVector = X{i}(useri, :) - X{i}(userj, :);
-%                 %ndsparse to normal value
-%                 dif = [0];
-%                 dif(1) = difVector* difVector';
             Su{i}(useri, userj) = exp(-(dif*dif)/(2*sigma));
         end
     end
@@ -139,10 +136,6 @@ parfor i = 1: numDom
         for itemj = 1:numFeature(i)
             %ndsparse does not support norm()
             dif = norm((X{i}(:,itemi) - X{i}(:,itemj)));
-%                 difVector = X{i}(:, itemi) - X{i}(:, itemj);
-%                 %ndsparse to normal value
-%                 dif = [0];
-%                 dif(1) = difVector'* difVector;
             Sv{i}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
         end
     end
@@ -168,20 +161,16 @@ if isURandom == true
         [initU(t,:),initB{t},initV(t,:)] = randomInitialize(X, lable, numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, true);
     end
 end
-globalBestAccuracy = 0;
-globalBestScore = Inf;
 
 resultFile = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
 
 for tuneGama = 0:6
-    gama = 0.000001 * 100 ^ tuneGama;
+    gama = 0.000001 * 10 ^ tuneGama;
     for tuneLambda = 0:6
-        lambda = 0.000001 * 100 ^ tuneLambda;
+        lambda = 0.000001 * 10 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Use Lambda:%f, Gama:%f\n', lambda, gama);
-        localBestAccuracy = 0;
-        localBestScore = Inf;
         for t = 1: randomTryTime
             validateScore = 0;
             validateIndex = 1: CVFoldSize;
@@ -302,7 +291,7 @@ for tuneGama = 0:6
                         %for i = 1:numDom
                         [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
                         result = U{i}*projB*V{i}';
-                        normEmp = norm(W{i}.*(X{i} - result))*norm(W{i}.*(X{i} - result));
+                        normEmp = norm((X{i} - result))*norm((X{i} - result));
                         smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                         smoothV = gama*trace(V{i}'*Lv{i}*V{i});
                         objectiveScore = normEmp + smoothU + smoothV;
@@ -326,21 +315,10 @@ for tuneGama = 0:6
                     validateIndex(c) = validateIndex(c) + CVFoldSize;
                 end
             end
-            Accuracy = validateScore/ numSampleInstance(1);
+            accuracy = validateScore/ numSampleInstance(1);
             avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
-            if avgObjectiveScore < globalBestScore
-                fprintf('best socre!\n');
-                globalBestScore = avgObjectiveScore;
-                globalBestAccuracy = Accuracy;
-                bestLambda = lambda;
-                bestGama = gama;
-            end
-            if avgObjectiveScore < localBestScore
-                localBestAccuracy = Accuracy;
-                localBestScore = avgObjectiveScore;
-            end
-            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, Accuracy*100);
-            fprintf(resultFile, '%f,%f\n', avgObjectiveScore, Accuracy);
+            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
+            fprintf(resultFile, '%f,%f\n', avgObjectiveScore, accuracy);
         end
         fprintf('LocalBestScore:%f, LocalBestAccuracy:%f%%\nGlobalBestScore:%f, GlobalBestAccuracy:%f%%\n\n',localBestScore, localBestAccuracy*100, globalBestScore, globalBestAccuracy*100);
     end

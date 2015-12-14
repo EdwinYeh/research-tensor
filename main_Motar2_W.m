@@ -15,7 +15,7 @@ datasetId = 10;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 100;
-randomTryTime = 10;
+randomTryTime = 5;
 
 if datasetId <= 6
     dataType = 1;
@@ -87,7 +87,6 @@ showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 YTrue = cell(1, numDom);
 Y = cell(1, numDom);
 label = cell(1, numDom);
-W = cell(1, numDom);
 uc = cell(1, numDom);
 % Su = cell(1, numDom);
 Du = cell(1, numDom);
@@ -100,7 +99,7 @@ X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 for i = 1: numDom
     domainName = domainNameList{i};
     label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-%     X{i} = normr(X{i});
+    X{i} = normr(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
         [originNumInstance, ~ ] = size(X{i});
@@ -183,7 +182,7 @@ for tuneLambda = 0:6
             MAES = zeros(1,maxIter);
             RMSES = zeros(1,maxIter);
             
-            while (abs(diff) >= 0.001  && iter < maxIter)
+            while (diff >= 0.001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
 %                 fprintf('\t#Iterator:%d', iter);

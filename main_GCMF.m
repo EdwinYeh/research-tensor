@@ -15,7 +15,7 @@ isSampleFeature = true;
 isURandom = true;
 %numTime = 20;
 maxIter = 100;
-randomTryTime = 2;
+randomTryTime = 5;
 
 if datasetId <= 6
     dataType = 1;
@@ -169,8 +169,6 @@ for tuneGama = 0:6
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);
-        localBestScore = Inf;
-        localBestAccuracy = 0;
         for t = 1: randomTryTime
             validateScore = 0;
             validateIndex = 1: CVFoldSize;
@@ -255,11 +253,7 @@ for tuneGama = 0:6
                     %disp(sprintf('\tCalculate this iterator error'));
                     parfor i = 1:numDom
                         result = U{i}*H*V{i}';
-                        if i == targetDomain
-                            normEmp = norm((X{i} - result))*norm((X{i} - result));
-                        else
-                            normEmp = norm((X{i} - result))*norm((X{i} - result));
-                        end
+                        normEmp = norm((X{i} - result))*norm((X{i} - result));
                         smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                         smoothV = gama*trace(V{i}'*Lv{i}*V{i});
                         loss = normEmp + smoothU + smoothV;
