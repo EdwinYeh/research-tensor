@@ -5,8 +5,8 @@ clc;
 % end
 % matlabpool(4);
 
-% configuration
-exp_title = 'Motar2_W_10_sigma30';
+%configuration
+exp_title = 'Motar2_W_10_sigma10_abs_-6to0';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
@@ -15,7 +15,7 @@ datasetId = 10;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 100;
-randomTryTime = 3;
+randomTryTime = 10;
 
 if datasetId <= 6
     dataType = 1;
@@ -37,7 +37,7 @@ elseif datasetId == 10
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = 2;
-    sigma = 30;
+    sigma = 0.1;
 elseif datasetId == 11
     dataType = 2;
     prefix = '../song/';
@@ -157,7 +157,7 @@ if isRandom == true
 end
 
 for tuneLambda = 0:6
-    lambda = 0.000001 * 100 ^ tuneLambda;
+    lambda = 0.000001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -165,7 +165,7 @@ for tuneLambda = 0:6
     localBestScore = Inf;
     %each pair is (objective score, accuracy);
     resultCellArray = cell(randomTryTime, 2);
-    for t = 1: randomTryTime
+    parfor t = 1: randomTryTime
         numCorrectPredict = 0;
         validateIndex = 1: CVFoldSize;
         foldObjectiveScores = zeros(1,numCVFold);
@@ -183,7 +183,7 @@ for tuneLambda = 0:6
             MAES = zeros(1,maxIter);
             RMSES = zeros(1,maxIter);
             
-            while (diff >= 0.001  && iter < maxIter)
+            while (abs(diff) >= 0.001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
 %                 fprintf('\t#Iterator:%d', iter);
@@ -345,4 +345,4 @@ end
 showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 fprintf('done\n');
 fclose(resultFile);
-% % matlabpool close;
+% matlabpool close;
