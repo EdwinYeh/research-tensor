@@ -6,16 +6,16 @@ clc;
 % matlabpool(4);
 
 %configuration
-exp_title = 'Motar2_W_7';
+datasetId = 7;
+exp_title = sprintf('Motar2_W_%d', datasetId);
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
-datasetId = 7;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
-maxIter = 100;
-randomTryTime = 5;
+maxIter = 120;
+randomTryTime = 3;
 
 if datasetId <= 6
     dataType = 1;
@@ -142,7 +142,7 @@ end
 str = str(1:length(str)-1);
 eval(sprintf('originalSize = [%s];', str));
 
-resultFile = fopen(sprintf('score_accuracy_%s.csv', exp_title), 'w');
+resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
 disp('Start training')
 %initialize B, U, V
 initV = cell(randomTryTime, numDom);
