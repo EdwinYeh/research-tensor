@@ -6,7 +6,7 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF_10';
+exp_title = 'GCMF_W_10';
 datasetId = 10;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
@@ -177,7 +177,7 @@ for tuneGama = 0:6
                 U = initU(t, :);
                 V = initV(t, :);
                 H = initH{t};
-                W = ones(numInstance(targetDomain), numClass);
+                W = ones(numInstance(targetDomain), numFeature(targetDomain));
                 W(validateIndex, :) = 0;
                 for i = 1:numDom
                     if i == targetDomain
@@ -192,7 +192,7 @@ for tuneGama = 0:6
                 newObjectiveScore = Inf;
                 ObjectiveScore = Inf;
                 iter = 0;
-                diff = -1;
+                diff = Inf;
                 foldObjectiveScores = zeros(1,numCVFold);
                 MAES = zeros(1,maxIter);
                 RMSES = zeros(1,maxIter);
@@ -205,7 +205,7 @@ for tuneGama = 0:6
                     for i = 1:numDom
                         %disp(sprintf('\t\tupdate V...'));
                         %update V
-                        V{i} = V{i}.*sqrt((X{i}'*U{i}*H + gama*Sv{i}*V{i})./((V{i}*H'*U{i}'.*W)*U{i}*H + gama*Dv{i}*V{i}));
+                        V{i} = V{i}.*sqrt((X{i}'*U{i}*H + gama*Sv{i}*V{i})./((V{i}*H'*U{i}'.*W')*U{i}*H + gama*Dv{i}*V{i}));
                         V{i}(isnan(V{i})) = 0;
                         V{i}(~isfinite(V{i})) = 0;
                         %col normalize
