@@ -6,7 +6,7 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF_10';
+exp_title = 'GCMF_W_10';
 datasetId = 10;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
@@ -192,7 +192,7 @@ for tuneGama = 0:6
                 newObjectiveScore = Inf;
                 ObjectiveScore = Inf;
                 iter = 0;
-                diff = -1;
+                diff = Inf;
                 foldObjectiveScores = zeros(1,numCVFold);
                 MAES = zeros(1,maxIter);
                 RMSES = zeros(1,maxIter);

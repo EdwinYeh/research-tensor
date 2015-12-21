@@ -6,12 +6,12 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'Motar_10';
+exp_title = 'Motar_7';
 isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
-datasetId = 10;
+datasetId = 7;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 100;
@@ -330,7 +330,7 @@ for tuneGama = 0:6
         end
     end
 end
-showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
+%showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 fprintf('done\n');
 fclose(resultFile);
 % matlabpool close;
