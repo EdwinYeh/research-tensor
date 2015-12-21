@@ -2,7 +2,7 @@ datasetId = 10;
 numDom = 2;
 mu = 1;
 numSampleFeature = 2000;
-numSampleData = 500;
+numSampleData = 200;
 numFold = 5;
 featureDimAfterReduce = 10;
 
@@ -63,9 +63,9 @@ H = eye(numAllData) - ((1/(numAllData) * ones(numAllData, numAllData)));
 resultFile = fopen(sprintf('result_TCA%d.csv', datasetId), 'w');
 fprintf(resultFile, 'mu,sigma,accuracy,empError\n');
 
-for tuneMu = 0:3
+for tuneMu = 0:5
     mu = 10 * 10 ^ tuneMu;
-    for tuneSigma = 0:3
+    for tuneSigma = 0:5
         sigma = 10 * 10 ^ tuneSigma;
         fprintf('(mu, sigma) = (%f, %f)\n', mu, sigma)
         numCorrectPredict = 0;
@@ -113,7 +113,7 @@ for tuneMu = 0:3
             dimReducedMatrix = tcaMatrix * transformMatrix;
             trainX = dimReducedMatrix(trainDataIndex, :);
             svmModel = fitcsvm(trainX, trainY, 'KernelFunction', 'linear');
-            errorSum = errorSum + loss(svmModel, trainX, trainY);
+            errorSum = errorSum + loss(svmModel, trainX, testX);
             predictLabel = predict(svmModel, dimReducedMatrix(testDataIndex, :));
             
             for i = 1: sizeOfOneFold
@@ -126,7 +126,7 @@ for tuneMu = 0:3
         accuracy = numCorrectPredict/ numSampleData;
         disp(accuracy);
         disp(avgError);
-        fprintf(resultFile, '%f,%f,%f,%f\n', mu, sigma, accuracy, avgError);
+        fprintf(resultFile, '%f,%f,%f\n', mu, sigma, accuracy, avgError);
     end
 end
 fclose(resultFile);
