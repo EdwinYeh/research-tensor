@@ -6,7 +6,7 @@ clc;
 % matlabpool(4);
 
 %configuration
-datasetId = 7;
+datasetId = 5;
 exp_title = sprintf('Motar2_W_%d', datasetId);
 isUpdateAE = true;
 isSampleInstance = true;
@@ -143,6 +143,7 @@ str = str(1:length(str)-1);
 eval(sprintf('originalSize = [%s];', str));
 
 resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
+fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
 disp('Start training')
 %initialize B, U, V
 initV = cell(randomTryTime, numDom);
@@ -336,7 +337,7 @@ for tuneLambda = 0:6
         resultCellArray{t}{2} = accuracy*100;
     end
     for numResult = 1:randomTryTime
-        fprintf(resultFile, '%f,%f\n', resultCellArray{numResult}{1}, resultCellArray{numResult}{2});
+        fprintf(resultFile, '%f,%f,%f\n', lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2});
     end
 end
 showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
