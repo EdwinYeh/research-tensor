@@ -6,8 +6,8 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF_10';
-datasetId = 10;
+exp_title = 'GCMF_7';
+datasetId = 7;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 isSampleInstance = true;
@@ -190,7 +190,7 @@ for tuneGama = 0:6
                 newObjectiveScore = Inf;
                 ObjectiveScore = Inf;
                 iter = 0;
-                diff = -1;
+                diff = Inf;
                 foldObjectiveScores = zeros(1,numCVFold);
                 MAES = zeros(1,maxIter);
                 RMSES = zeros(1,maxIter);
@@ -251,7 +251,7 @@ for tuneGama = 0:6
                         H = H.*sqrt(HChild./HMother);
                     end
                     %disp(sprintf('\tCalculate this iterator error'));
-                    parfor i = 1:numDom
+                    for i = 1:numDom
                         result = U{i}*H*V{i}';
                         normEmp = norm((X{i} - result))*norm((X{i} - result));
                         smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
@@ -262,7 +262,7 @@ for tuneGama = 0:6
                     end
                     %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
                     foldObjectiveScores(fold) = newObjectiveScore;
-                    %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
+                    fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
                     diff = ObjectiveScore - newObjectiveScore;
                 end
                 %calculate validationScore
@@ -277,10 +277,10 @@ for tuneGama = 0:6
                     validateIndex(i) = validateIndex(i) + CVFoldSize;
                 end
             end
-            avgObjectivecore = sum(foldObjectiveScores)/ numCVFold;
+            avgObjectivescore = sum(foldObjectiveScores)/ numCVFold;
             accuracy = validateScore/ numInstance(targetDomain);
-            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t,avgObjectivecore, accuracy*100);
-            fprintf(resultFile, '%f,%f\n', avgObjectivecore, accuracy);
+            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t,avgObjectivescore, accuracy*100);
+            fprintf(resultFile, '%f,%f\n', avgObjectivescore, accuracy);
         end
     end
 end

@@ -177,7 +177,7 @@ for tuneGama = 0:6
                 U = initU(t, :);
                 V = initV(t, :);
                 H = initH{t};
-                W = ones(numInstance(targetDomain), numClass);
+                W = ones(numInstance(targetDomain), numFeature(targetDomain));
                 W(validateIndex, :) = 0;
                 for i = 1:numDom
                     if i == targetDomain
@@ -205,7 +205,7 @@ for tuneGama = 0:6
                     for i = 1:numDom
                         %disp(sprintf('\t\tupdate V...'));
                         %update V
-                        V{i} = V{i}.*sqrt((X{i}'*U{i}*H + gama*Sv{i}*V{i})./((V{i}*H'*U{i}'.*W)*U{i}*H + gama*Dv{i}*V{i}));
+                        V{i} = V{i}.*sqrt((X{i}'*U{i}*H + gama*Sv{i}*V{i})./((V{i}*H'*U{i}'.*W')*U{i}*H + gama*Dv{i}*V{i}));
                         V{i}(isnan(V{i})) = 0;
                         V{i}(~isfinite(V{i})) = 0;
                         %col normalize

@@ -197,7 +197,7 @@ for tuneGama = 0:6
                 end
                 newObjectiveScore = Inf;
                 iter = 0;
-                diff = -1;
+                diff = Inf;
                 MAES = zeros(1,maxIter);
                 RMSES = zeros(1,maxIter);
                 %fprintf('Fold:%d(%d~%d), Iterative update\n', fold, min(validateIndex), max(validateIndex));
