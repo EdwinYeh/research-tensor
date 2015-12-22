@@ -1,4 +1,4 @@
-datasetId = 10;
+datasetId = 6;
 numDom = 2;
 mu = 1;
 numSampleFeature = 2000;
