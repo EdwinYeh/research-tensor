@@ -5,13 +5,14 @@ function [ bestRank ] = FindBestRank( x, maxRank )
     dy = sz(2);
     dz = sz(3);
     tensorX = tensor(x);
-    totalErrors = Inf(1, maxRank/5);
+    minError = Inf;
+    
     for i = 1:(maxRank/5)
-	R = 5*i;
-	time = round(clock);
-	fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-	fprintf('Start cp_rank = %d\n', R);
-        P = cp_apr(tensorX, R, 'printitn', 0);%parafac_als(tensorX, R);
+        R = 5*i;
+        time = round(clock);
+        fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
+        fprintf('Start cp_rank = %d\n', R);
+        P = cp_apr(tensorX, R, 'printitn', 0, 'alg', 'mu');%parafac_als(tensorX, R);
         [warnmsg, msgid] = lastwarn;
         if strcmp(msgid,'MATLAB:nearlySingularMatrix')
             lastwarn('');
@@ -24,14 +25,15 @@ function [ bestRank ] = FindBestRank( x, maxRank )
             error = error + abs(original - appx);
         end
         totalError = norm(error)*norm(error);
-        totalErrors(i) = totalError;
-	time = round(clock);
-	fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-	fprintf('Finish cp_rank = %d, error = %f\n\n', R, totalError);
- 
+        if totalError < minError
+            minError = totalError;
+            bestRank = R;
+        end
+        time = round(clock);
+        fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
+        fprintf('Finish cp_rank = %d, error = %f\n\n', R, totalError);
     end
-    totalErrors(isnan(totalErrors)) = Inf;
-    bestRank = find(totalErrors==min(totalErrors(1:i)));
-    bestRank = bestRank(1);
+    fprintf('Best rank: %d\n', bestRank);
+    fprintf('Error: %f\n', minError);
 end
 

@@ -6,7 +6,7 @@ clc;
 % matlabpool(4);
 
 %configuration
-% datasetId = 5;
+datasetId = 1;
 exp_title = sprintf('Motar2_W_%d', datasetId);
 isUpdateAE = true;
 isSampleInstance = true;
@@ -14,26 +14,26 @@ isSampleFeature = true;
 isRandom = true;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
-maxIter = 120;
-randomTryTime = 3;
+maxIter = 100;
+randomTryTime = 2;
 
 if datasetId <= 6
     dataType = 1;
-    prefix = '../20-newsgroup/';
+    prefix = '../../20-newsgroup/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = [2, 2];
     sigma = 0.1;
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
-    prefix = '../Reuter/';
+    prefix = '../../Reuter/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = [2, 2];
     sigma = 0.1;
 elseif datasetId == 10
     dataType = 2;
-    prefix = '../Animal_img/';
+    prefix = '../../Animal_img/';
     numInstanceCluster = 4;
     numFeatureCluster = 5;
     numClass = [2, 2];
@@ -75,31 +75,45 @@ CVFoldSize = numInstance(targetDomain)/ numCVFold;
 
 showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 
-YMatrix = cell(1, numDom);
-Label = cell(1, numDom);
+% disp(numSampleFeature);
+%disp(sprintf('Configuration:\n\tisUpdateAE:%d\n\tisUpdateFi:%d\n\tisBinary:%d\n\tmaxIter:%d\n\t#domain:%d (predict domain:%d)', isUpdateAE, isUpdateFi, isBinary, maxIter, numDom, targetDomain));
+%disp(sprintf('#users:[%s]\n#items:[%s]\n#user_cluster:[%s]\n#item_cluster:[%s]', num2str(numInstance(1:numDom)), num2str(numFeature(1:numDom)), num2str(numInstanceCluster(1:numDom)), num2str(numFeatureCluster(1:numDom))));
+
+%[groundTruthX, snapshot, idx] = preprocessing(numDom, targetDomain);
+%bestLambda = 0.1;
+%bestAccuracy = 0;
+
+%Bcell = cell(1, numDom);
+YTrue = cell(1, numDom);
+Y = cell(1, numDom);
+label = cell(1, numDom);
+uc = cell(1, numDom);
+% Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);
 
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
+% X = load(sprintf('%sdataset%d.mat', prefix, datasetId));
+% X = X.X;
 
 for i = 1: numDom
     domainName = domainNameList{i};
-    Label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
+    label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
     X{i} = normr(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
         [originNumInstance, ~ ] = size(X{i});
         sampleInstanceIndex = randperm(originNumInstance, numInstance(i));
         X{i} = X{i}(sampleInstanceIndex, :);
-        Label{i} = Label{i}(sampleInstanceIndex, :);
+        label{i} = label{i}(sampleInstanceIndex, :);
     end
     if isSampleFeature == true
         denseFeatures = findDenseFeature(X{i}, numFeature(i));
         X{i} = X{i}(:, denseFeatures);
     end
-    YMatrix{i} = zeros(numInstance(i), numClass(i));
+    YTrue{i} = zeros(numInstance(i), numClass(i));
     for j = 1: numInstance(i)        
-        YMatrix{i}(j, Label{i}(j)) = 1;
+        YTrue{i}(j, label{i}(j)) = 1;
     end
 end
 
@@ -129,6 +143,7 @@ str = str(1:length(str)-1);
 eval(sprintf('originalSize = [%s];', str));
 
 resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
+cpRankResultFile = fopen(sprintf('cp_rank_%s.csv', exp_title), 'w');
 fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
 disp('Start training')
 %initialize B, U, V
@@ -142,27 +157,27 @@ if isRandom == true
     end
 end
 
-resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
-fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
-disp('Start training');
-
-for tuneLambda = 0:6
+for tuneLambda = 0:3
     lambda = 0.000001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
+    fprintf(cpRankResultFile, 'lambda:%f\n', tuneLambda);
     %each pair is (objective score, accuracy);
     resultCellArray = cell(randomTryTime, 2);
     for t = 1: randomTryTime
         numCorrectPredict = 0;
         validateIndex = 1: CVFoldSize;
+        fprintf(cpRankResultFile, 'randomTryTime:%d\n', randomTryTime);
         foldObjectiveScores = zeros(1,numCVFold);
         for fold = 1:numCVFold
+            fprintf(cpRankResultFile, 'fold:%d\n', fold);
             U = initU(t, :);
             V = initV(t, :);
             B = initB{t};
-            YMatrix{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(1));
-            W = ones(numSampleInstance(targetDomain), numClass(1));
+            Y = YTrue;
+            Y{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(1));
+            W = ones(numInstance(targetDomain), numClass(1));
             W(validateIndex, :) = 0;
             iter = 0;
             diff = Inf;
@@ -181,8 +196,10 @@ for tuneLambda = 0:6
 %                     fprintf('New iteration: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
                     %disp(sprintf('\tdomain #%d update...', i));
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
-                    %bestCPR = FindBestRank(threeMatrixB, 50)
-                    bestCPR = 20;
+                    bestCPR = FindBestRank(threeMatrixB, 50);
+%                     bestCPR = 20;
+                    disp(bestCPR);
+                    fprintf(cpRankResultFile, sprintf('%d\n', bestCPR));
                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
 %                     time = round(clock);
 %                     fprintf('Cp complete: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
@@ -195,9 +212,9 @@ for tuneLambda = 0:6
                     %disp(sprintf('\t\tupdate V...'));
                     %update V
                     if i == targetDomain
-                        V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
+                        V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
                     else
-                        V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}')*U{i}*projB));
+                        V{i} = V{i}.*sqrt((Y{i}'*U{i}*projB)./((V{i}*projB'*U{i}')*U{i}*projB));
                     end
                     V{i}(isnan(V{i})) = 0;
                     V{i}(~isfinite(V{i})) = 0;
@@ -217,9 +234,9 @@ for tuneLambda = 0:6
                     %disp(sprintf('\t\tupdate U...'));
                     %update U
                     if i == targetDomain
-                        U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB' + lambda*Su{i}*U{i})./((U{i}*projB*V{i}'.*W)*V{i}*projB' + lambda*Du{i}*U{i}));
+                        U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./((U{i}*projB*V{i}'.*W)*V{i}*projB' + lambda*Du{i}*U{i}));
                     else
-                        U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
+                        U{i} = U{i}.*sqrt((Y{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
                     end
                     U{i}(isnan(U{i})) = 0;
                     U{i}(~isfinite(U{i})) = 0;
@@ -250,7 +267,7 @@ for tuneLambda = 0:6
                         %disp(sprintf('\t\tupdate A...'));
                         [rA, cA] = size(A);
                         onesA = ones(rA, cA);
-                        A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi + alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+                        A = A.*sqrt((U{i}'*Y{i}*V{i}*E*sumFi + alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
                         A(isnan(A)) = 0;
                         A(~isfinite(A)) = 0;
                         %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
@@ -260,7 +277,7 @@ for tuneLambda = 0:6
                         %disp(sprintf('\t\tupdate E...'));
                         [rE ,cE] = size(E);
                         onesE = ones(rE, cE);
-                        E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
+                        E = E.*sqrt((V{i}'*Y{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
                         E(isnan(E)) = 0;
                         E(~isfinite(E)) = 0;
                         %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
@@ -283,9 +300,9 @@ for tuneLambda = 0:6
                     [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
                     result = U{i}*projB*V{i}';
                     if i == targetDomain
-                        normEmp = norm((YMatrix{i} - result).*W)*norm((YMatrix{i} - result).*W);
+                        normEmp = norm((Y{i} - result).*W)*norm((Y{i} - result).*W);
                     else
-                        normEmp = norm((YMatrix{i} - result))*norm((YMatrix{i} - result));
+                        normEmp = norm((Y{i} - result))*norm((Y{i} - result));
                     end
                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                     objectiveScore = normEmp + smoothU;
@@ -310,13 +327,13 @@ for tuneLambda = 0:6
             [~, maxIndex] = max(result, [], 2);
             predictResult = maxIndex;
             for i = 1: CVFoldSize
-                if(predictResult(validateIndex(i)) == Label{targetDomain}(validateIndex(i)))
+                if(predictResult(validateIndex(i)) == label{targetDomain}(validateIndex(i)))
                     numCorrectPredict = numCorrectPredict + 1;
                 end
             end
             validateIndex = validateIndex + CVFoldSize;
         end
-        accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
+        accuracy = numCorrectPredict/ numInstance(targetDomain);
         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
         
         time = round(clock);
@@ -329,7 +346,7 @@ for tuneLambda = 0:6
         fprintf(resultFile, '%f,%f,%f\n', lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2});
     end
 end
-showExperimentInfo(datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
+showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature);
 fprintf('done\n');
 fclose(resultFile);
 % matlabpool close;
