@@ -1,8 +1,8 @@
 clear;
 clc;
-sigmaList = [0.1, 0.5, 1, 5, 10];
+sigmaList = [0.5, 1, 5, 10, 20];
 
-for sigmaTryTime = 1:5
+for sigmaTryTime = 2:5
     datasetId = 1;
     SetParameter;
     sigma = sigmaList(sigmaTryTime);
