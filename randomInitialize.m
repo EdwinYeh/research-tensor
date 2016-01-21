@@ -14,10 +14,12 @@ function [U, B, V] = randomInitialize(numInstance, numFeature, numInstanceCluste
     if isMotar == true
         B = tensor(randStr);
     else
+        rng('shuffle');
         B = rand(numInstanceCluster, numFeatureCluster);
     end
 
     for i = 1:numDom
+        rng('shuffle');
         V{i} = rand(numFeature(i),numFeatureCluster);
         U{i} = rand(numInstance(i), numInstanceCluster);
     end
