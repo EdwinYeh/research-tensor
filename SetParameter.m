@@ -7,7 +7,11 @@ isUsingTensor = true;
 numSampleInstance = [0, 0];
 numSampleFeature = 2000;
 maxIter = 100;
+lambdaTryTime = 3;
 randomTryTime = 1;
+numDom = 2;
+sourceDomain = 1;
+targetDomain = 2;
 
 if datasetId <= 6
     dataType = 1;
@@ -31,9 +35,6 @@ elseif datasetId == 10
     numClass = [2, 2];
     sigma = 0.1;
 end
-numDom = 2;
-sourceDomain = 1;
-targetDomain = 2;
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 

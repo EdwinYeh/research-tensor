@@ -2,7 +2,7 @@ resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
 fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
 disp('Start training');
 
-for tuneLambda = 0:3
+for tuneLambda = 0:lambdaTryTime
     lambda = 0.001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
