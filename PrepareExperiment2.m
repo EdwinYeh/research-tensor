@@ -38,7 +38,7 @@ for i = 1: numDom
         denseFeatures = findDenseFeature(X{i}, numSampleFeature);
         X{i} = X{i}(:, denseFeatures);
     end
-    TrueYMatrix{i} = zeros(numSampleInstance(i), numClass(i));
+    TrueYMatrix{i} = -1* ones(numSampleInstance(i), numClass(i));
     for j = 1: numSampleInstance(i)        
         TrueYMatrix{i}(j, Label{i}(j)) = 1;
     end
@@ -74,5 +74,4 @@ if isRandom == true
     end
 end
 
-numCVFold = 5;
 CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;

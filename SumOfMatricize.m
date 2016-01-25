@@ -6,7 +6,7 @@ function [ projB, threeMtrixB ] = SumOfMatricize( tensorB, mode )
     Mcell = mat2cell(matricizeB, rdim, repmat(cdim,length(matricizeB)/cdim,1));
     threeMtrixB = zeros(rdim, cdim, length(Mcell));
     divMatrix = zeros(rdim, cdim, length(Mcell));
-    parfor i = 1:length(Mcell)
+    for i = 1:length(Mcell)
         threeMtrixB(:,:,i) = Mcell{i};
     end
     divMatrix(threeMtrixB~=0) = 1;

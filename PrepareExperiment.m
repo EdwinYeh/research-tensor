@@ -22,7 +22,8 @@ sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, dat
 for i = 1: numDom
     domainName = domainNameList{i};
     Label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-    X{i} = minMaxNormalize(X{i});
+%     X{i} = minMaxNormalize(X{i});
+    X{i} = normc(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
         if i == sourceDomain
@@ -74,5 +75,4 @@ if isRandom == true
     end
 end
 
-numCVFold = 5;
 CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;

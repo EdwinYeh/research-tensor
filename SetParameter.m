@@ -7,6 +7,7 @@ isUsingTensor = true;
 numSampleInstance = [0, 0];
 numSampleFeature = 2000;
 maxIter = 100;
+numCVFold = 5;
 lambdaTryTime = 3;
 randomTryTime = 1;
 numDom = 2;
