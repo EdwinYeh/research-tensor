@@ -1,12 +1,13 @@
+numInstanceClusterList = [2, 4, 8, 16, 32];
 
-for sigmaTryTime = 1:5
-    datasetId = 1;
+for instanceClusterTryTime = 1:5
+%     datasetId = 1;
     SetParameter;
     sigma = 0.5;
     lambdaTryTime = 0;
-    numInstanceCluster = 4;
+    numInstanceCluster = numInstanceClusterList(instanceClusterTryTime);
     numFeatureCluster = 5;
-    exp_title = sprintf('ours_%d_num_cluster', datasetId, sigma);
+    exp_title = sprintf('ours_%d_num_instance_cluster_%d', datasetId, numInstanceCluster);
     showExperimentInfo(datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
     PrepareExperiment;
     main_ours;
