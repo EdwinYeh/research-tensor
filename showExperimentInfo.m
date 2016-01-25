@@ -1,7 +1,7 @@
-function showExperimentInfo(datasetId, prefix, numInstance, numFeature, numInstanceCluster, numFeatureCluster, sigma)
+function showExperimentInfo(exp_title, datasetId, prefix, numInstance, numFeature, numInstanceCluster, numFeatureCluster, sigma)
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-    fprintf('Title: %s\n', sprintf('Motar2_W_%d', datasetId));
+    fprintf('Title: %s\n', exp_title);
     fprintf('Dataset: %s\n', prefix);
     fprintf('Source domain: source%d.csv\n', datasetId);
     fprintf('Target domain: target%d.csv\n', datasetId);

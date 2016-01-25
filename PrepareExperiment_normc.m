@@ -43,7 +43,7 @@ for i = 1: numDom
         TrueYMatrix{i}(j, Label{i}(j)) = 1;
     end
     fprintf('Normalizing domain %d data\n', i);
-    X{i} = minMaxNormalize(X{i});
+    X{i} = normc(X{i});
 end
 % 
 for dom = 1: numDom

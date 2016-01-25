@@ -146,7 +146,7 @@ for tuneLambda = 0:lambdaTryTime
         fprintf(resultFile, '%f,%f,%f,%f\n', lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3});
     end
 end
-showExperimentInfo(datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
+showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
 fprintf('done\n');
 fclose(resultFile);
 % matlabpool close;
