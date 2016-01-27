@@ -22,7 +22,6 @@ sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, dat
 for i = 1: numDom
     domainName = domainNameList{i};
     Label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-    X{i} = minMaxNormalize(X{i});
     %Randomly sample instances & the corresponding labels
     if isSampleInstance == true
         if i == sourceDomain
@@ -38,6 +37,7 @@ for i = 1: numDom
         denseFeatures = findDenseFeature(X{i}, numSampleFeature);
         X{i} = X{i}(:, denseFeatures);
     end
+    X{i} = minMaxNormalize(X{i});
     TrueYMatrix{i} = -1* ones(numSampleInstance(i), numClass(i));
     for j = 1: numSampleInstance(i)        
         TrueYMatrix{i}(j, Label{i}(j)) = 1;

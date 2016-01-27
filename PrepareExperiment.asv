@@ -20,14 +20,13 @@ X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 % sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId));
 [numSourceInstance, ~] = size(X{sourceDomain});
 [numTargetInstance, ~] = size(X{targetDomain});
-sampleSourceDataIndex = randperm(numSourceInstance, numSampleInstance(sourceDomain));
-sampleTargetDataIndex = randperm(numTargetInstance, numSampleInstance(targetDomain));
+sampleSourceDataIndex = randperm(numSourceInstance, numSampleInstance{sourceDomain})
 % 
 for i = 1: numDom
     domainName = domainNameList{i};
     Label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
     %Randomly sample instances & the corresponding labels
-%     fprintf('Sample domain %d data\n', i);
+    fprintf('Sample domain %d data\n', i);
     if isSampleInstance == true
         if i == sourceDomain
             X{i} = X{i}(sampleSourceDataIndex, :);
@@ -46,9 +45,8 @@ for i = 1: numDom
     for j = 1: numSampleInstance(i)        
         TrueYMatrix{i}(j, Label{i}(j)) = 1;
     end
-%     fprintf('Normalizing domain %d data\n', i);
-%     X{i} = minMaxNormalize(X{i});
-    X{i} = zscore(X{i});
+    fprintf('Normalizing domain %d data\n', i);
+    X{i} = minMaxNormalize(X{i});
 end
 % 
 for dom = 1: numDom

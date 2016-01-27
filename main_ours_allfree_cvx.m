@@ -3,7 +3,7 @@ fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
 disp('Start training');
 
 for tuneLambda = 0:lambdaTryTime
-    lambda = 0.000001 * 10 ^ tuneLambda;
+    lambda = 0.001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -26,69 +26,52 @@ for tuneLambda = 0:lambdaTryTime
             diff = Inf;
             newObjectiveScore = Inf;
             
-            while (abs(diff) >= 0.001  && iter < maxIter)
+            while (diff >= 0.0001  && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
                 newObjectiveScore = 0;
                 for i = 1:numDom
-                    [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
-                    %bestCPR = FindBestRank(threeMatrixB, 50)
+                    fprintf('iter:%d\n', iter);
+                    fprintf('domain:%d\n', i);
+                    [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);      
+                    
+%                     %Solve cvx U
+%                     cvx_begin
+%                         variable tmpU(size(U{i}));
+%                         minimize(norm(YMatrix{i}-tmpU*projB*V{i}')+trace(tmpU'*Lu{i}*tmpU));
+%                     cvx_end
+%                     Assign cvx result
+                    U{i} = tmpU;
+                    disp('Update U');
+                    tmpA = -YMatrix{i}*V{i}*projB';
+                    tmpB = projB*V{i}'*V{i}*projB';
+                    tmpC = Lu{i};
+                    
+                    vectorA = reshape(tmpA, [], 1);
+                    tmpM = constructM(tmpB, tmpC);
+                    vectorU = tmpM\-vectorA;
+                    
+                    U{i} = reshape(vectorU, [], numInstanceCluster);
+                    
+                    disp(norm(U{i}));
+                    
+                    disp('Solve cvx V');
+                    cvx_begin quiet
+                        variable tmpV(size(V{i}));
+                        minimize(norm(YMatrix{i}-U{i}*projB*tmpV'));
+                    cvx_end
+                    % Assign cvx result
+                    V{i} = tmpV;
+                    disp(norm(V{i}));
+
+                    %Update fi
                     bestCPR = 20;
-%                     cpTimer = tic;
-                    CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
-%                     cpUsedTime = toc(cpTimer);
-%                     disp(cpUsedTime);
+                    CP = cp_als(tensor(threeMatrixB), bestCPR, 'printitn', 0);                 
                     A = CP.U{1};
                     E = CP.U{2};
                     U3 = CP.U{3};
-
+                    
                     fi = cell(1, length(CP.U{3}));
-                    
-%                     updateUVTimer = tic;
-                    if i == targetDomain
-                        V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
-                    else
-                        V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}')*U{i}*projB));
-                    end
-                    V{i}(isnan(V{i})) = 0;
-                    V{i}(~isfinite(V{i})) = 0;
-                    
-                    %col normalize
-                    [r, ~] = size(V{i});
-                    for tmpI = 1:r
-                        bot = sum(abs(V{i}(tmpI,:)));
-                        if bot == 0
-                            bot = 1;
-                        end
-                        V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
-                    end
-                    V{i}(isnan(V{i})) = 0;
-                    V{i}(~isfinite(V{i})) = 0;
-                    
-                    %update U
-                    if i == targetDomain
-                        U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB' + lambda*Su{i}*U{i})./((U{i}*projB*V{i}'.*W)*V{i}*projB' + lambda*Du{i}*U{i}));
-                    else
-                        U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB' + lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB' + lambda*Du{i}*U{i}));
-                    end
-                    U{i}(isnan(U{i})) = 0;
-                    U{i}(~isfinite(U{i})) = 0;
-                    
-                    %col normalize
-                    [r, ~] = size(U{i});
-                    for tmpI = 1:r
-                        bot = sum(abs(U{i}(tmpI,:)));
-                        if bot == 0
-                            bot = 1;
-                        end
-                        U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
-                    end
-                    U{i}(isnan(U{i})) = 0;
-                    U{i}(~isfinite(U{i})) = 0;
-%                     updateUVTime = toc(updateUVTimer);
-%                     disp(updateUVTime);
-
-                    %update fi
                     [r, c] = size(U3);
                     nextThreeB = zeros(numInstanceCluster, numFeatureCluster, r);
                     sumFi = zeros(c, c);
@@ -97,25 +80,28 @@ for tuneLambda = 0:lambdaTryTime
                         fi{idx} = diag(CPLamda.*U3(idx,:)');
                         sumFi = sumFi + fi{idx};
                     end
+                    %Update A, E
                     if isUpdateAE
-%                         updateAETimer = tic;
-                        [rA, cA] = size(A);
-                        onesA = ones(rA, cA);
-                        A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi + alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
-                        A(isnan(A)) = 0;
-                        A(~isfinite(A)) = 0;
-                        A(isnan(A)) = 0;
-                        A(~isfinite(A)) = 0;
-
-                        [rE ,cE] = size(E);
-                        onesE = ones(rE, cE);
-                        E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
-                        E(isnan(E)) = 0;
-                        E(~isfinite(E)) = 0;
-                        E(isnan(E)) = 0;
-                        E(~isfinite(E)) = 0;
-%                         updateAETime = toc(updateAETimer);
-%                         disp(updateAETime);
+                        disp('Solve cvx A');
+                        cvx_begin quiet
+                            variable tmpA(size(A));
+                        
+                            minimize(norm(YMatrix{i}-U{i}*tmpA*sumFi*E'*V{i}'));
+                        cvx_end
+                        % Assign cvx result
+                        A = tmpA;
+                        disp(norm(A));
+                        
+                        disp('Solve cvx E');
+                        cvx_begin quiet
+                            variable tmpE(size(E));
+                        
+                            minimize(norm(YMatrix{i}-U{i}*A*sumFi*tmpE'*V{i}'));
+                        cvx_end
+                        % Assign cvx result
+                        E = tmpE;
+                        disp(norm(E));
+                        
                         for idx = 1:r
                             nextThreeB(:,:,idx) = A*fi{idx}*E';
                         end
@@ -135,7 +121,7 @@ for tuneLambda = 0:lambdaTryTime
                     objectiveScore = normEmp + smoothU;
                     newObjectiveScore = newObjectiveScore + objectiveScore;
                 end
-%                 fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
+                fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
                 diff = oldObjectiveScore - newObjectiveScore;
             end
             fprintf('iteration used: %d\n', iter);

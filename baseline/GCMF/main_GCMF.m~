@@ -6,8 +6,8 @@ clc;
 % matlabpool('open', 'local', 4);
 
 % configuration
-exp_title = 'GCMF_1';
-datasetId = 1;
+exp_title = 'GCMF_7';
+datasetId = 7;
 numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 isSampleInstance = true;
@@ -106,7 +106,7 @@ for i = 1: numDom
         %denseFeatures = randperm(numFeature(i), numSampleFeature);
         X{i} = X{i}(:, denseFeatures);
     end
-    X{i} = normc(X{i});
+    
     Y{i} = zeros(numInstance(i), numInstanceCluster);
     for j = 1: numInstance(i)
         Y{i}(j, label{i}(j)) = 1;
@@ -162,9 +162,9 @@ if isURandom == true
         [initU(t,:),initH{t},initV(t,:)] = randomInitialize(numInstance, numFeature, numInstanceCluster, numFeatureCluster, numDom, false);
     end
 end
-for tuneGama = 0:3
+for tuneGama = 0:6
     gama = 0.000001 * 10 ^ tuneGama;
-    for tuneLambda = 0:3
+    for tuneLambda = 0:6
         lambda = 0.000001 * 10 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
