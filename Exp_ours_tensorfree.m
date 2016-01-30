@@ -10,5 +10,5 @@ for sigmaTryTime = 1:1
     exp_title = sprintf('ours_%d_tensorfree', datasetId);
     PrepareExperiment2;
     showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
-    main_ours_tensorfree;
+    Main_ours_tensorfree;
 end

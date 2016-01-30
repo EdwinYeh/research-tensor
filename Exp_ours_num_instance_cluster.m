@@ -10,5 +10,5 @@ for instanceClusterTryTime = 1:5
     exp_title = sprintf('ours_%d_num_instance_cluster_%d', datasetId, numInstanceCluster);
     PrepareExperiment;
     showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
-    main_ours;
+    Main_ours;
 end

@@ -10,5 +10,5 @@ for sigmaTryTime = 1:1
     exp_title = sprintf('ours_%d_allfree', datasetId);
     showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
     PrepareExperiment2;
-    main_ours_allfree;
+    Main_ours_allfree;
 end

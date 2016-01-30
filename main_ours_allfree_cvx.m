@@ -6,9 +6,10 @@ for tuneLambda = 0:lambdaTryTime
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
     %each pair is (objective score, accuracy);
-    resultCellArray = cell(randomTryTime, 3);
+    resultCellArray = cell(randomTryTime, 4);
     for t = 1: randomTryTime
         numCorrectPredict = 0;
+        avgIterationUsed = 0;
         validateIndex = 1: CVFoldSize;
         foldObjectiveScores = zeros(1,numCVFold);
         TotalTimer = tic;
@@ -30,12 +31,12 @@ for tuneLambda = 0:lambdaTryTime
                 newObjectiveScore = 0;
                 for i = 1:numDom
                     updateTimer  = tic;
-                    fprintf('iter:%d\n', iter);
-                    fprintf('domain:%d\n', i);
+%                     fprintf('iter:%d\n', iter);
+%                     fprintf('domain:%d\n', i);
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);      
                     
-                    Lu{i} = Lu{i} + diag(0.0000001*ones(numSampleInstance(i), 1));
-                    L = chol(Lu{i});
+                    tmpLu = Lu{i} + diag(0.0000001*ones(numSampleInstance(i), 1));
+                    L = chol(tmpLu);
                     
                     %Solve cvx U
                     %disp('Solve cvx U')
@@ -124,8 +125,6 @@ for tuneLambda = 0:lambdaTryTime
                         end
                     end
                     B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, originalSize);
-                    updateTime = toc(updateTimer);
-                    disp(updateTime);
                 end
                 %disp(sprintf('\tCalculate this iterator error'));
                 for i = 1:numDom
@@ -140,9 +139,10 @@ for tuneLambda = 0:lambdaTryTime
                     objectiveScore = normEmp + smoothU;
                     newObjectiveScore = newObjectiveScore + objectiveScore;
                 end
-                fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
+%                 fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
                 diff = oldObjectiveScore - newObjectiveScore;
             end
+            avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
             fprintf('iteration used: %d\n', iter);
             foldObjectiveScores(fold) = newObjectiveScore;
             
@@ -163,16 +163,17 @@ for tuneLambda = 0:lambdaTryTime
         accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
         avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
         
-        TotalTime = toc(TotalTimer);
+        avgTime = toc(TotalTimer)/ numCVFold;
+        resultCellArray{t}{1} = avgObjectiveScore;
+        resultCellArray{t}{2} = accuracy*100;
+        resultCellArray{t}{3} = avgTime;
+        resultCellArray{t}{4} = avgIterationUsed;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
-        resultCellArray{t}{1} = avgObjectiveScore;
-        resultCellArray{t}{2} = accuracy*100;
-        resultCellArray{t}{3} = TotalTime;
     end
     for numResult = 1:randomTryTime
-        fprintf(resultFile, '%f,%f,%f,%f\n', lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3});
+        fprintf(resultFile, '%f,%f,%f,%f,%f\n', lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3}, resultCellArray{numResult}{4});
     end
 end
 showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
