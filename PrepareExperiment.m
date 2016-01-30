@@ -3,6 +3,22 @@
 % end
 % matlabpool(4);
 
+if datasetId <= 6
+    dataType = 1;
+    prefix = '../20-newsgroup/'; 
+elseif datasetId > 6 && datasetId <=9
+    dataType = 1;
+    prefix = '../Reuter/';
+elseif datasetId == 10
+    dataType = 2;
+    prefix = '../Animal_img/';
+elseif datasetId == 11;
+    dataType = 2;
+    prefix = '../Donuts';
+end
+
+domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
+
 TrueYMatrix = cell(1, numDom);
 YMatrix = cell(1, numDom);
 Label = cell(1, numDom);
@@ -82,3 +98,6 @@ if isRandom == true
 end
 
 CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
+
+resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
+fprintf(resultFile, 'lambda,objectiveScore,accuracy,trainingTime\n');

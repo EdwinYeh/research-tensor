@@ -1,5 +1,3 @@
-resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
-fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
 disp('Start training');
 
 for tuneLambda = 0:lambdaTryTime
@@ -127,9 +125,9 @@ for tuneLambda = 0:lambdaTryTime
                     [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
                     result = U{i}*projB*V{i}';
                     if i == targetDomain
-                        normEmp = norm((YMatrix{i} - result).*W)*norm((YMatrix{i} - result).*W);
+                        normEmp = norm((YMatrix{i} - result).*W, 'fro')*norm((YMatrix{i} - result).*W, 'fro');
                     else
-                        normEmp = norm((YMatrix{i} - result))*norm((YMatrix{i} - result));
+                        normEmp = norm((YMatrix{i} - result), 'fro')*norm((YMatrix{i} - result), 'fro');
                     end
                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                     objectiveScore = normEmp + smoothU;

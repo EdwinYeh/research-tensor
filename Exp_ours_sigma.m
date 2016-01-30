@@ -6,7 +6,7 @@ for sigmaTryTime = 1:5
     lambdaTryTime = 6;
     sigma = sigmaList(sigmaTryTime);
     exp_title = sprintf('ours_%d_sigma_%f', datasetId, sigma);
-    showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
     PrepareExperiment;
-    main_ours;
+    showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
+    Main_ours;
 end

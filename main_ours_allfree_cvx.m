@@ -1,9 +1,7 @@
-resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
-fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
 disp('Start training');
 
 for tuneLambda = 0:lambdaTryTime
-    lambda = 0.001 * 10 ^ tuneLambda;
+    lambda = 0.000001 * 100 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -31,38 +29,45 @@ for tuneLambda = 0:lambdaTryTime
                 oldObjectiveScore = newObjectiveScore;
                 newObjectiveScore = 0;
                 for i = 1:numDom
+                    updateTimer  = tic;
                     fprintf('iter:%d\n', iter);
                     fprintf('domain:%d\n', i);
                     [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);      
                     
-%                     %Solve cvx U
-%                     cvx_begin
-%                         variable tmpU(size(U{i}));
-%                         minimize(norm(YMatrix{i}-tmpU*projB*V{i}')+trace(tmpU'*Lu{i}*tmpU));
-%                     cvx_end
-%                     Assign cvx result
+                    Lu{i} = Lu{i} + diag(0.0000001*ones(numSampleInstance(i), 1));
+                    L = chol(Lu{i});
+                    
+                    %Solve cvx U
+                    %disp('Solve cvx U')
+                    if i == sourceDomain
+                        cvx_begin quiet
+                            variable tmpU(size(U{i}));
+                            minimize(norm(YMatrix{i}-tmpU*projB*V{i}', 'fro')+lambda*norm(tmpU'*L, 'fro'));
+                        cvx_end
+                    elseif i == targetDomain
+                        cvx_begin quiet
+                            variable tmpU(size(U{i}));
+                            minimize(norm((YMatrix{i}-tmpU*projB*V{i}').*W, 'fro')+lambda*norm(tmpU'*L, 'fro'));  
+                        cvx_end
+                    end
+                    %Assign cvx result
                     U{i} = tmpU;
-                    disp('Update U');
-                    tmpA = -YMatrix{i}*V{i}*projB';
-                    tmpB = projB*V{i}'*V{i}*projB';
-                    tmpC = Lu{i};
                     
-                    vectorA = reshape(tmpA, [], 1);
-                    tmpM = constructM(tmpB, tmpC);
-                    vectorU = tmpM\-vectorA;
-                    
-                    U{i} = reshape(vectorU, [], numInstanceCluster);
-                    
-                    disp(norm(U{i}));
-                    
-                    disp('Solve cvx V');
-                    cvx_begin quiet
-                        variable tmpV(size(V{i}));
-                        minimize(norm(YMatrix{i}-U{i}*projB*tmpV'));
-                    cvx_end
+                    %Solve cvx V
+                    %disp('Solve cvx V');
+                    if i == sourceDomain
+                        cvx_begin quiet
+                            variable tmpV(size(V{i}));
+                            minimize(norm(YMatrix{i}-U{i}*projB*tmpV', 'fro'));
+                        cvx_end
+                    elseif i == targetDomain
+                        cvx_begin quiet
+                            variable tmpV(size(V{i}));
+                            minimize(norm((YMatrix{i}-U{i}*projB*tmpV').*W, 'fro'));
+                        cvx_end
+                    end
                     % Assign cvx result
                     V{i} = tmpV;
-                    disp(norm(V{i}));
 
                     %Update fi
                     bestCPR = 20;
@@ -82,40 +87,54 @@ for tuneLambda = 0:lambdaTryTime
                     end
                     %Update A, E
                     if isUpdateAE
-                        disp('Solve cvx A');
-                        cvx_begin quiet
-                            variable tmpA(size(A));
-                        
-                            minimize(norm(YMatrix{i}-U{i}*tmpA*sumFi*E'*V{i}'));
-                        cvx_end
+                        %Solve cvx A
+                        %disp('Solve cvx A');
+                        if i == sourceDomain
+                            cvx_begin quiet
+                                variable tmpA(size(A));
+                                minimize(norm(YMatrix{i}-U{i}*tmpA*sumFi*E'*V{i}',  'fro'));
+                            cvx_end
+                        elseif i == targetDomain
+                            cvx_begin quiet
+                                variable tmpA(size(A));
+                                minimize(norm((YMatrix{i}-U{i}*tmpA*sumFi*E'*V{i}').*W, 'fro'));
+                            cvx_end
+                        end
                         % Assign cvx result
                         A = tmpA;
-                        disp(norm(A));
                         
-                        disp('Solve cvx E');
-                        cvx_begin quiet
-                            variable tmpE(size(E));
-                        
-                            minimize(norm(YMatrix{i}-U{i}*A*sumFi*tmpE'*V{i}'));
-                        cvx_end
+                        %Solve cvx E
+                        %disp('Solve cvx E');
+                        if i == sourceDomain
+                            cvx_begin quiet
+                                variable tmpE(size(E));
+                                minimize(norm(YMatrix{i}-U{i}*A*sumFi*tmpE'*V{i}', 'fro'));
+                            cvx_end
+                        elseif i == targetDomain
+                            cvx_begin quiet
+                                variable tmpE(size(E));
+                                minimize(norm((YMatrix{i}-U{i}*A*sumFi*tmpE'*V{i}').*W, 'fro'));
+                            cvx_end
+                        end
                         % Assign cvx result
                         E = tmpE;
-                        disp(norm(E));
                         
                         for idx = 1:r
                             nextThreeB(:,:,idx) = A*fi{idx}*E';
                         end
                     end
                     B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, originalSize);
+                    updateTime = toc(updateTimer);
+                    disp(updateTime);
                 end
                 %disp(sprintf('\tCalculate this iterator error'));
                 for i = 1:numDom
                     [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
                     result = U{i}*projB*V{i}';
                     if i == targetDomain
-                        normEmp = norm((YMatrix{i} - result).*W)*norm((YMatrix{i} - result).*W);
+                        normEmp = norm((YMatrix{i} - result).*W, 'fro')*norm((YMatrix{i} - result).*W, 'fro');
                     else
-                        normEmp = norm((YMatrix{i} - result))*norm((YMatrix{i} - result));
+                        normEmp = norm((YMatrix{i} - result), 'fro')*norm((YMatrix{i} - result), 'fro');
                     end
                     smoothU = lambda*trace(U{i}'*Lu{i}*U{i});
                     objectiveScore = normEmp + smoothU;

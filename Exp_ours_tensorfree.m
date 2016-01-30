@@ -8,7 +8,7 @@ for sigmaTryTime = 1:1
 %     sigma = sigmaList(sigmaTryTime);
     sigma = 5;
     exp_title = sprintf('ours_%d_tensorfree', datasetId);
-    showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
     PrepareExperiment2;
+    showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
     main_ours_tensorfree;
 end
