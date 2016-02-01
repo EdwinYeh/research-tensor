@@ -1,7 +1,7 @@
 disp('Start training');
 
 for tuneLambda = 0:lambdaTryTime
-    lambda = 0.000001 * 10 ^ tuneLambda;
+    lambda = 0.000001 * 100 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -35,7 +35,8 @@ for tuneLambda = 0:lambdaTryTime
                     bestCPR = 20;
 %                     cpTimer = tic;
                     CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
-%                     cpUsedTime = toc(cpTimer);
+                    %CP = cp_als(tensor(threeMatrixB), bestCPR, 'printitn', 0);
+                    %                     cpUsedTime = toc(cpTimer);
 %                     disp(cpUsedTime);
                     A = CP.U{1};
                     E = CP.U{2};

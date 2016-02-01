@@ -1,9 +1,9 @@
-sigmaList = [1, 10, 100, 1000, 10000];
+sigmaList = [50, 100, 250, 500, 1000, 10000];
 
-for sigmaTryTime = 1:5
-%     datasetId = 1;
+for sigmaTryTime = 1:6
+    datasetId = 1;
     SetParameter;
-    lambdaTryTime = 6;
+    lambdaTryTime = 3;
     sigma = sigmaList(sigmaTryTime);
     exp_title = sprintf('ours_%d_sigma_%f', datasetId, sigma);
     PrepareExperiment;
