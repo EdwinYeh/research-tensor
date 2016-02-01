@@ -1,9 +1,9 @@
-sigmaList = [50, 100, 250, 500, 1000, 10000];
+sigmaList = [100, 150, 200, 250, 300, 350, 400, 450, 500];
 
-for sigmaTryTime = 1:6
+for sigmaTryTime = 1:8
     datasetId = 1;
     SetParameter;
-    lambdaTryTime = 4;
+    lambdaTryTime = 3;
     sigma = sigmaList(sigmaTryTime);
     exp_title = sprintf('ours_%d_allfree_cvx_sigma_%f', datasetId, sigma);
     PrepareExperiment2;

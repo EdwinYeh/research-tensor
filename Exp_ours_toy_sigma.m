@@ -1,8 +1,8 @@
 sigmaList = [0.1, 1, 10, 50, 100, 250];
 
 for sigmaTryTime = 1:6
-%     datasetId = 11;
     SetParameter;
+    numSampleFeature = 2;
     lambdaTryTime = 3;
     sigma = sigmaList(sigmaTryTime);
     exp_title = sprintf('ours_%d_sigma_%f', datasetId, sigma);

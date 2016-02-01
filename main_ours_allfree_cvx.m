@@ -39,7 +39,7 @@ for tuneLambda = 0:lambdaTryTime
                     L = chol(tmpLu);
                     
                     %Solve cvx U
-                    %disp('Solve cvx U')
+                    disp('Solve cvx U')
                     if i == sourceDomain
                         cvx_begin quiet
                             variable tmpU(size(U{i}));

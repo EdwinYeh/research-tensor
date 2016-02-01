@@ -6,15 +6,15 @@
 if datasetId <= 6
     dataType = 1;
     prefix = '../20-newsgroup/'; 
-elseif datasetId > 6 && datasetId <=9
+elseif datasetId > 6 && datasetId <= 9
     dataType = 1;
     prefix = '../Reuter/';
 elseif datasetId == 10
     dataType = 2;
     prefix = '../Animal_img/';
-elseif datasetId == 11;
+elseif datasetId == 11 || datasetId == 12;
     dataType = 2;
-    prefix = '../Donuts';
+    prefix = '../Toy_dataset/';
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
@@ -62,9 +62,10 @@ for i = 1: numDom
     for j = 1: numSampleInstance(i)        
         TrueYMatrix{i}(j, Label{i}(j)) = 1;
     end
+    X{i} = normr(X{i});
 %     fprintf('Normalizing domain %d data\n', i);
 %     X{i} = minMaxNormalize(X{i});
-    X{i} = zscore(X{i});
+%     X{i} = zscore(X{i});
 end
 % 
 for dom = 1: numDom
