@@ -8,5 +8,5 @@ for sigmaTryTime = 1:6
     exp_title = sprintf('ours_%d_allfree_cvx_sigma_%f', datasetId, sigma);
     PrepareExperiment2;
     showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
-    Main_ours_allfree_cvx;
+    main_ours_allfree_cvx;
 end
