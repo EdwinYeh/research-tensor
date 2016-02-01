@@ -12,9 +12,9 @@ elseif datasetId > 6 && datasetId <=9
 elseif datasetId == 10
     dataType = 2;
     prefix = '../Animal_img/';
-elseif datasetId == 11;
+elseif datasetId == 11 || datasetId == 12;
     dataType = 2;
-    prefix = '../Donuts';
+    prefix = '../Toy_dataset/';
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
@@ -57,7 +57,8 @@ for i = 1: numDom
         denseFeatures = findDenseFeature(X{i}, numSampleFeature);
         X{i} = X{i}(:, denseFeatures);
     end
-    X{i} = zscore(X{i});
+%     X{i} = zscore(X{i});
+    X{i} = normr(X{i});
     TrueYMatrix{i} = -1* ones(numSampleInstance(i), numClass(i));
     for j = 1: numSampleInstance(i)        
         TrueYMatrix{i}(j, Label{i}(j)) = 1;

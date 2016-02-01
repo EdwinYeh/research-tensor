@@ -1,6 +1,6 @@
-sigmaList = [100, 150, 200, 250, 300, 350, 400, 450, 500];
+sigmaList = [0.1, 1, 10, 50, 100, 250];
 
-for sigmaTryTime = 1:8
+for sigmaTryTime = 1:6
     datasetId = 1;
     SetParameter;
     lambdaTryTime = 3;
