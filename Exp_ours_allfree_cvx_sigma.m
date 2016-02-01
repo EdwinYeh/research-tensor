@@ -1,7 +1,7 @@
 sigmaList = [0.1, 1, 10, 50, 100, 250];
 
 for sigmaTryTime = 1:6
-    datasetId = 1;
+%     datasetId = 1;
     SetParameter;
     lambdaTryTime = 3;
     sigma = sigmaList(sigmaTryTime);
