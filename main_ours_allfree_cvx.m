@@ -1,7 +1,7 @@
 disp('Start training');
 
 for tuneLambda = 0:lambdaTryTime
-    lambda = 0.000001 * 100 ^ tuneLambda;
+    lambda = 0.000001 * 10 ^ tuneLambda;
     time = round(clock);
     fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     fprintf('Use Lambda:%f\n', lambda);
@@ -39,7 +39,7 @@ for tuneLambda = 0:lambdaTryTime
                     L = chol(tmpLu);
                     
                     % Solve cvx U
-                    % disp('Solve cvx U')
+                    disp('Solve cvx U')
                     if i == sourceDomain
                         cvx_begin quiet
                             variable tmpU(size(U{i}));

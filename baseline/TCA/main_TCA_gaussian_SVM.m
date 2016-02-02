@@ -1,11 +1,11 @@
 % datasetId = 6;
 numDom = 2;
 mu = 1;
-numSampleFeature = 2000;
+numSampleFeature = 2;
 numSampleData = 500;
 numTestData = 250;
 numFold = 5;
-featureDimAfterReduce = 10;
+featureDimAfterReduce = 2;
 
 fprintf('datasetId: %d\n', datasetId);
 
@@ -14,13 +14,16 @@ fprintf('datasetId: %d\n', datasetId);
 % 2 means "x y value" form storage
 if datasetId <= 6
     dataType = 1;
-    prefix = '../../20-newsgroup/';
+    prefix = '../../../20-newsgroup/';
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
-    prefix = '../../Reuter/';
+    prefix = '../../../Reuter/';
 elseif datasetId == 10
     dataType = 2;
-    prefix = '../../Animal_img/';
+    prefix = '../../../Animal_img/';
+elseif datasetId == 11 || datasetId == 12
+    dataType = 2;
+    prefix = '../../../Toy_dataset/'
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
@@ -36,18 +39,18 @@ targetY = load([prefix sprintf('target%d_label.csv', datasetId)]);
 
 sourceDomainData = X{1};
 targetDomainData = X{2};
-% sizeOfSourceDomainData = size(X{1});
-% sizeOfTargetDomainData = size(X{2});
-% numSourceData = sizeOfSourceDomainData(1);
-% numTargetData = sizeOfTargetDomainData(1);
+sizeOfSourceDomainData = size(X{1});
+sizeOfTargetDomainData = size(X{2});
+numSourceData = sizeOfSourceDomainData(1);
+numTargetData = sizeOfTargetDomainData(1);
 
-% sampledTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
-% sampledSourceDataIndex = randperm(numSourceData, numSampleData);
-% sampledTargetDataIndex = sampledTargetAndTestDataIndex(1:numSampleData);
-% sampledTestDataIndex = sampledTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
-sampleSourceDataIndex = csvread(sprintf('%ssampleSourceIndex%d.csv', prefix, datasetId));
-sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId));
-sampleTestDataIndex = csvread(sprintf('%ssampleTestIndex%d.csv', prefix, datasetId));
+sampleTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
+sampleSourceDataIndex = randperm(numSourceData, numSampleData);
+sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
+sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
+% sampleSourceDataIndex = csvread(sprintf('%ssampleSourceIndex%d.csv', prefix, datasetId));
+% sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId));
+% sampleTestDataIndex = csvread(sprintf('%ssampleTestIndex%d.csv', prefix, datasetId));
 testData = targetDomainData(sampleTestDataIndex, :);
 sourceDomainData = sourceDomainData(sampleSourceDataIndex, :);
 targetDomainData = targetDomainData(sampleTargetDataIndex, :);

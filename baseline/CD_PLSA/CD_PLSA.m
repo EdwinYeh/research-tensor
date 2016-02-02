@@ -42,8 +42,9 @@ numSource = 1;
 numTarget = 1;
 numDom = numTarget + numSource;
 numIteration = 100;
-numSampleFeature = 2000;
+numSampleFeature = 2;
 numSampleData = 500;
+numTestData = 100;
 tryTime = 5;
 
 if datasetId <= 6
@@ -67,6 +68,12 @@ elseif datasetId == 10
     numFeatureCluster = 5;
     numClass = [2, 2];
     sigma = 0.1;
+elseif datasetId == 11 || datasetId == 12
+    dataType = 2;
+    prefix = '../../../Toy_dataset/';
+    numInstanceCluster = 4;
+    numFeatureCluster = 5;
+    numClass = [2, 2];
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
@@ -82,17 +89,17 @@ TestY = load([prefix sprintf('target%d_label.csv', datasetId)]);
 
 sourceDomainData = X{1};
 targetDomainData = X{2};
-% sizeOfSourceDomainData = size(X{1});
-% sizeOfTargetDomainData = size(X{2});
-% numSourceData = sizeOfSourceDomainData(1);
-% numTargetData = sizeOfTargetDomainData(1);
+sizeOfSourceDomainData = size(X{1});
+sizeOfTargetDomainData = size(X{2});
+numSourceData = sizeOfSourceDomainData(1);
+numTargetData = sizeOfTargetDomainData(1);
 
-% sampledTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
-% sampledSourceDataIndex = randperm(numSourceData, numSampleData);
-% sampledTargetDataIndex = sampledTargetAndTestDataIndex(1:numSampleData);
-% sampledTestDataIndex = sampledTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
-sampleSourceDataIndex = csvread(sprintf('%ssampleSourceIndex%d.csv', prefix, datasetId));
-sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId));
+sampleTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
+sampleSourceDataIndex = randperm(numSourceData, numSampleData);
+sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
+sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
+% sampleSourceDataIndex = csvread(sprintf('%ssampleSourceIndex%d.csv', prefix, datasetId));
+% sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId));
 %sampleTestDataIndex = csvread(sprintf('%ssampleTestIndex%d.csv', prefix, datasetId));
 %testData = targetDomainData(sampleTestDataIndex, :);
 sourceDomainData = sourceDomainData(sampleSourceDataIndex, :);

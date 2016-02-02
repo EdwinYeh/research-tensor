@@ -6,7 +6,7 @@ for sigmaTryTime = 1:6
     numSampleFeature = 2;
     lambdaTryTime = 3;
     sigma = sigmaList(sigmaTryTime);
-    exp_title = sprintf('ours_%d_allfree_cvx_sigma_%f', datasetId, sigma);
+    exp_title = sprintf('ours_%d_allfree_cvx_toy_sigma_%f', datasetId, sigma);
     PrepareExperiment2;
     showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
     main_ours_allfree_cvx;

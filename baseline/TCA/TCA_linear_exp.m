@@ -1,8 +1,5 @@
-datasetId = 1;
+datasetId = 11;
 main_TCA_linear_SVM;
 
-datasetId = 2;
-main_TCA_linear_SVM;
-
-datasetId = 3;
+datasetId = 12;
 main_TCA_linear_SVM;
