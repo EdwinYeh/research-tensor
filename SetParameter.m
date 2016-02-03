@@ -3,8 +3,9 @@ isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
 isUsingTensor = true;
+isTestPhase = false;
 
-numSampleInstance = [500, 500];
+numSampleInstance = [0, 0];
 numSampleFeature = 2000;
 sigma = 1;
 numInstanceCluster = 4;
@@ -13,7 +14,7 @@ numClass = [2, 2];
 
 maxIter = 100;
 numCVFold = 5;
-lambdaTryTime = 3;
+lambdaTryTime = 0;
 randomTryTime = 1;
 numDom = 2;
 sourceDomain = 1;

@@ -1,4 +1,4 @@
-function [ avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sigma, numFold, numSourceData, numTargetData, featureDimAfterReduce,sourceDomainData, targetDomainData, Y)
+function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sigma, numFold, numSourceData, numTargetData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y)
     fprintf('mu = %f\nsigma = %f\n', mu, sigma);
     numCorrectPredict = 0;
     empErrorSum = 0;
@@ -11,7 +11,7 @@ function [ avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sigma, numFold, 
     H = eye(numAllData) - ((1/(numAllData) * ones(numAllData, numAllData)));
     
     for fold = 0: (numFold-1)
-        %             fprintf('fold: %d\n', fold);
+        % fprintf('fold: %d\n', fold);
         % Compute K, L matrix
         validateDataIndex = (fold*sizeOfOneFold+1: fold*sizeOfOneFold+sizeOfOneFold) + numSourceData;
         trainDataIndex = setdiff(1:numAllData, validateDataIndex);

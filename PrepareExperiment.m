@@ -23,6 +23,7 @@ TrueYMatrix = cell(1, numDom);
 YMatrix = cell(1, numDom);
 Label = cell(1, numDom);
 uc = cell(1, numDom);
+Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);
 
@@ -32,13 +33,19 @@ initB = cell(randomTryTime);
 
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 
-% sampleSourceDataIndex = csvread(sprintf('%ssampleSourceIndex%d.csv', prefix, datasetId));
-% sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId));
-[numSourceInstance, ~] = size(X{sourceDomain});
-[numTargetInstance, ~] = size(X{targetDomain});
-sampleSourceDataIndex = randperm(numSourceInstance, numSampleInstance(sourceDomain));
-sampleTargetDataIndex = randperm(numTargetInstance, numSampleInstance(targetDomain));
-% 
+sampleSourceDataIndex = csvread(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
+sampleValidateDataIndex = csvread(sprintf('sampleIndex/sampleValidateDataIndex%d.csv', datasetId));
+sampleTestDataIndex = csvread(sprintf('sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
+% [numSourceInstance, ~] = size(X{sourceDomain});
+% [numTargetInstance, ~] = size(X{targetDomain});
+% sampleSourceDataIndex = randperm(numSourceInstance, numSampleInstance(sourceDomain));
+% sampleTargetDataIndex = randperm(numTargetInstance, numSampleInstance(targetDomain)+100);
+% sampleValidateDataIndex = sampleTargetDataIndex(501:600);
+% sampleTargetDataIndex = sampleTargetDataIndex(1:500);
+% csvwrite(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId), sampleSourceDataIndex);
+% csvwrite(sprintf('sampleIndex/sampleTargetDataIndex%d.csv', datasetId), sampleTargetDataIndex);
+% csvwrite(sprintf('sampleIndex/sampleValidateDataIndex%d.csv', datasetId), sampleValidateDataIndex);
+
 for i = 1: numDom
     domainName = domainNameList{i};
     Label{i} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
@@ -49,8 +56,13 @@ for i = 1: numDom
             X{i} = X{i}(sampleSourceDataIndex, :);
             Label{i} = Label{i}(sampleSourceDataIndex, :);
         elseif i == targetDomain
-            X{i} = X{i}(sampleTargetDataIndex, :);
-            Label{i} = Label{i}(sampleTargetDataIndex, :);
+            if isTestPhase == true
+                X{i} = X{i}(sampleTestDataIndex, :);
+                Label{i} = Label{i}(sampleTestDataIndex, :);
+            else
+                X{i} = X{i}(sampleValidateDataIndex, :);
+                Label{i} = Label{i}(sampleValidateDataIndex, :);
+            end
         end
     end
     [numSampleInstance(i), ~] = size(X{i});
@@ -63,9 +75,6 @@ for i = 1: numDom
         TrueYMatrix{i}(j, Label{i}(j)) = 1;
     end
     X{i} = normr(X{i});
-%     fprintf('Normalizing domain %d data\n', i);
-%     X{i} = minMaxNormalize(X{i});
-%     X{i} = zscore(X{i});
 end
 % 
 for dom = 1: numDom
@@ -99,6 +108,3 @@ if isRandom == true
 end
 
 CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
-
-resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
-fprintf(resultFile, 'lambda,objectiveScore,accuracy,trainingTime\n');

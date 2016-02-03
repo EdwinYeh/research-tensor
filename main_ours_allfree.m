@@ -1,5 +1,3 @@
-resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
-fprintf(resultFile, 'lambda,objectiveScore,accuracy\n');
 disp('Start training');
 
 for tuneLambda = 0:lambdaTryTime

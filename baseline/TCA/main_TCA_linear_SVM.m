@@ -2,8 +2,8 @@
 numDom = 2;
 mu = 1;
 numSampleFeature = 2;
-numSampleData = 500;
-numTestData = 250;
+numSourceData = 500;
+numValidateData = 100;
 numFold = 5;
 featureDimAfterReduce = 2;
 
@@ -42,28 +42,31 @@ sourceDomainData = X{1};
 targetDomainData = X{2};
 sizeOfSourceDomainData = size(X{1});
 sizeOfTargetDomainData = size(X{2});
-numSourceData = sizeOfSourceDomainData(1);
-numTargetData = sizeOfTargetDomainData(1);
+% numSourceData = sizeOfSourceDomainData(1);
+% numTargetData = sizeOfTargetDomainData(1);
 
-sampleTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
-sampleSourceDataIndex = randperm(numSourceData, numSampleData);
-sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
-sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
+% sampleTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
+% sampleSourceDataIndex = randperm(numSourceData, numSampleData);
+% sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
+% sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
 % csvwrite(sprintf('%ssampleSourceIndex%d.csv', prefix, datasetId), sampleSourceDataIndex);
 % csvwrite(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId), sampleTargetDataIndex);
 % csvwrite(sprintf('%ssampleTestIndex%d.csv', prefix, datasetId), sampleTestDataIndex);
+
+sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
+sampleValidateDataIndex = csvread(sprintf('../../sampleIndex/sampleValidateDataIndex%d.csv', datasetId));
+sampleTestDataIndex = csvread(sprintf('../../sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
+
 testData = targetDomainData(sampleTestDataIndex, :);
 sourceDomainData = sourceDomainData(sampleSourceDataIndex, :);
-targetDomainData = targetDomainData(sampleTargetDataIndex, :);
+targetDomainData = targetDomainData(sampleValidateDataIndex, :);
 testData = normr(testData);
 sourceDomainData = normr(sourceDomainData);
 targetDomainData = normr(targetDomainData);
-numSourceData = numSampleData;
-numTargetData = numSampleData;
 
 testY = targetY(sampleTestDataIndex);
 sourceY = sourceY(sampleSourceDataIndex);
-targetY = targetY(sampleTargetDataIndex);
+targetY = targetY(sampleValidateDataIndex);
 Y = [sourceY; targetY];
 
 resultFile = fopen(sprintf('result_TCA_linear%d.csv', datasetId), 'w');
@@ -73,7 +76,7 @@ bestValidationAccuracy = 0;
 bestMu = 1;
 for tuneMu = 0:3
     mu = 0.001 * 100 ^ tuneMu;
-    [avgEmpError, validationAccuracy] = trainAndCvLinearTCA(mu, numFold, numSourceData, numTargetData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
+    [~, avgEmpError, validationAccuracy] = trainAndCvLinearTCA(mu, numFold, numSourceData, numValidateData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
     if validationAccuracy > bestValidationAccuracy
         bestValidationAccuracy = validationAccuracy;
         bestMu = mu;
@@ -82,6 +85,7 @@ for tuneMu = 0:3
 end
 
 Y = [sourceY; testY];
-[avgEmpError, accuracy] = trainAndCvLinearTCA(bestMu, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y); 
+[predictLabel, avgEmpError, accuracy] = trainAndCvLinearTCA(bestMu, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y); 
+csvwrite(sprintf('../../../exp_result/predict_result/TCA_gaussian%d_predict_result.csv', datasetId), predictLabel);
 fprintf(resultFile, '%f,%f,%f\n', bestMu, avgEmpError, accuracy);
 fclose(resultFile);

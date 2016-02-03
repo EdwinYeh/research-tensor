@@ -1,4 +1,4 @@
-function [ avgEmpError, accuracy ] = trainAndCvLinearTCA( mu, numFold, numSourceData, numTargetData, featureDimAfterReduce,sourceDomainData, targetDomainData, Y)
+function [ predictLabel, avgEmpError, accuracy ] = trainAndCvLinearTCA( mu, numFold, numSourceData, numTargetData, featureDimAfterReduce,sourceDomainData, targetDomainData, Y)
     fprintf('mu = %f\n', mu);
     numCorrectPredict = 0;
     empErrorSum = 0;

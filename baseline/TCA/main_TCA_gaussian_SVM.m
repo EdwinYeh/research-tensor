@@ -2,8 +2,9 @@
 numDom = 2;
 mu = 1;
 numSampleFeature = 2;
-numSampleData = 500;
-numTestData = 250;
+numSourceData = 500;
+numValidateData = 100;
+numTestData = 500;
 numFold = 5;
 featureDimAfterReduce = 2;
 
@@ -23,7 +24,7 @@ elseif datasetId == 10
     prefix = '../../../Animal_img/';
 elseif datasetId == 11 || datasetId == 12
     dataType = 2;
-    prefix = '../../../Toy_dataset/'
+    prefix = '../../../Toy_dataset/';
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
@@ -41,30 +42,28 @@ sourceDomainData = X{1};
 targetDomainData = X{2};
 sizeOfSourceDomainData = size(X{1});
 sizeOfTargetDomainData = size(X{2});
-numSourceData = sizeOfSourceDomainData(1);
-numTargetData = sizeOfTargetDomainData(1);
+% numSourceData = sizeOfSourceDomainData(1);
+% numTargetData = sizeOfTargetDomainData(1);
+% 
+% sampleTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
+% sampleSourceDataIndex = randperm(numSourceData, numSampleData);
+% sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
+% sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
+sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
+sampleValidateDataIndex = csvread(sprintf('../../sampleIndex/sampleValidateDataIndex%d.csv', datasetId));
+sampleTestDataIndex = csvread(sprintf('../../sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
 
-sampleTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
-sampleSourceDataIndex = randperm(numSourceData, numSampleData);
-sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
-sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
-% sampleSourceDataIndex = csvread(sprintf('%ssampleSourceIndex%d.csv', prefix, datasetId));
-% sampleTargetDataIndex = csvread(sprintf('%ssampleTargetIndex%d.csv', prefix, datasetId));
-% sampleTestDataIndex = csvread(sprintf('%ssampleTestIndex%d.csv', prefix, datasetId));
 testData = targetDomainData(sampleTestDataIndex, :);
 sourceDomainData = sourceDomainData(sampleSourceDataIndex, :);
-targetDomainData = targetDomainData(sampleTargetDataIndex, :);
+targetDomainData = targetDomainData(sampleValidateDataIndex, :);
 
 testData = normr(testData);
 sourceDomainData = normr(sourceDomainData);
 targetDomainData = normr(targetDomainData);
 
-numSourceData = numSampleData;
-numTargetData = numSampleData;
-
 testY = targetY(sampleTestDataIndex);
 sourceY = sourceY(sampleSourceDataIndex);
-targetY = targetY(sampleTargetDataIndex);
+targetY = targetY(sampleValidateDataIndex);
 Y = [sourceY; targetY];
 
 resultFile = fopen(sprintf('result_TCA_gaussian%d.csv', datasetId), 'w');
@@ -77,16 +76,17 @@ for tuneMu = 0:3
     for tuneSigma = 0:3
     mu = 0.001 * 100 ^ tuneMu;
     sigma = 0.001 * 100 ^ tuneSigma;
-    [avgEmpError, validationAccuracy] = trainAndCvGaussianTCA(mu, sigma, numFold, numSourceData, numTargetData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
+    [~, avgEmpError, validationAccuracy] = trainAndCvGaussianTCA(mu, sigma, numFold, numSourceData, numValidateData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
     if validationAccuracy > bestValidationAccuracy
         bestValidationAccuracy = validationAccuracy;
         bestMu = mu;
-        bestSigma = sigma;
+        bestSigma = sigma;     
     end
     fprintf(resultFile, '%f,%f,%f,%f\n', mu, sigma, avgEmpError, validationAccuracy);
     end
 end
 Y = [sourceY; testY];
-[avgEmpError, accuracy] = trainAndCvGaussianTCA(bestMu, bestSigma, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y); 
+[predictLabel, avgEmpError, accuracy] = trainAndCvGaussianTCA(bestMu, bestSigma, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y); 
+csvwrite(sprintf('../../../exp_result/predict_result/TCA_gaussian%d_predict_result.csv', datasetId), predictLabel);
 fprintf(resultFile, '%f,%f,%f,%f\n', bestMu, bestSigma, avgEmpError, accuracy);
 fclose(resultFile);
