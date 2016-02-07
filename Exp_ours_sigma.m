@@ -5,11 +5,11 @@ bestLambda = 0;
 bestSigma = 0;
 lambdaTryTime = 0;
 sigmaList = [0.1, 0.2, 0.3, 0.4, 0.5];
-for sigmaTryTime = 1:1
+for sigmaTryTime = 1:length(sigmaList)
     sigma = sigmaList(sigmaTryTime);
     PrepareExperiment;
     for tuneLambda = 0:lambdaTryTime
-        lambda = 0.000001 * 100 ^ tuneLambda;
+        lambda = 0.000001 * 10 ^ tuneLambda;
         showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
         main_ours;
         if accuracy > bestValidateAccuracy

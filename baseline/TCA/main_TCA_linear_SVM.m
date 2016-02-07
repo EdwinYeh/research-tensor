@@ -1,9 +1,10 @@
 % datasetId = 6;
 numDom = 2;
 mu = 1;
-numSampleFeature = 2;
+numSampleFeature = 2000;
 numSourceData = 500;
 numValidateData = 100;
+numTestData = 500;
 numFold = 5;
 featureDimAfterReduce = 2;
 
@@ -18,12 +19,9 @@ if datasetId <= 6
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
     prefix = '../../../Reuter/';
-elseif datasetId == 10
+elseif datasetId >= 10
     dataType = 2;
     prefix = '../../../Animal_img/';
-elseif datasetId == 11
-    dataType = 2;
-    prefix = '../../../Toy_dataset/';
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};

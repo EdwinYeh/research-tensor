@@ -9,12 +9,9 @@ if datasetId <= 6
 elseif datasetId > 6 && datasetId <= 9
     dataType = 1;
     prefix = '../Reuter/';
-elseif datasetId == 10
+elseif datasetId >= 10
     dataType = 2;
     prefix = '../Animal_img/';
-elseif datasetId == 11 || datasetId == 12;
-    dataType = 2;
-    prefix = '../Toy_dataset/';
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};

@@ -1,8 +1,8 @@
 disp('Start training');
 
 if isTestPhase
-    resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'a');
-    fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime\n');
+    resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
+    fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime,iterationUsed\n');
 end
 
 fprintf('Use Lambda:%f\n', lambda);
