@@ -42,7 +42,7 @@ for t = 1: randomTryTime
                 % Solve cvx U
                 % disp('Solve cvx U')
                 if i == sourceDomain
-                    cvx_begin
+                    cvx_begin quiet
                         variable tmpU(size(U{i}));
                         minimize(norm(YMatrix{i}-tmpU*projB*V{i}', 'fro')+lambda*norm(tmpU'*L, 'fro'));
                     cvx_end
