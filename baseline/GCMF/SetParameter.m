@@ -1,0 +1,15 @@
+numSampleInstance = [0, 0];
+numSampleFeature = [2000, 2000];
+numClass = 2;
+numDom = 2;
+numInstanceCluster = 2;
+numFeatureCluster = 4;
+isSampleInstance = true;
+isSampleFeature = true;
+isURandom = true;
+isUsingTensor = false;
+isTestPhase = false;
+maxIter = 100;
+numCVFold = 5;
+randomTryTime = 5;
+sigma = 0.1;

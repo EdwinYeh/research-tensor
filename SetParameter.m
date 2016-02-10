@@ -15,6 +15,7 @@ numClass = [2, 2];
 maxIter = 100;
 numCVFold = 5;
 lambdaTryTime = 0;
+gamaTryTime = 0;
 randomTryTime = 1;
 numDom = 2;
 sourceDomain = 1;

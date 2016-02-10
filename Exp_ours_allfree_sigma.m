@@ -1,5 +1,5 @@
 SetParameter;
-exp_title = sprintf('ours_%d_allfree_cvx_sigma', datasetId);
+exp_title = sprintf('ours_%d_allfree_sigma', datasetId);
 bestValidateAccuracy = 0;
 bestLambda = 0;
 bestSigma = 0;
@@ -12,9 +12,9 @@ for sigmaTryTime = 1:length(sigmaList)
         lambda = 0.00000001 * 100 ^ tuneLambda;
         showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
             try
-                    main_ours_allfree;
+                main_ours_allfree;
             catch exception
-                    continue;
+                continue;
             end
         if accuracy > bestValidateAccuracy
             bestValidateAccuracy = accuracy;
@@ -32,4 +32,4 @@ lambda = bestLambda;
 PrepareExperiment2;
 exp_title = sprintf('ours_%d_allfree_cvx_sigma', datasetId);
 showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
-main_ours_allfree_cvx;
+main_ours_allfree;

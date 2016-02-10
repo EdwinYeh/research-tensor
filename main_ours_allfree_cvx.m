@@ -82,6 +82,7 @@ for t = 1: randomTryTime
                 [r, c] = size(U3);
                 nextThreeB = zeros(numInstanceCluster, numFeatureCluster, r);
                 sumFi = zeros(c, c);
+                disp('ready');
                 CPLamda = CP.lambda(:);
                 for idx = 1:r
                     fi{idx} = diag(CPLamda.*U3(idx,:)');
@@ -143,8 +144,6 @@ for t = 1: randomTryTime
             %                 fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
             diff = oldObjectiveScore - newObjectiveScore;
         end
-        avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
-        foldObjectiveScores(fold) = newObjectiveScore;
         
         %calculate validationScore
         [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
@@ -161,6 +160,8 @@ for t = 1: randomTryTime
         validateIndex = validateIndex + CVFoldSize;
     end
     
+    avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
+    foldObjectiveScores(fold) = newObjectiveScore;
     accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
     avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
     avgTime = toc(TotalTimer)/ numCVFold;
@@ -187,4 +188,3 @@ end
 
 showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
 fprintf('done\n\n');
-% matlabpool close;
