@@ -23,7 +23,7 @@ end
 fprintf('Start testing\n');
 SetParameter;
 isTestPhase = true;
-%randomTryTime = 5;
+% randomTryTime = 5;
 sigma = bestSigma;
 lambda = bestLambda;
 PrepareExperiment;
