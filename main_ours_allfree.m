@@ -99,7 +99,8 @@ for t = 1: randomTryTime
             %                 fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
             diff = oldObjectiveScore - newObjectiveScore;
         end
-        
+         avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
+         foldObjectiveScores(fold) = newObjectiveScore;
         %calculate validationScore
         [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
         result = U{targetDomain}*projB*V{targetDomain}';
@@ -115,8 +116,6 @@ for t = 1: randomTryTime
         validateIndex = validateIndex + CVFoldSize;
     end
     
-    avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
-    foldObjectiveScores(fold) = newObjectiveScore;
     accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
     avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
     avgTime = toc(TotalTimer)/ numCVFold;

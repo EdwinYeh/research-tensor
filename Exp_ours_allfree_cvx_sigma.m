@@ -4,7 +4,7 @@ bestValidateAccuracy = 0;
 bestLambda = 0;
 bestSigma = 0;
 lambdaTryTime = 3;
-sigmaList = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+sigmaList = [ 0.1, 0.5, 1, 10, 100];
 for sigmaTryTime = 1:length(sigmaList)
     sigma = sigmaList(sigmaTryTime);
     PrepareExperiment2;
@@ -12,8 +12,9 @@ for sigmaTryTime = 1:length(sigmaList)
         lambda = 0.00000001 * 100 ^ tuneLambda;
         showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
             try
-                    main_ours_allfree;
+                    main_ours_allfree_cvx;
             catch exception
+                    fprintf('Hyper parameter failed: sigma = %f, lambda = %f\n', sigma, lambda);
                     continue;
             end
         if accuracy > bestValidateAccuracy
@@ -26,7 +27,7 @@ end
 
 fprintf('Start testing\n');
 isTestPhase = true;
-randomTryTime = 5;
+%randomTryTime = 5;
 sigma = bestSigma;
 lambda = bestLambda;
 PrepareExperiment2;

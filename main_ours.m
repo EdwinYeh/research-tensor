@@ -9,7 +9,7 @@ time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
 fprintf('Use Lambda:%f\n', lambda);
 %each pair is (objective score, accuracy);
-resultCellArray = cell(randomTryTime, 4);
+resultCellArray = cell(randomTryTime);
 bestObjectiveScore = Inf;
 
 for t = 1: randomTryTime
@@ -132,7 +132,6 @@ for t = 1: randomTryTime
             end
             diff = oldObjectiveScore - newObjectiveScore;
         end
-        avgIterationUsed = iter/ numCVFold;
         foldObjectiveScores(fold) = newObjectiveScore;
         
         %calculate validationScore
@@ -165,17 +164,14 @@ for t = 1: randomTryTime
     resultCellArray{t}{1} = avgObjectiveScore;
     resultCellArray{t}{2} = accuracy*100;
     resultCellArray{t}{3} = avgTime;
-    resultCellArray{t}{4} = avgIterationUsed;
 end
 
 if isTestPhase
     for numResult = 1:randomTryTime
-        fprintf(resultFile, '%f,%f,%f,%f,%f,%f\n', sigma, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3}, resultCellArray{numResult}{4});
+        fprintf(resultFile, '%f,%f,%f,%f,%f,%f\n', sigma, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3});
     end
     csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);
     fclose(resultFile);
 end
-
-showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
-fprintf('done\n');
+fprintf('done\n\n');
 % matlabpool close;

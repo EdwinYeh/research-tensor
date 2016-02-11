@@ -2,11 +2,11 @@ disp('Start training');
 
 if isTestPhase
     resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
-    fprintf(resultFile, 'sigma,gama,lambda,objectiveScore,accuracy,trainingTime,iterationUsed\n');
+    fprintf(resultFile, 'sigma,gama,lambda,objectiveScore,accuracy,trainingTime\n');
 end
 
 fprintf('Use Lambda: %f, Gama: %f\n', lambda, gama);
-resultCellArray = cell(randomTryTime, 4);
+resultCellArray = cell(randomTryTime, 3);
 bestObjectiveScore = Inf;
 
 for t = 1: randomTryTime
@@ -24,7 +24,7 @@ for t = 1: randomTryTime
         for i = 1:numDom
             if i == targetDomain
                 U{i} = TrueYMatrix{i};
-                U{i} = zeros(CVFoldSize, numClass);
+                U{i}(validateIndex, :) = zeros(CVFoldSize, numClass(i));
             else
                 U{i} = TrueYMatrix{i};
             end
@@ -37,7 +37,7 @@ for t = 1: randomTryTime
         iter = 0;
         diff = Inf;
         
-        while (diff >= 0.0001  && iter < maxIter)%(abs(ObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
+        while (diff >= abs(0.001)  && iter < maxIter)%(abs(ObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
             iter = iter + 1;
             oldObjectiveScore = newObjectiveScore;
             %disp(sprintf('\t#Iterator:%d', iter));
@@ -106,9 +106,10 @@ for t = 1: randomTryTime
                 %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, loss));
             end
             %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
-            fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
+            %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
             diff = oldObjectiveScore - newObjectiveScore;
         end
+        foldObjectiveScores(fold) = newObjectiveScore;
         %calculate validationScore
         [~, maxIndex] = max(U{targetDomain}, [], 2);
         predictResult = maxIndex;
@@ -120,8 +121,6 @@ for t = 1: randomTryTime
         validateIndex = validateIndex + CVFoldSize;
     end
     
-    avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
-    foldObjectiveScores(fold) = newObjectiveScore;
     accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
     avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
     avgTime = toc(TotalTimer)/ numCVFold;
@@ -134,16 +133,14 @@ for t = 1: randomTryTime
     resultCellArray{t}{1} = avgObjectiveScore;
     resultCellArray{t}{2} = accuracy*100;
     resultCellArray{t}{3} = avgTime;
-    resultCellArray{t}{4} = avgIterationUsed;
     
-    fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t,avgObjectivescore, accuracy*100);
+    fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
 end
 
 if isTestPhase
     for numResult = 1:randomTryTime
-        fprintf(resultFile, '%f,%f,%f,%f,%f,%f\n', sigma, gama, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3}, resultCellArray{numResult}{4});
+        fprintf(resultFile, '%f,%f,%f,%f,%f,%f\n', sigma, gama, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3});
     end
-    csvwrite(sprintf('%s_predict_result.csv', exp_title), bestPredictResult);
     fclose(resultFile);
 end
 

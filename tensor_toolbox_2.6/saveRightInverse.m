@@ -14,7 +14,7 @@ function [ inverseResult ] = saveRightInverse(M, inverse)
        state3 = ~strcmp(warnType, 'MATLAB:nearlySingularMatrix');
        state4 = all(all(isnan(inverseResult))) == 0;
        state5 = all(all(isinf(inverseResult))) == 0;
-       fprintf('Add diag: %d\n', iter);
+%        fprintf('Add diag: %d\n', iter);
        if(state1 || state2 && state3 && state4 && state5)
             break;
        else

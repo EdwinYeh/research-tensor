@@ -2,11 +2,11 @@ disp('Start training');
 
 if isTestPhase
     resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
-    fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime,iterationUsed\n');
+    fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime\n');
 end
 
 fprintf('Use Lambda:%f\n', lambda);
-resultCellArray = cell(randomTryTime, 4);
+resultCellArray = cell(randomTryTime, 3);
 bestObjectiveScore = Inf;
 
 for t = 1: randomTryTime
@@ -82,7 +82,6 @@ for t = 1: randomTryTime
                 [r, c] = size(U3);
                 nextThreeB = zeros(numInstanceCluster, numFeatureCluster, r);
                 sumFi = zeros(c, c);
-                disp('ready');
                 CPLamda = CP.lambda(:);
                 for idx = 1:r
                     fi{idx} = diag(CPLamda.*U3(idx,:)');
@@ -144,6 +143,7 @@ for t = 1: randomTryTime
             %                 fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
             diff = oldObjectiveScore - newObjectiveScore;
         end
+        foldObjectiveScores(fold) = newObjectiveScore;
         
         %calculate validationScore
         [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
@@ -160,8 +160,6 @@ for t = 1: randomTryTime
         validateIndex = validateIndex + CVFoldSize;
     end
     
-    avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
-    foldObjectiveScores(fold) = newObjectiveScore;
     accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
     avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
     avgTime = toc(TotalTimer)/ numCVFold;
@@ -174,17 +172,15 @@ for t = 1: randomTryTime
     resultCellArray{t}{1} = avgObjectiveScore;
     resultCellArray{t}{2} = accuracy*100;
     resultCellArray{t}{3} = avgTime;
-    resultCellArray{t}{4} = avgIterationUsed;
     fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
 end
 
 if isTestPhase
     for numResult = 1:randomTryTime
-        fprintf(resultFile, '%f,%f,%f,%f,%f,%f\n', sigma, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3}, resultCellArray{numResult}{4});
+        fprintf(resultFile, '%f,%f,%f,%f,%f\n', sigma, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3});
     end
     csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);
     fclose(resultFile);
 end
 
-showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
 fprintf('done\n\n');
