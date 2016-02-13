@@ -9,9 +9,10 @@ if datasetId <= 6
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
     prefix = '../Reuter/';
-elseif datasetId >= 10
+elseif datasetId >= 10 && datasetId <= 13
     dataType = 2;
     prefix = '../Animal_img/';
+elseif datasetId
 end
 
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
@@ -19,7 +20,6 @@ domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', da
 TrueYMatrix = cell(1, numDom);
 YMatrix = cell(1, numDom);
 Label = cell(1, numDom);
-uc = cell(1, numDom);
 Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);
