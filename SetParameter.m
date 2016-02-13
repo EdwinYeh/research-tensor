@@ -5,7 +5,7 @@ isRandom = true;
 isUsingTensor = true;
 isTestPhase = false;
 
-numSampleInstance = [0, 0];
+numSampleInstance = [500, 500];
 numSampleFeature = 2000;
 sigma = 1;
 numInstanceCluster = 4;

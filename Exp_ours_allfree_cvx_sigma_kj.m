@@ -22,7 +22,7 @@ for sigmaTryTime = 1:length(sigmaList)
         if accuracy > bestValidateAccuracy
             bestValidateAccuracy = accuracy;
             bestLambda = lambda;
-            bestSigma = sigma;
+            bestSigma = sigmja;
         end
     end
 end
