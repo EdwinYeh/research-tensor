@@ -4,7 +4,7 @@ if datasetId <= 6
 elseif datasetId > 6 && datasetId <= 9
     dataType = 1;
     prefix = '../../../Reuter/';
-elseif datasetId >= 10 && datasteId <=13
+elseif datasetId >= 10 && datasetId <=13
     dataType = 2;
     prefix = '../../../Animal_img/';
 end

@@ -1,7 +1,7 @@
 disp('Start training');
 
 if isTestPhase
-    resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
+    resultFile = fopen(sprintf('result_%s.csv', exp_title), 'a');
     fprintf(resultFile, 'sigma,gama,lambda,objectiveScore,accuracy,trainingTime\n');
 end
 
