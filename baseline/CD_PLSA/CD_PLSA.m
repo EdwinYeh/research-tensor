@@ -42,30 +42,29 @@ numSource = 1;
 numTarget = 1;
 numDom = numTarget + numSource;
 numIteration = 100;
-numSampleFeature = 2;
+numSampleFeature = 2000;
 numSampleData = 500;
-numTestData = 100;
 tryTime = 5;
 
 if datasetId <= 6
     dataType = 1;
     prefix = '../../../20-newsgroup/';
     numInstanceCluster = 4;
-    numFeatureCluster = 4;
+    numFeatureCluster = 5;
     numClass = [2, 2];
     sigma = 0.1;
 elseif datasetId > 6 && datasetId <=9
     dataType = 1;
     prefix = '../../../Reuter/';
     numInstanceCluster = 4;
-    numFeatureCluster = 4;
+    numFeatureCluster = 5;
     numClass = [2, 2];
     sigma = 0.1;
-elseif datasetId >= 10 && datasetId <=13
+elseif datasetId >= 10 && datasetId  <= 13
     dataType = 2;
     prefix = '../../../Animal_img/';
     numInstanceCluster = 4;
-    numFeatureCluster = 4;
+    numFeatureCluster = 5;
     numClass = [2, 2];
     sigma = 0.1;
 end
@@ -83,30 +82,28 @@ TestY = load([prefix sprintf('target%d_label.csv', datasetId)]);
 
 sourceDomainData = X{1};
 targetDomainData = X{2};
-% sizeOfSourceDomainData = size(X{1});
-% sizeOfTargetDomainData = size(X{2});
-% numSourceData = sizeOfSourceDomainData(1);
-% numTargetData = sizeOfTargetDomainData(1);
-% 
-% sampleTargetAndTestDataIndex = randperm(numTargetData, (numSampleData+numTestData));
-% sampleSourceDataIndex = randperm(numSourceData, numSampleData);
-% sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
-% sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
+sizeOfSourceDomainData = size(X{1});
+sizeOfTargetDomainData = size(X{2});
+numSourceData = sizeOfSourceDomainData(1);
+numTargetData = sizeOfTargetDomainData(1);
 
-sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
-sampleTargetDataIndex = csvread(sprintf('../../sampleIndex/sampleValidateDataIndex%d.csv', datasetId));
-sampleTestDataIndex = csvread(sprintf('../../sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
-testData = targetDomainData(sampleTestDataIndex, :);
+sampledSourceDataIndex = randperm(numSourceData, numSampleData);
+sampledTargetDataIndex = randperm(numTargetData, numSampleData);
+% sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
+% sampleTargetDataIndex = csvread(sprintf('../../sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
+%sampleTestDataIndex = csvread(sprintf('%ssampleTestIndex%d.csv', prefix, datasetId));
+%testData = targetDomainData(sampleTestDataIndex, :);
 sourceDomainData = sourceDomainData(sampleSourceDataIndex, :);
 targetDomainData = targetDomainData(sampleTargetDataIndex, :);
 
-testData = normr(testData);
+%testData = normr(testData);
 sourceDomainData = normr(sourceDomainData);
 targetDomainData = normr(targetDomainData);
 
 numTrain = numSampleData;
 numTest = numSampleData;
 
+%testY = targetY(sampleTestDataIndex);
 TrainY = TrainY(sampleSourceDataIndex);
 TestY = TestY(sampleTargetDataIndex);
 TrainX = sourceDomainData';
@@ -362,7 +359,7 @@ for tryId = 1:tryTime
                     nCorrect = nCorrect + 1;
                 end
             end
-
+%             [iterID nCorrect/(numTest(i))]
             iter_results(iterID,i) = nCorrect/(numTest(i));
         end
         for i = 1:size(pz_d,1)
