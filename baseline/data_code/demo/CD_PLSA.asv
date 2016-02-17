@@ -42,17 +42,7 @@ numK = str2num(fgetl(fid));
 numIteration = str2num(fgetl(fid));
 fclose(fid);
 
-iscsvread = 0;
-fid=fopen(Train_Data);
-numSource = str2num(fgetl(fid));
-fid1=fopen(fgetl(fid));
-A = fgetl(fid1);
-B = find(A == ',');
-if length(B) == 2
-    iscsvread = 1;
-end
-fclose(fid1);
-fclose(fid);
+iscsvread = 1;
 
 labelset = [];
 
@@ -64,8 +54,9 @@ if iscsvread == 1
     TrainY = [];
     numTrain = [];
     for i = 1:numSource
-        A = csvread(fgetl(fid));
-        B = spconvert(A);
+%         A = csvread(fgetl(fid));
+%         B = spconvert(A);
+        B = csvread(fgetl(fid));
         TrainX = [TrainX B];
         C = textread(fgetl(fid));
         TrainY = [TrainY C'];
@@ -84,48 +75,9 @@ if iscsvread == 1
     TestY = [];
     numTest = [];
     for i = 1:numTarget
-        A = csvread(fgetl(fid));
-        B = spconvert(A);
-        TestX = [TestX B];
-        C = textread(fgetl(fid));
-        TestY = [TestY C'];
-        numTest(1,i) = length(C);
-        labelset = union(labelset,C');
-        clear A;
-        clear B;
-        clear C;
-    end
-    fclose(fid);
-else
-    % read source domain data
-    fid=fopen(Train_Data);
-    numSource = str2num(fgetl(fid));
-    TrainX = [];
-    TrainY = [];
-    numTrain = [];
-    for i = 1:numSource
-        A = load(fgetl(fid));
-        B = spconvert(A);
-        TrainX = [TrainX B];
-        C = textread(fgetl(fid));
-        TrainY = [TrainY C'];
-        numTrain(1,i) = length(C);
-        labelset = union(labelset,C');
-        clear A;
-        clear B;
-        clear C;
-    end
-    fclose(fid);
-
-    % read target domain data
-    fid=fopen(Test_Data);
-    numTarget = str2num(fgetl(fid));
-    TestX = [];
-    TestY = [];
-    numTest = [];
-    for i = 1:numTarget
-        A = load(fgetl(fid));
-        B = spconvert(A);
+%         A = csvread(fgetl(fid));
+%         B = spconvert(A);
+        B = csvread(fgetl(fid));
         TestX = [TestX B];
         C = textread(fgetl(fid));
         TestY = [TestY C'];
@@ -143,9 +95,24 @@ pyz = rand(numK,numC);
 %pyz = ones(numK,numC);
 pyz = pyz/sum(sum(pyz));
 
+TrainX = TrainX';
+TestX = TestX';
+
+TrainX = TrainX';
+TestX = TestX';
+denseFeature = findDenseFeature(TrainX, 5000);
+TrainX = TrainX(:, denseFeature);
+denseFeature = findDenseFeature(TestX, 5000);
+TestX = TestX(:, denseFeature);
+% TrainX = normr(TrainX);
+% TestX = normr(TestX);
+TrainX = TrainX';
+TestX = TestX';
+
 size(TrainX)
 size(TrainY)
-
+size(TestX)
+size(TestY )
 
 start = 1;
 if start == 1
@@ -233,7 +200,7 @@ for iterID = 1:numIteration
     temp_pyz = zeros(size(pyz));
     temp_pc = zeros(size(pc));
 
-    stepLen = 3000;
+    stepLen = 2;
     numStep = fix(size(TrainX,1)/stepLen);
     step = fix(size(TrainX,1)/numStep);
 

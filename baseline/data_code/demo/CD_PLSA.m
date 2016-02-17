@@ -29,9 +29,6 @@ function [Results, pz_d] = CD_PLSA(Train_Data,Test_Data,Parameter_Setting)
 % Be good luck for your research, if you have any questions, you can
 % contact the email: zhuangfz@ics.ict.ac.cn
 
-
-
-
 numK = 0;
 numC = 0;
 numSource = 0;
@@ -54,9 +51,9 @@ if iscsvread == 1
     TrainY = [];
     numTrain = [];
     for i = 1:numSource
-%         A = csvread(fgetl(fid));
-%         B = spconvert(A);
-        B = csvread(fgetl(fid));
+        A = csvread(fgetl(fid));
+        B = spconvert(A);
+%         B = csvread(fgetl(fid));
         TrainX = [TrainX B];
         C = textread(fgetl(fid));
         TrainY = [TrainY C'];
@@ -75,9 +72,9 @@ if iscsvread == 1
     TestY = [];
     numTest = [];
     for i = 1:numTarget
-%         A = csvread(fgetl(fid));
-%         B = spconvert(A);
-        B = csvread(fgetl(fid));
+        A = csvread(fgetl(fid));
+        B = spconvert(A);
+%         B = csvread(fgetl(fid));
         TestX = [TestX B];
         C = textread(fgetl(fid));
         TestY = [TestY C'];
@@ -95,19 +92,26 @@ pyz = rand(numK,numC);
 %pyz = ones(numK,numC);
 pyz = pyz/sum(sum(pyz));
 
-denseFeature = findDenseFeature(TrainX, 2000);
+size(TrainX)
+size(TrainY)
+size(TestX)
+size(TestY )
+
+% TrainX = TrainX';
+% TestX = TestX';
+denseFeature = findDenseFeature(TrainX, 5000);
 TrainX = TrainX(:, denseFeature);
-denseFeature = findDenseFeature(TestX, 2000);
+denseFeature = findDenseFeature(TestX, 5000);
 TestX = TestX(:, denseFeature);
 % TrainX = normr(TrainX);
 % TestX = normr(TestX);
 TrainX = TrainX';
 TestX = TestX';
 
-% size(TrainX)
-% size(TrainY)
-% size(TestX)
-% size(TestY )
+size(TrainX)
+size(TrainY)
+size(TestX)
+size(TestY )
 
 start = 1;
 if start == 1
