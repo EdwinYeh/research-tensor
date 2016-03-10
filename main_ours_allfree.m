@@ -1,13 +1,14 @@
 disp('Start training');
 
 if isTestPhase
-    resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
-    fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime,iterationUsed\n');
+    resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'a');
+    fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime\n');
 end
 
 fprintf('Use Lambda:%f\n', lambda);
-resultCellArray = cell(randomTryTime, 4);
+resultCellArray = cell(randomTryTime, 3);
 bestObjectiveScore = Inf;
+W = cell(numDom, 1);
 
 for t = 1: randomTryTime
     numCorrectPredict = 0;
@@ -18,8 +19,10 @@ for t = 1: randomTryTime
     totalPredictResult = zeros(numSampleInstance(targetDomain), 1);
     for fold = 1:numCVFold
         YMatrix = TrueYMatrix;
-        YMatrix{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(targetDomain));
-        W = cell(1, numDom);
+        YMatrix{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(1));
+        W{1} = ones(numSampleInstance(sourceDomain), numClass(1));
+        W{2} = ones(numSampleInstance(targetDomain), numClass(2));
+        W{2}(validateIndex, :) = 0;
         U = initU(t, :);
         V = initV(t, :);
         B = initB{t};
@@ -33,22 +36,16 @@ for t = 1: randomTryTime
             newObjectiveScore = 0;
             for i = 1:numDom
                 updateTimer  = tic;
-                W{i} = ones(numSampleInstance(i), numClass(i));
-                if i == targetDomain
-                    W{numDom}(validateIndex, :) = 0;
-                end
                 [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
                 
                 tmpLu = Lu{i} + diag(0.0000001*ones(numSampleInstance(i), 1));
                 L = chol(tmpLu);
                 
-                % Solve U using closed-from
-                disp('Solve U');
-                U{i} = update_rule(YMatrix{i}, eye(numSampleInstance(i)), V{i}*projB', Lu{i}, W{i}, 1, U{i});
+                % Solve U
+                U{i} = update_rule2(YMatrix{i},eye(numSampleInstance(i)),V{i}*projB',Lu{i},W{i},1,0,projB,lambda);
                 
-                %Solve V using closed-form
-                disp('Solve V');
-                V{i} = update_rule(YMatrix{i}, U{i}*projB, eye(numClass(i)), Lu{i}, W{i}, 0, V{i});
+                %Solve V
+                V{i} = update_rule2(YMatrix{i},U{i}*projB,eye(numClass(i)),Lu{i},W{i},0,0,projB,lambda);
                 
                 %Update fi
                 bestCPR = 20;
@@ -61,7 +58,6 @@ for t = 1: randomTryTime
                 [r, c] = size(U3);
                 nextThreeB = zeros(numInstanceCluster, numFeatureCluster, r);
                 sumFi = zeros(c, c);
-                disp('ready');
                 CPLamda = CP.lambda(:);
                 for idx = 1:r
                     fi{idx} = diag(CPLamda.*U3(idx,:)');
@@ -69,19 +65,28 @@ for t = 1: randomTryTime
                 end
                 %Update A, E
                 if isUpdateAE
-                    %Solve A using closed-form
-                    disp('Solve A');
-                    A = update_rule(YMatrix{i},U{i},V{i}*E*sumFi',Lu{i},W{i},0,A);
+                    %Solve A
+                    A = update_rule2(YMatrix{i},U{i},V{i}*E*sumFi',Lu{i},W{i},0,1,projB,lambda);
                     
                     %Solve cvx E
-                    disp('Solve E');
-                    E = update_rule(YMatrix{i},U{i}*A*sumFi,V{i},Lu{i},W{i},0,E);
+                    E = update_rule2(YMatrix{i},U{i}*A*sumFi,V{i},Lu{i},W{i},0,0,projB,lambda);
                     
                     for idx = 1:r
                         nextThreeB(:,:,idx) = A*fi{idx}*E';
                     end
                 end
                 B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, originalSize);
+                if i == sourceDomain
+                    csvwrite(sprintf('../exp_result/predict_result/U/source/U%d.csv', iter), U{i});
+                    csvwrite(sprintf('../exp_result/predict_result/V/source/V%d.csv', iter), V{i});
+                    csvwrite(sprintf('../exp_result/predict_result/A/source/A%d.csv', iter), A);
+                    csvwrite(sprintf('../exp_result/predict_result/E/source/E%d.csv', iter), E);
+                elseif i == targetDomain
+                    csvwrite(sprintf('../exp_result/predict_result/U/target/U%d.csv', iter), U{i});
+                    csvwrite(sprintf('../exp_result/predict_result/V/target/V%d.csv', iter), V{i});
+                    csvwrite(sprintf('../exp_result/predict_result/A/target/A%d.csv', iter), A);
+                    csvwrite(sprintf('../exp_result/predict_result/E/target/E%d.csv', iter), E);
+                end
             end
             %disp(sprintf('\tCalculate this iterator error'));
             for i = 1:numDom
@@ -99,8 +104,8 @@ for t = 1: randomTryTime
             %                 fprintf('iteration:%d, objectivescore:%f\n', iter, newObjectiveScore);
             diff = oldObjectiveScore - newObjectiveScore;
         end
-         avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
-         foldObjectiveScores(fold) = newObjectiveScore;
+        foldObjectiveScores(fold) = newObjectiveScore;
+        
         %calculate validationScore
         [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
         result = U{targetDomain}*projB*V{targetDomain}';
@@ -128,17 +133,14 @@ for t = 1: randomTryTime
     resultCellArray{t}{1} = avgObjectiveScore;
     resultCellArray{t}{2} = accuracy*100;
     resultCellArray{t}{3} = avgTime;
-    resultCellArray{t}{4} = avgIterationUsed;
     fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
 end
 
 if isTestPhase
     for numResult = 1:randomTryTime
-        fprintf(resultFile, '%f,%f,%f,%f,%f,%f\n', sigma, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3}, resultCellArray{numResult}{4});
+        fprintf(resultFile, '%f,%f,%f,%f,%f\n', sigma, lambda, resultCellArray{numResult}{1}, resultCellArray{numResult}{2}, resultCellArray{numResult}{3});
     end
-    csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);
     fclose(resultFile);
 end
 
-showExperimentInfo(exp_title, datasetId, prefix, numSampleInstance, numSampleFeature, numInstanceCluster, numFeatureCluster, sigma);
 fprintf('done\n\n');

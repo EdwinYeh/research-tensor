@@ -1,4 +1,5 @@
-function [Results, pz_d] = CD_PLSA(Train_Data,Test_Data,Parameter_Setting)
+% function [Results, pz_d] = CD_PLSA(Train_Data,Test_Data,Parameter_Setting)
+function CD_PLSA(datasetId)
 
 % function [Results, pz_d] = CD_PLSA(Train_Data,Test_Data,Parameter_Setting)
 
@@ -29,89 +30,64 @@ function [Results, pz_d] = CD_PLSA(Train_Data,Test_Data,Parameter_Setting)
 % Be good luck for your research, if you have any questions, you can
 % contact the email: zhuangfz@ics.ict.ac.cn
 
-numK = 0;
-numC = 0;
-numSource = 0;
-
-%read the parameters
-fid=fopen(Parameter_Setting);
-numK = str2num(fgetl(fid));
-numIteration = str2num(fgetl(fid));
-fclose(fid);
+numK = 64;
+numC = 2;
+numSource = 1;
+numTarget = 1;
+numIteration = 100;
+numSampleFeature = 2000;
+maxRandomTryTime = 10;
 
 iscsvread = 1;
 
 labelset = [];
 
-if iscsvread == 1
-    % read source domain data
-    fid=fopen(Train_Data);
-    numSource = str2num(fgetl(fid));
-    TrainX = [];
-    TrainY = [];
-    numTrain = [];
-    for i = 1:numSource
-        A = csvread(fgetl(fid));
-        B = spconvert(A);
-%         B = csvread(fgetl(fid));
-        TrainX = [TrainX B];
-        C = textread(fgetl(fid));
-        TrainY = [TrainY C'];
-        numTrain(1,i) = length(C);
-        labelset = union(labelset,C');
-        clear A;
-        clear B;
-        clear C;
-    end
-    fclose(fid);
-
-    % read target domain data
-    fid=fopen(Test_Data);
-    numTarget = str2num(fgetl(fid));
-    TestX = [];
-    TestY = [];
-    numTest = [];
-    for i = 1:numTarget
-        A = csvread(fgetl(fid));
-        B = spconvert(A);
-%         B = csvread(fgetl(fid));
-        TestX = [TestX B];
-        C = textread(fgetl(fid));
-        TestY = [TestY C'];
-        numTest(1,i) = length(C);
-        labelset = union(labelset,C');
-        clear A;
-        clear B;
-        clear C;
-    end
-    fclose(fid);
+if datasetId <= 6
+    dataType = 1;
+    prefix = '../../../../20-newsgroup/';
+elseif datasetId > 6 && datasetId <=9
+    dataType = 1;
+    prefix = '../../../../Reuter/';
+elseif datasetId >= 10 && datasetId  <= 13
+    dataType = 2;
+    prefix = '../../../../Animal_img/';
 end
 
-numC = length(labelset);
-pyz = rand(numK,numC);
-%pyz = ones(numK,numC);
-pyz = pyz/sum(sum(pyz));
+numDom = 2;
+domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 
-size(TrainX)
-size(TrainY)
-size(TestX)
-size(TestY )
+% Load data from source and target domain data
+X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
+for i = 1:numDom
+    denseFeatureIndex = findDenseFeature(X{i}, numSampleFeature);
+    X{i} = X{i}(:, denseFeatureIndex);
+end
+TrainY = load([prefix sprintf('source%d_label.csv', datasetId)]);
+TestY = load([prefix sprintf('target%d_label.csv', datasetId)]);
 
-% TrainX = TrainX';
-% TestX = TestX';
-denseFeature = findDenseFeature(TrainX, 5000);
-TrainX = TrainX(:, denseFeature);
-denseFeature = findDenseFeature(TestX, 5000);
-TestX = TestX(:, denseFeature);
-% TrainX = normr(TrainX);
-% TestX = normr(TestX);
+TrainX = X{1};
+TestX = X{2};
+
+sampleSourceDataIndex = csvread(sprintf('../../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
+sampleTargetDataIndex = csvread(sprintf('../../../sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
+numTrain = length(sampleSourceDataIndex);
+numTest = length(sampleTargetDataIndex);
+TrainX = TrainX(sampleSourceDataIndex, :);
+TestX = TestX(sampleTargetDataIndex, :);
+TrainY = TrainY(sampleSourceDataIndex, :);
+TestY = TestY(sampleTargetDataIndex, :);
 TrainX = TrainX';
 TestX = TestX';
+labelset = union(labelset, TrainY);
+labelset = union(labelset, TestY);
 
-size(TrainX)
-size(TrainY)
-size(TestX)
-size(TestY )
+numC = length(labelset);
+
+avgAccuracy = 0;
+for randomTryTime = 1:maxRandomTryTime
+    pyz = rand(numK,numC);
+%pyz = ones(numK,numC);
+pyz = pyz/sum(sum(pyz));
 
 start = 1;
 if start == 1
@@ -121,7 +97,8 @@ if start == 1
     Learn.heldout = .1; % for tempered EM only, percentage of held out data
     Learn.Min_Likelihood_Change = 1;
     Learn.Folding_Iterations = 20; % for TEM only: number of fiolding in iterations
-    Learn.TEM = 0; %tempered or not tempered
+    Learn.TEM = 0; %tempered or not tempered.
+    size(DataSetX)
     [Pw_z,Pz_d,Pd,Li,perp,eta] = pLSA(DataSetX,[],numK,Learn); %start PLSA
     %xlswrite(strcat('pwz_','common_selected','.xls'),Pw_z);
 end
@@ -142,7 +119,7 @@ clear pwy;
 
 pd_zc_s = [];
 for i = 1:numSource
-    A = zeros(numTrain(i),numC);
+    A = zeros(numTrain,numC);
     pos = 0;
     if i > 1
         for t = 1:i-1
@@ -152,7 +129,7 @@ for i = 1:numSource
     if i == 1
         pos = 0;
     end
-    for j = 1:numTrain(i)
+    for j = 1:numTrain
         for k = 1:numC
             if TrainY(pos+j) == labelset(k)
                 A(j,k) = 1;
@@ -169,7 +146,7 @@ end
 % In our paper, pd_z_t is assigned as the predicted results by supervised classifiers 
 pd_zc_t = [];
 for i = 1:numTarget
-    A = ones(numTest(i),numC);
+    A = ones(numTest,numC);
     for k = 1:numC
         A(:,k) = A(:,k)/sum(A(:,k));
     end
@@ -179,10 +156,10 @@ end
 pc = zeros(1,numSource+numTarget);
 numAll = sum(numTrain) + sum(numTest);
 for i = 1:numSource
-    pc(i) = numTrain(i)/numAll;
+    pc(i) = numTrain/numAll;
 end
 for i = 1:numTarget
-    pc(i+numSource) = numTest(i)/numAll;
+    pc(i+numSource) = numTest/numAll;
 end
 
 iter_results = [];
@@ -215,29 +192,29 @@ for iterID = 1:numIteration
         end
 
         A = [];
-        D = zeros(numK,numTrain(i));
+        D = zeros(numK,numTrain);
         for stepID = 1:numStep
             if stepID < numStep
-                tempsum2_s = pw_yc_s((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK)*pyz*pd_zc_s(pos+1:pos+numTrain(i),:)';
+                tempsum2_s = pw_yc_s((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK)*pyz*pd_zc_s(pos+1:pos+numTrain,:)';
                 tempsum2_s = tempsum2_s*pc(i);
                 [xs ys] = find(tempsum2_s == 0);
                 for q = 1:size(xs,1)
                     tempsum2_s(xs(q,1),ys(q,1)) = 1;
                 end
-                B = O_s((stepID-1)*step+1:stepID*step,pos+1:pos+numTrain(i))./tempsum2_s;
-                A = [A; pw_yc_s((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK).*(B*pd_zc_s(pos+1:pos+numTrain(i),:)*pyz')];
+                B = O_s((stepID-1)*step+1:stepID*step,pos+1:pos+numTrain)./tempsum2_s;
+                A = [A; pw_yc_s((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK).*(B*pd_zc_s(pos+1:pos+numTrain,:)*pyz')];
                 D = D + pw_yc_s((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK)'*B;
                 clear B;
             end
             if stepID == numStep
-                tempsum2_s = pw_yc_s((stepID-1)*step+1:size(O_s,1),(i-1)*numK+1:i*numK)*pyz*pd_zc_s(pos+1:pos+numTrain(i),:)';
+                tempsum2_s = pw_yc_s((stepID-1)*step+1:size(O_s,1),(i-1)*numK+1:i*numK)*pyz*pd_zc_s(pos+1:pos+numTrain,:)';
                 tempsum2_s = tempsum2_s*pc(i);
                 [xs ys] = find(tempsum2_s == 0);
                 for q = 1:size(xs,1)
                     tempsum2_s(xs(q,1),ys(q,1)) = 1;
                 end
-                B = O_s((stepID-1)*step+1:size(O_s,1),pos+1:pos+numTrain(i))./tempsum2_s;
-                A = [A; pw_yc_s((stepID-1)*step+1:size(O_s,1),(i-1)*numK+1:i*numK).*(B*pd_zc_s(pos+1:pos+numTrain(i),:)*pyz')];
+                B = O_s((stepID-1)*step+1:size(O_s,1),pos+1:pos+numTrain)./tempsum2_s;
+                A = [A; pw_yc_s((stepID-1)*step+1:size(O_s,1),(i-1)*numK+1:i*numK).*(B*pd_zc_s(pos+1:pos+numTrain,:)*pyz')];
                 D = D + pw_yc_s((stepID-1)*step+1:size(O_s,1),(i-1)*numK+1:i*numK)'*B;
                 clear B;
             end
@@ -250,9 +227,9 @@ for iterID = 1:numIteration
         temp_pw_yc_s = [temp_pw_yc_s A];
         clear A;
         
-        temp_pyz = temp_pyz + (pyz.*(D*pd_zc_s(pos+1:pos+numTrain(i),:)))*pc(i);
+        temp_pyz = temp_pyz + (pyz.*(D*pd_zc_s(pos+1:pos+numTrain,:)))*pc(i);
         clear D;
-        temp_pc(i) = sum(sum(TrainX(:,pos+1:pos+numTrain(i))));
+        temp_pc(i) = sum(sum(TrainX(:,pos+1:pos+numTrain)));
     end
 
     for i = 1:numTarget
@@ -267,31 +244,31 @@ for iterID = 1:numIteration
         end
 
         A = [];
-        C = zeros(numTest(i),numK);
-        D = zeros(numK,numTest(i));
+        C = zeros(numTest,numK);
+        D = zeros(numK,numTest);
         for stepID = 1:numStep
             if stepID < numStep
-                tempsum2_t = pw_yc_t((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK)*pyz*pd_zc_t(pos+1:pos+numTest(i),:)';
+                tempsum2_t = pw_yc_t((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK)*pyz*pd_zc_t(pos+1:pos+numTest,:)';
                 tempsum2_t = tempsum2_t*pc(numSource+i);
                 [xs ys] = find(tempsum2_t == 0);
                 for q = 1:size(xs,1)
                     tempsum2_t(xs(q,1),ys(q,1)) = 1;
                 end
-                B = O_t((stepID-1)*step+1:stepID*step,pos+1:pos+numTest(i))./tempsum2_t;
-                A = [A; pw_yc_t((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK).*(B*pd_zc_t(pos+1:pos+numTest(i),:)*pyz')];
+                B = O_t((stepID-1)*step+1:stepID*step,pos+1:pos+numTest)./tempsum2_t;
+                A = [A; pw_yc_t((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK).*(B*pd_zc_t(pos+1:pos+numTest,:)*pyz')];
                 C = C + B'*pw_yc_t((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK);
                 D = D + pw_yc_t((stepID-1)*step+1:stepID*step,(i-1)*numK+1:i*numK)'*B;
                 clear B;
             end
             if stepID == numStep
-                tempsum2_t = pw_yc_t((stepID-1)*step+1:size(O_t,1),(i-1)*numK+1:i*numK)*pyz*pd_zc_t(pos+1:pos+numTest(i),:)';
+                tempsum2_t = pw_yc_t((stepID-1)*step+1:size(O_t,1),(i-1)*numK+1:i*numK)*pyz*pd_zc_t(pos+1:pos+numTest,:)';
                 tempsum2_t = tempsum2_t*pc(numSource+i);
                 [xs ys] = find(tempsum2_t == 0);
                 for q = 1:size(xs,1)
                     tempsum2_t(xs(q,1),ys(q,1)) = 1;
                 end
-                B = O_t((stepID-1)*step+1:size(O_t,1),pos+1:pos+numTest(i))./tempsum2_t;
-                A = [A; pw_yc_t((stepID-1)*step+1:size(O_t,1),(i-1)*numK+1:i*numK).*(B*pd_zc_t(pos+1:pos+numTest(i),:)*pyz')];
+                B = O_t((stepID-1)*step+1:size(O_t,1),pos+1:pos+numTest)./tempsum2_t;
+                A = [A; pw_yc_t((stepID-1)*step+1:size(O_t,1),(i-1)*numK+1:i*numK).*(B*pd_zc_t(pos+1:pos+numTest,:)*pyz')];
                 C = C + B'*pw_yc_t((stepID-1)*step+1:size(O_t,1),(i-1)*numK+1:i*numK);
                 D = D + pw_yc_t((stepID-1)*step+1:size(O_t,1),(i-1)*numK+1:i*numK)'*B;
                 clear B;
@@ -305,7 +282,7 @@ for iterID = 1:numIteration
         temp_pw_yc_t = [temp_pw_yc_t A];
         clear A;
 
-        A = pd_zc_t(pos+1:pos+numTest(i),:).*(C*pyz);
+        A = pd_zc_t(pos+1:pos+numTest,:).*(C*pyz);
         clear C;
         A = A*pc(numSource+i);
         for k = 1:numC
@@ -313,9 +290,9 @@ for iterID = 1:numIteration
         end
         temp_pd_zc_t = [temp_pd_zc_t;A];
 
-        temp_pyz = temp_pyz + (pyz.*(D*pd_zc_t(pos+1:pos+numTest(i),:)))*pc(numSource+i);
+        temp_pyz = temp_pyz + (pyz.*(D*pd_zc_t(pos+1:pos+numTest,:)))*pc(numSource+i);
         clear D;
-        temp_pc(numSource+i) = sum(sum(TestX(:,pos+1:pos+numTest(i))));
+        temp_pc(numSource+i) = sum(sum(TestX(:,pos+1:pos+numTest)));
     end
 
     temp_pyz = temp_pyz/sum(sum(temp_pyz));
@@ -339,7 +316,7 @@ for iterID = 1:numIteration
             pos = 0;
         end
 
-        pzd = zeros(numTest(i),numC);
+        pzd = zeros(numTest,numC);
         for j = 1:size(pzd,1)
             for k = 1:size(pzd,2)
                 pzd(j,k) = pd_zc_t(pos+j,k)*sum(pyz(:,k));
@@ -353,9 +330,11 @@ for iterID = 1:numIteration
                 nCorrect = nCorrect + 1;
             end
         end
-        [iterID nCorrect/(numTest(i))]
-        iter_results(iterID,i) = nCorrect/(numTest(i));
+%         [iterID nCorrect/(numTest)]
+        iter_results(iterID,i) = nCorrect/(numTest);
     end
+    accuracy = nCorrect/(numTest);
+    avgAccuracy = avgAccuracy + accuracy;
     for i = 1:size(pz_d,1)
          pz_d(i,:) = pz_d(i,:)/sum( pz_d(i,:));
     end
@@ -363,5 +342,6 @@ for iterID = 1:numIteration
     O_s = TrainX;
     O_t = TestX;
 end
-
+disp(avgAccuracy/maxRandomTryTime);
 Results = iter_results;
+end

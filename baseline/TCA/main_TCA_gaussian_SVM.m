@@ -69,21 +69,24 @@ fprintf(resultFile, 'mu,sigma,empError,accuracy\n');
 bestValidationAccuracy = 0;
 bestMu = 1;
 bestSigma = 1;
-for tuneMu = 0:3
-    for tuneSigma = 0:3
-    mu = 0.001 * 100 ^ tuneMu;
-    sigma = 0.001 * 100 ^ tuneSigma;
-    [~, avgEmpError, validationAccuracy] = trainAndCvGaussianTCA(mu, sigma, numFold, numSourceData, numValidateData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
-    if validationAccuracy > bestValidationAccuracy
-        bestValidationAccuracy = validationAccuracy;
-        bestMu = mu;
-        bestSigma = sigma;     
-    end
-    fprintf(resultFile, '%f,%f,%f,%f\n', mu, sigma, avgEmpError, validationAccuracy);
-    end
-end
+% for tuneMu = 0:3
+%     for tuneSigma = 0:3
+%     mu = 0.001 * 100 ^ tuneMu;
+%     sigma = 0.001 * 100 ^ tuneSigma;
+%     [~, avgEmpError, validationAccuracy] = trainAndCvGaussianTCA(mu, sigma, numFold, numSourceData, numValidateData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
+%     if validationAccuracy > bestValidationAccuracy
+%         bestValidationAccuracy = validationAccuracy;
+%         bestMu = mu;
+%         bestSigma = sigma;     
+%     end
+%     fprintf(resultFile, '%f,%f,%f,%f\n', mu, sigma, avgEmpError, validationAccuracy);
+%     end
+% end
+totalTimer = tic;
 Y = [sourceY; testY];
-[predictLabel, avgEmpError, accuracy] = trainAndCvGaussianTCA(bestMu, bestSigma, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y); 
+[predictLabel, avgEmpError, accuracy] = trainAndCvGaussianTCA(0.1, 0.1, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y); 
+totalTime = toc(totalTimer);
+disp(totalTime/numFold);
 csvwrite(sprintf('../../../exp_result/predict_result/TCA_gaussian%d_predict_result.csv', datasetId), predictLabel);
 fprintf(resultFile, '%f,%f,%f,%f\n', bestMu, bestSigma, avgEmpError, accuracy);
 fclose(resultFile);

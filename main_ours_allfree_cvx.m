@@ -126,6 +126,17 @@ for t = 1: randomTryTime
                     end
                 end
                 B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, originalSize);
+                if i == sourceDomain
+                    csvwrite(sprintf('../exp_result/predict_result/U/source/U%d.csv', iter), U{i});
+                    csvwrite(sprintf('../exp_result/predict_result/V/source/V%d.csv', iter), V{i});
+                    csvwrite(sprintf('../exp_result/predict_result/A/source/A%d.csv', iter), A);
+                    csvwrite(sprintf('../exp_result/predict_result/E/source/E%d.csv', iter), E);
+                elseif i == targetDomain
+                    csvwrite(sprintf('../exp_result/predict_result/U/target/U%d.csv', iter), U{i});
+                    csvwrite(sprintf('../exp_result/predict_result/V/target/V%d.csv', iter), V{i});
+                    csvwrite(sprintf('../exp_result/predict_result/A/target/A%d.csv', iter), A);
+                    csvwrite(sprintf('../exp_result/predict_result/E/target/E%d.csv', iter), E);
+                end
             end
             %disp(sprintf('\tCalculate this iterator error'));
             for i = 1:numDom

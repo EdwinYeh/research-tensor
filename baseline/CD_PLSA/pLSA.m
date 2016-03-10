@@ -150,7 +150,7 @@ Pw_d = mex_Pw_d(X,Pw_z,Pz_d);
 % Tempered EM algorithm
 %
 for it = 1:maxit
-    fprintf('Iteration %d \n',it);
+    % fprintf('Iteration %d \n',it);
 
     % update the parameters and avoide the big posterior
     [Pw_z,Pz_d] = mex_EMstep(X,Pw_d,Pw_z,Pz_d,beta);
@@ -173,7 +173,7 @@ for it = 1:maxit
     if it > 1
 
         dLi(it) = Li(it) - Li(it-1);
-        fprintf('dLi= %f\n',dLi(it));
+        % fprintf('dLi= %f\n',dLi(it));
 
         % no TEM and stoping criterion reached
         if (~TEM && dLi(it) < Learn.Min_Likelihood_Change)

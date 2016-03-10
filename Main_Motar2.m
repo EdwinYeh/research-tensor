@@ -332,4 +332,4 @@ fprintf(resultFile, 'BestScore: %f%%', globalBestAccuracy* 100);
 fprintf('done\n');
 fclose(resultFile);
 fclose(resultFile2);
-matlabpool close;
+% matlabpool close;

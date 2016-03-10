@@ -1,8 +1,9 @@
 SetParameter;
 isTestPhase = true;
 exp_title = sprintf('ours_%d_sigma', datasetId);
-lambdaTryTime = 3;
-sigmaList = [0.1,  0.5, 1, 10, 100];
+lambdaTryTime = 5;
+randomTryTime = 1;
+sigmaList = [0.1];
 for sigmaTryTime = 1:length(sigmaList)
     sigma = sigmaList(sigmaTryTime);
     PrepareExperiment;

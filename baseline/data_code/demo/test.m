@@ -7,9 +7,9 @@
 % mex -largeArrayDims mex_logL.c;
 % mex -largeArrayDims mex_Pw_d.c;
 
-Train_Data = 'Train_Data.txt';
-Test_Data = 'Test_Data.txt';
-Parameter_Setting = 'Parameter_Setting.txt';
+% Train_Data = 'Train_Data.txt';
+% Test_Data = 'Test_Data.txt';
+% Parameter_Setting = 'Parameter_Setting.txt';
 
-[Results, pzd] = CD_PLSA(Train_Data,Test_Data,Parameter_Setting);
+CD_PLSA(1);
 

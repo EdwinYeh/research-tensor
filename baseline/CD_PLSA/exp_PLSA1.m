@@ -1,8 +1,3 @@
-datasetId = 11;
-CD_PLSA;
-
-datasetId = 12;
-CD_PLSA;
-
-datasetId = 13;
-CD_PLSA;
+CD_PLSA(11);
+CD_PLSA(12);
+CD_PLSA(13);

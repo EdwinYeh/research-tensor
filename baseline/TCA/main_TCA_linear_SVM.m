@@ -71,19 +71,22 @@ resultFile = fopen(sprintf('result_TCA_linear%d.csv', datasetId), 'w');
 fprintf(resultFile, 'mu,empError,accuracy\n');
 
 bestValidationAccuracy = 0;
-bestMu = 1;
-for tuneMu = 0:3
-    mu = 0.001 * 100 ^ tuneMu;
-    [~, avgEmpError, validationAccuracy] = trainAndCvLinearTCA(mu, numFold, numSourceData, numValidateData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
-    if validationAccuracy > bestValidationAccuracy
-        bestValidationAccuracy = validationAccuracy;
-        bestMu = mu;
-    end
-    fprintf(resultFile, '%f,%f,%f\n', mu, avgEmpError, validationAccuracy);
-end
+bestMu = 10;
+% for tuneMu = 0:3
+%     mu = 0.001 * 100 ^ tuneMu;
+%     [~, avgEmpError, validationAccuracy] = trainAndCvLinearTCA(mu, numFold, numSourceData, numValidateData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y);
+%     if validationAccuracy > bestValidationAccuracy
+%         bestValidationAccuracy = validationAccuracy;
+%         bestMu = mu;
+%     end
+%     fprintf(resultFile, '%f,%f,%f\n', mu, avgEmpError, validationAccuracy);
+% end
 
+totalTimer = tic;
 Y = [sourceY; testY];
 [predictLabel, avgEmpError, accuracy] = trainAndCvLinearTCA(bestMu, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y); 
+totalTime = toc(totalTimer);
+disp(totalTime);
 csvwrite(sprintf('../../../exp_result/predict_result/TCA_gaussian%d_predict_result.csv', datasetId), predictLabel);
 fprintf(resultFile, '%f,%f,%f\n', bestMu, avgEmpError, accuracy);
 fclose(resultFile);
