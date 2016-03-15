@@ -277,6 +277,7 @@ for tuneGama = 0:6
             convergeTime = toc(convergeTimer);
             if newObjectiveScore < bestRandomInitialObjectiveScore
                 bestU = U;
+                bestConvergeTime = convergeTime;
             end
         end
         targetTestingDataIndex = 1:CVFoldSize;
@@ -295,8 +296,8 @@ for tuneGama = 0:6
             targetTestingDataIndex = targetTestingDataIndex + CVFoldSize;
         end
         accuracy = numCorrectPredict/ (CVFoldSize*numCVFold);
-        fprintf('Lambda:%f, Gama:%f, ObjectiveScore:%f, Accuracy:%f%%\n', lambda, gama, newObjectiveScore, accuracy);
-        fprintf(resultFile, '%f,%f,%f,%f,%f\n', lambda, gama, newObjectiveScore, accuracy,convergeTime);
+        fprintf('Lambda:%f, Gama:%f, ObjectiveScore:%f, Accuracy:%f%%\n', lambda, gama, bestRandomInitialObjectiveScore, accuracy);
+        fprintf(resultFile, '%f,%f,%f,%f,%f\n', lambda, gama, bestRandomInitialObjectiveScore, accuracy,bestConvergeTime);
     end
 end
 %showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
