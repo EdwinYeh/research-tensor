@@ -149,10 +149,10 @@ resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
 fprintf(resultFile, 'lambda, gama, objectiveScore, accuracy, convergeTime\n');
 
 disp('Start training');
-for tuneGama = 0:6
-    gama = 0.000001 * 10 ^ tuneGama;
-    for tuneLambda = 0:6
-        lambda = 0.000001 * 10 ^ tuneLambda;
+for tuneGama = 0:3
+    gama = 0.000001 * 100 ^ tuneGama;
+    for tuneLambda = 0:3
+        lambda = 0.000001 * 100 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Use Lambda:%f, Gama:%f\n', lambda, gama);
@@ -171,8 +171,8 @@ for tuneGama = 0:6
             while (diff >= 0.0001  && iter < maxIter)%(abs(oldObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
                 iter = iter + 1;
                 oldObjectiveScore = newObjectiveScore;
-                fprintf('\t#Iterator:%d\n', iter);
-                disp(newObjectiveScore);
+%                 fprintf('\t#Iterator:%d\n', iter);
+%                 disp(newObjectiveScore);
                 newObjectiveScore = 0;
                 for i = 1:numDom
                     %disp(sprintf('\tdomain #%d update...', i));
@@ -276,6 +276,7 @@ for tuneGama = 0:6
             end
             convergeTime = toc(convergeTimer);
             if newObjectiveScore < bestRandomInitialObjectiveScore
+                bestRandomInitialObjectiveScore = newObjectiveScore;
                 bestU = U;
                 bestConvergeTime = convergeTime;
             end

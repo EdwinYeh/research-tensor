@@ -20,7 +20,7 @@ function [U, B, V] = randomInitialize(numInstance, numFeature, numInstanceCluste
 
     for i = 1:numDom
         rng('shuffle');
-        V{i} = rand(numFeature(i),numFeatureCluster);
+        V{i} = rand(numFeature(i), numFeatureCluster);
         U{i} = rand(numInstance(i), numInstanceCluster);
     end
 end
