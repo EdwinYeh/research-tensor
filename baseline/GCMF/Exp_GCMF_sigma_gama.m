@@ -1,9 +1,9 @@
 SetParameter;
 isTestPhase = true;
 exp_title = sprintf('ours_%d_GCMF_sigma', datasetId);
-lambdaTryTime = 0;
-gamaTryTime = 1;
-randomTryTime = 1;
+lambdaTryTime = 3;
+gamaTryTime = 3;
+randomTryTime = 5;
 sigmaList = [0.1];
 for sigmaTryTime = 1:length(sigmaList)
     sigma = sigmaList(sigmaTryTime);
