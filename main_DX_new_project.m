@@ -152,9 +152,9 @@ mkdir(directoryName);
 % fprintf(resultFile, 'lambda, gama, objectiveScore, accuracy, convergeTime\n');
 
 disp('Start training');
-for tuneGama = 0:1
+for tuneGama = 0:3
     gama = 0.000001 * 100 ^ tuneGama;
-    for tuneLambda = 0:0
+    for tuneLambda = 0:3
         lambda = 0.000001 * 100 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
