@@ -10,7 +10,7 @@ for tuneGama = 0:8
         lambda = 0.00000001 * 10 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-        fprintf('Use (%g_%g_%g_%d_%d_%d)\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
+        fprintf('Use ()\n', lambda, gama);
         bestRandomInitialObjectiveScore = Inf;
         for t = 1: randomTryTime
             objectiveScore = 0;
