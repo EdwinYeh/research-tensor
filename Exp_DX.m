@@ -10,8 +10,8 @@ mkdir(directoryName);
 
 for tuneCPRank = 1: length(cpRankList)
     cpRank = cpRankList(tuneCPRank);
-    for tuneNumFeatureCluster = 1: length(numInstanceClusterList)
-        numInstanceCluster = numInstanceClusterList(tuneNumFeatureCluster);
+    for tuneNumFeatureCluster = 1: length(numFeatureClusterList)
+        numFeatureCluster = numFeatureClusterList(tuneNumFeatureCluster);
         for tuneNumInstanceCluster = 1: length(numInstanceClusterList)
             numInstanceCluster = numInstanceClusterList(tuneNumInstanceCluster);
             for tuneSigma = 1: length(sigmaList)
