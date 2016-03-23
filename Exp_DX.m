@@ -1,9 +1,9 @@
 % Please assign datasetId in the commend line
 
 sigmaList = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
-numInstanceClusterList = [5, 10, 20, 40];
-numFeatureClusterList = [5, 10, 20, 40];
-cpRankList = [5, 10, 20, 40];
+numInstanceClusterList = [5, 10, 20, 30, 40, 50];
+numFeatureClusterList = [5, 10, 20, 30, 40, 50];
+cpRankList = [5, 10, 20, 30, 40, 50];
 expTitle = 'DX';
 
 directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
@@ -24,6 +24,7 @@ for tuneSigma = 1: length(sigmaList)
                     catch exception
                         fprintf('%g,%g,%g,%d,%d,%d\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
                         disp(exception.message);
+                        continue;
                     end
                 end
             end
