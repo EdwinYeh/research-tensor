@@ -1,5 +1,4 @@
 % configuration
-isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
@@ -124,11 +123,6 @@ for t = 1: randomTryTime
     randStr = round(randStr);
     initB{t} = tensor(randStr);
 end
-
-CP1 = rand(numInstanceCluster, cpRank);
-CP2 = rand(numFeatureCluster, cpRank);
-CP3 = rand(numInstanceCluster, cpRank);
-CP4 = rand(numFeatureCluster, cpRank);
 
 numCVFold = 5;
 CVFoldSize = numInstance(targetDomain)/ numCVFold;

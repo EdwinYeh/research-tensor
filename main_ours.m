@@ -99,7 +99,7 @@ for t = 1: randomTryTime
                 if isUpdateAE
                     [rA, cA] = size(A);
                     onesA = ones(rA, cA);
-                    A = A.*sqrt((A*sumFi*(E'*E)*sumFi'/norm(A*sumFi*E','fro')+U{i}'*YMatrix{i}*V{i}*E*sumFi+alpha*(onesA))./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+                    A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi+alpha*(onesA))./((A*sumFi*(E'*E)*sumFi'/norm(A*sumFi*E','fro'))+U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
                     A(isnan(A)) = 0;
                     A(~isfinite(A)) = 0;
                     A(isnan(A)) = 0;
@@ -107,7 +107,7 @@ for t = 1: randomTryTime
                     
                     [rE ,cE] = size(E);
                     onesE = ones(rE, cE);
-                    E = E.*sqrt(((E*sumFi'*(A'*A)*sumFi/norm(A*sumFi*E','fro'))+V{i}'*YMatrix{i}'*U{i}*A*sumFi + beta*(onesE))./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
+                    E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi + beta*(onesE))./((E*sumFi'*(A'*A)*sumFi/norm(A*sumFi*E','fro'))+V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
                     E(isnan(E)) = 0;
                     E(~isfinite(E)) = 0;
                     E(isnan(E)) = 0;
