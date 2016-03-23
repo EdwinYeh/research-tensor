@@ -1,9 +1,9 @@
 % Please assign datasetId in the commend line
 
 sigmaList = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
-numInstanceClusterList = [5, 10, 20, 40];
-numFeatureClusterList = [5, 10, 20, 40];
-cpRankList = [5, 10, 20, 40];
+numInstanceClusterList = [10, 20, 40];
+numFeatureClusterList = [10, 20, 40];
+cpRankList = [10, 20, 40];
 expTitle = 'DX_rH';
 
 isMakePrediction = false;

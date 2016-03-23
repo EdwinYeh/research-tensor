@@ -17,12 +17,14 @@ for tuneSigma = 1: length(sigmaList)
             numFeatureCluster = numFeatureClusterList(tuneNumFeatureCluster);
             for tuneNumInstanceCluster = 1: length(numInstanceClusterList)
                 numInstanceCluster = numInstanceClusterList(tuneNumInstanceCluster);
-                try
-                    prepareDXExperiment;
-                    main_DX;
-                catch exception
-                    fprintf('%g,%g,%g,%d,%d,%d\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
-                    disp(exception.message);
+                if numInstanceCluster <= cpRank && numFeatureCluster <= cpRank
+                    try
+                        prepareDXExperiment;
+                        main_DX;
+                    catch exception
+                        fprintf('%g,%g,%g,%d,%d,%d\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
+                        disp(exception.message);
+                    end
                 end
             end
         end

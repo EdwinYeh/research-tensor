@@ -6,7 +6,6 @@ numSampleInstance = [500, 500];
 numSampleFeature = [2000, 2000];
 maxIter = 500;
 randomTryTime = 5;
-cpRank = 5;
 numClass = 2;
 
 if datasetId <= 6

@@ -13,7 +13,7 @@ for tuneGama = 0:6
     gama = 0.00000001 * 10 ^ tuneGama;
     for tuneLambda = 0:6
         lambda = 0.00000001 * 10 ^ tuneLambda;
-        for tuneDelta = 0:6
+        for tuneDelta = 3:6
             delta = 0.000001 * 100 ^ tuneDelta;
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
@@ -36,8 +36,7 @@ for tuneGama = 0:6
                     iter = iter + 1;
                     oldObjectiveScore = newObjectiveScore;
                     % Display information of per iteration
-                    fprintf('\t#Iterator:%d\n', iter);
-                    disp(newObjectiveScore);
+                    fprintf('\t#Iterator:%d, objectiveScore:%f\n', iter, newObjectiveScore);
                     %--------------------------------------------------
                     newObjectiveScore = 0;
                     for dom = 1:numDom
@@ -45,6 +44,7 @@ for tuneGama = 0:6
                         [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
                         projB = A*sumFi*E';
                         fprintf('rank H: %d\n', rank(projB));
+                        fprintf('norm H: %f\n', norm(projB, 'fro'));
                         %---------------------------------------------------------
                         
                         % Update V
