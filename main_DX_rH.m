@@ -13,7 +13,7 @@ for tuneGama = 0:6
     gama = 0.00000001 * 10 ^ tuneGama;
     for tuneLambda = 0:6
         lambda = 0.00000001 * 10 ^ tuneLambda;
-        for tuneDelta = 3:6
+        for tuneDelta = 0:4
             delta = 0.000001 * 100 ^ tuneDelta;
             time = round(clock);
             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
@@ -36,15 +36,15 @@ for tuneGama = 0:6
                     iter = iter + 1;
                     oldObjectiveScore = newObjectiveScore;
                     % Display information of per iteration
-                    fprintf('\t#Iterator:%d, objectiveScore:%f\n', iter, newObjectiveScore);
+%                     fprintf('#Iterator:%d, objectiveScore:%f\n', iter, newObjectiveScore);
                     %--------------------------------------------------
                     newObjectiveScore = 0;
                     for dom = 1:numDom
                         % Compute projection of tensor by domain
                         [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
                         projB = A*sumFi*E';
-                        fprintf('rank H: %d\n', rank(projB));
-                        fprintf('norm H: %f\n', norm(projB, 'fro'));
+%                         fprintf('rank H: %d\n', rank(projB));
+%                         fprintf('norm H: %f\n', norm(projB, 'fro'));
                         %---------------------------------------------------------
                         
                         % Update V
@@ -117,7 +117,8 @@ for tuneGama = 0:6
                         normEmp = norm((X{dom} - result), 'fro')*norm((X{dom} - result), 'fro');
                         smoothU = lambda*trace(U{dom}'*Lu{dom}*U{dom});
                         smoothV = gama*trace(V{dom}'*Lv{dom}*V{dom});
-                        objectiveScore = normEmp + smoothU + smoothV;
+                        normH = delta*norm(projB, 'fro');
+                        objectiveScore = normEmp + smoothU + smoothV + normH;
                         newObjectiveScore = newObjectiveScore + objectiveScore;
                         %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, objectiveScore));
                     end
@@ -135,29 +136,31 @@ for tuneGama = 0:6
             save(sprintf('%sU_%g_%g_%g_%g_%d_%d_%d.mat', directoryName, delta, lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank), 'bestU');
             if isMakePrediction
                 targetTestingDataIndex = 1:CVFoldSize;
-            numCorrectPredict = 0;
-            for cvFold = 1: numCVFold
-                targetTrainingDataIndex = setdiff(1:numInstance(targetDomain),targetTestingDataIndex);
-                trainingData = [bestU{sourceDomain}; bestU{targetDomain}(targetTrainingDataIndex,:)];
-                trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
-                svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf');
-                predictLabel = predict(svmModel, bestU{targetDomain}(targetTestingDataIndex,:));
-                for dataIndex = 1: CVFoldSize
-                    if sampledLabel{targetDomain}(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
-                        numCorrectPredict = numCorrectPredict + 1;
+                numCorrectPredict = 0;
+                for cvFold = 1: numCVFold
+                    targetTrainingDataIndex = setdiff(1:numInstance(targetDomain),targetTestingDataIndex);
+                    trainingData = [bestU{sourceDomain}; bestU{targetDomain}(targetTrainingDataIndex,:)];
+                    trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
+                    svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf');
+                    predictLabel = predict(svmModel, bestU{targetDomain}(targetTestingDataIndex,:));
+                    for dataIndex = 1: CVFoldSize
+                        if sampledLabel{targetDomain}(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
+                            numCorrectPredict = numCorrectPredict + 1;
+                        end
                     end
+                    targetTestingDataIndex = targetTestingDataIndex + CVFoldSize;
                 end
-                targetTestingDataIndex = targetTestingDataIndex + CVFoldSize;
-            end
-            accuracy = numCorrectPredict/ (CVFoldSize*numCVFold);
-            fprintf('Delta:%g, Lambda:%g, Gama:%g, Sigma:%g, InstanceCluster:%d, FeatureCluster:%d, cpRank:%d\n', delta, lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
-            fprintf('ObjectiveScore:%g, Accuracy:%g%%\n', bestRandomInitialObjectiveScore, accuracy);
-            fprintf(resultFile, '%f,%g,%g,%g,%g,%d,%d,%d,%f\n', accuracy, delta, lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank, bestConvergeTime);
+                accuracy = numCorrectPredict/ (CVFoldSize*numCVFold);
+                fprintf('Delta:%g, Lambda:%g, Gama:%g, Sigma:%g, InstanceCluster:%d, FeatureCluster:%d, cpRank:%d\n', delta, lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
+                fprintf('ObjectiveScore:%g, Accuracy:%g%%\n', bestRandomInitialObjectiveScore, accuracy);
+                fprintf(resultFile, '%f,%g,%g,%g,%g,%d,%d,%d,%f\n', accuracy, delta, lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank, bestConvergeTime);
             end
         end
     end
 end
-fclose(resultFile);
+if isMakePrediction
+    fclose(resultFile);
+end
 %showExperimentInfo(exp_title, datasetId, prefix, numSourceInstanceList, numTargetInstanceList, numSourceFeatureList, numTargetFeatureList, numSampleInstance, numSampleFeature);
 fprintf('done\n');
 % parpool close;
