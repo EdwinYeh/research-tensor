@@ -7,16 +7,16 @@ isTestPhase = false;
 
 numSampleInstance = [500, 500];
 numSampleFeature = 2000;
-sigma = 1;
-numInstanceCluster = 4;
-numFeatureCluster = 4;
+sigma = 0.1;
+sigma2 = 0.1;
+cpRank = 10;
+numInstanceCluster = 10;
+numFeatureCluster = 10;
 numClass = [2, 2];
 
-maxIter = 100;
+maxIter = 1000;
 numCVFold = 5;
-lambdaTryTime = 0;
-gamaTryTime = 0;
-randomTryTime = 1;
+randomTryTime = 5;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;

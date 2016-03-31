@@ -83,10 +83,7 @@ for tuneGama = 0:6
                         %disp(sprintf('\t\tupdate A...'));
                         [rA, cA] = size(A);
                         onesA = ones(rA, cA);
-                        A = A.*sqrt((U{dom}'*X{dom}*V{dom}*E*sumFi + alpha*(onesA))./(delta*(A*sumFi*(E'*E)*sumFi'/norm(A*sumFi*E','fro'))+U{dom}'*U{dom}*A*sumFi*E'*V{dom}'*V{dom}*E*sumFi));
-                        A(isnan(A)) = 0;
-                        A(~isfinite(A)) = 0;
-                        %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
+                        A = A.*sqrt((U{dom}'*X{dom}*V{dom}*E*sumFi+alpha*(onesA))./(delta*(A*sumFi*(E'*E)*sumFi'/norm(A*sumFi*E','fro'))+U{dom}'*U{dom}*A*sumFi*E'*V{dom}'*V{dom}*E*sumFi));
                         A(isnan(A)) = 0;
                         A(~isfinite(A)) = 0;
                         
@@ -94,9 +91,6 @@ for tuneGama = 0:6
                         [rE ,cE] = size(E);
                         onesE = ones(rE, cE);
                         E = E.*sqrt((V{dom}'*X{dom}'*U{dom}*A*sumFi + beta*(onesE))./(delta*(E*sumFi'*(A'*A)*sumFi/norm(A*sumFi*E','fro'))+V{dom}'*V{dom}*E*sumFi*A'*U{dom}'*U{dom}*A*sumFi));
-                        E(isnan(E)) = 0;
-                        E(~isfinite(E)) = 0;
-                        %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
                         E(isnan(E)) = 0;
                         E(~isfinite(E)) = 0;
                         
