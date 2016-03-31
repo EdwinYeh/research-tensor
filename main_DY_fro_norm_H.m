@@ -1,6 +1,5 @@
 disp('Start training');
 
-resultFile = fopen(sprintf('../exp_result/%s_%d.csv', exp_title, datasetId), 'w');
 fprintf(resultFile,'accuracy,sigma,sigma2,lambda,delta,trainingTime\n');
 
 lambdaScale = 100;
@@ -154,5 +153,4 @@ for lambdaOrder = 0:6
         % matlabpool close;
     end
 end
-fclose(resultFile);
 fprintf('done\n\n');
