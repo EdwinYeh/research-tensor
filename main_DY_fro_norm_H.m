@@ -122,7 +122,6 @@ for lambdaOrder = 0:6
                     end
                     diff = oldObjectiveScore - newObjectiveScore;
                     oldObjectiveScore = newObjectiveScore;
-                    disp(diff);
                 end
                 foldObjectiveScores(fold) = newObjectiveScore;
                 
