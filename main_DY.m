@@ -2,7 +2,7 @@ disp('Start training');
 
 if isTestPhase
     resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
-    fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime\n');
+    fprintf(resultFile, 'sigma,sigma2,lambda,objectiveScore,accuracy,trainingTime\n');
 end
 
 time = round(clock);
