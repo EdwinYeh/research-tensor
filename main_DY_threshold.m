@@ -121,7 +121,7 @@ for lambdaOrder = 0:6
                             normEmp = norm((YMatrix{domId} - result), 'fro')*norm((YMatrix{domId} - result), 'fro');
                         end
                         smoothU = lambda*trace(U{domId}'*Lu{domId}*U{domId});
-                        normH = delta*norm(projB, 'one');
+                        normH = delta*norm(projB, 1);
                         objectiveScore = normEmp + smoothU + normH;
                         newObjectiveScore = newObjectiveScore + objectiveScore;
                     end
