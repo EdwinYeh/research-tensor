@@ -2,11 +2,11 @@ disp('Start training');
 
 fprintf(resultFile,'accuracy,sigma,lambda,delta,trainingTime\n');
 
-lambdaScale = 100;
-deltaScale = 100;
+lambdaScale = 10;
+deltaScale = 10;
 for lambdaOrder = 0:6
-    lambda = 10^(-8)* lambdaScale^lambdaOrder;
-    for deltaOrder = 0:6
+    lambda = 10^(-6)* lambdaScale^lambdaOrder;
+    for deltaOrder = 0:8
         delta = 10^(-8)* deltaScale^deltaOrder;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
@@ -85,19 +85,22 @@ for lambdaOrder = 0:6
                         U{domId}(isnan(U{domId})) = 0;
                         U{domId}(~isfinite(U{domId})) = 0;
                         
-                        %update AE
+                        % Update AE
                         
-                        NNZ = (projB < 0.00000001);
+                        % Indicator matrix where entries >= delta = 1,
+                        % otherwise = 0
                         
                         [rA, cA] = size(A);
                         onesA = ones(rA, cA);
-                        A = A.*sqrt((U{domId}'*YMatrix{domId}*V{domId}*E*sumFi+alpha*(onesA))./(delta*NNZ+U{domId}'*U{domId}*A*sumFi*E'*V{domId}'*V{domId}*E*sumFi));
+                        A = A.*sqrt((U{domId}'*YMatrix{domId}*V{domId}*E*sumFi+alpha*(onesA))./(U{domId}'*U{domId}*A*sumFi*E'*V{domId}'*V{domId}*E*sumFi));
+                        wthresh(A, 's', delta);
                         A(isnan(A)) = 0;
                         A(~isfinite(A)) = 0;
                         
                         [rE ,cE] = size(E);
                         onesE = ones(rE, cE);
-                        E = E.*sqrt((V{domId}'*YMatrix{domId}'*U{domId}*A*sumFi + beta*(onesE))./(delta*NNZ+V{domId}'*V{domId}*E*sumFi*A'*U{domId}'*U{domId}*A*sumFi));
+                        E = E.*sqrt((V{domId}'*YMatrix{domId}'*U{domId}*A*sumFi + beta*(onesE))./(V{domId}'*V{domId}*E*sumFi*A'*U{domId}'*U{domId}*A*sumFi));
+                        wthresh(E, 's', delta);
                         E(isnan(E)) = 0;
                         E(~isfinite(E)) = 0;
                         if domId == sourceDomain
@@ -118,7 +121,7 @@ for lambdaOrder = 0:6
                             normEmp = norm((YMatrix{domId} - result), 'fro')*norm((YMatrix{domId} - result), 'fro');
                         end
                         smoothU = lambda*trace(U{domId}'*Lu{domId}*U{domId});
-                        normH = delta*norm(projB, 'fro');
+                        normH = delta*norm(projB, 'one');
                         objectiveScore = normEmp + smoothU + normH;
                         newObjectiveScore = newObjectiveScore + objectiveScore;
                     end
