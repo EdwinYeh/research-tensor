@@ -1,14 +1,17 @@
 disp('Start training');
 
 fprintf(resultFile,'accuracy,sigma,lambda,delta,trainingTime\n');
+objTrack = cell(20,5);
+HTrack = cell(20,5);
 
 lambdaScale = 10;
-deltaScale = 10;
-for lambdaOrder = 0:6
+deltaScale = 2;
+for lambdaOrder = 3
     lambda = 10^(-6)* lambdaScale^lambdaOrder;
-    for deltaOrder = 0:12
-        delta = 10^(-6)* deltaScale^deltaOrder;
-        time = round(clock);
+    for deltaOrder = 1:20
+        delta = 10^(-4)* deltaScale^deltaOrder;
+	delta =0;
+	round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         fprintf('Use (sigma,lambda,delta)=(%g,%g,%g)\n', sigma, lambda, delta);
         % Random initila several times
@@ -21,7 +24,7 @@ for lambdaOrder = 0:6
             validateIndex = 1: CVFoldSize;
             foldObjectiveScores = zeros(1,numCVFold);
             trainAndPredictTimer = tic;
-            for fold = 1:numCVFold
+		for fold = 1:numCVFold
                 YMatrix = TrueYMatrix;
                 YMatrix{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(1));
                 W = ones(numSampleInstance(targetDomain), numClass(1));
@@ -87,17 +90,18 @@ for lambdaOrder = 0:6
                         
                         %update AE
                         
-                        NNZ = (projB < 0.00000001);
+                        %NNZ = (projB < 0.00000001);
+			NNZ=1;
                         
                         [rA, cA] = size(A);
                         onesA = ones(rA, cA);
-                        A = A.*sqrt((U{domId}'*YMatrix{domId}*V{domId}*E*sumFi+alpha*(onesA))./(delta*NNZ+U{domId}'*U{domId}*A*sumFi*E'*V{domId}'*V{domId}*E*sumFi));
+                        A = A.*sqrt(max(U{domId}'*YMatrix{domId}*V{domId}*E*sumFi + alpha*(onesA)-delta*norm(sumFi*E',1),0))./(U{domId}'*U{domId}*A*sumFi*E'*V{domId}'*V{domId}*E*sumFi+E*sumFi'*A'*A*sumFi/norm(A*sumFi*E','fro'));
                         A(isnan(A)) = 0;
                         A(~isfinite(A)) = 0;
                         
                         [rE ,cE] = size(E);
                         onesE = ones(rE, cE);
-                        E = E.*sqrt((V{domId}'*YMatrix{domId}'*U{domId}*A*sumFi + beta*(onesE))./(delta*NNZ+V{domId}'*V{domId}*E*sumFi*A'*U{domId}'*U{domId}*A*sumFi));
+                        E = E.*sqrt(V{domId}'*YMatrix{domId}'*U{domId}*A*sumFi + beta*(onesE))./(V{domId}'*V{domId}*E*sumFi*A'*U{domId}'*U{domId}*A*sumFi+delta*A*sumFi*E'*E*sumFi/norm(A*sumFi*E','fro'));
                         E(isnan(E)) = 0;
                         E(~isfinite(E)) = 0;
                         if domId == sourceDomain
@@ -108,27 +112,34 @@ for lambdaOrder = 0:6
                             CP4 = E;
                         end
                     end
-                    for domId = 1:numDom
-                        [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
-                        projB = A*sumFi*E';
-                        result = U{domId}*projB*V{domId}';
-                        if domId == targetDomain
-                            normEmp = norm((YMatrix{domId} - result).*W, 'fro')*norm((YMatrix{domId} - result).*W, 'fro');
-                        else
-                            normEmp = norm((YMatrix{domId} - result), 'fro')*norm((YMatrix{domId} - result), 'fro');
-                        end
-                        smoothU = lambda*trace(U{domId}'*Lu{domId}*U{domId});
-                        normH = delta*norm(projB, 1);
-                        objectiveScore = normEmp + smoothU + normH;
-                        newObjectiveScore = newObjectiveScore + objectiveScore;
-                    end
+
+
+
+%                    for domId = 1:numDom
+ %                       [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, domId);
+  %                      projB = A*sumFi*E';
+   %                     result = U{domId}*projB*V{domId}';
+    %                    if domId == targetDomain
+     %                       normEmp = norm((YMatrix{domId} - result).*W, 'fro')*norm((YMatrix{domId} - result).*W, 'fro');
+      %                  else
+       %                     normEmp = norm((YMatrix{domId} - result), 'fro')*norm((YMatrix{domId} - result), 'fro');
+        %                end
+         %               smoothU = lambda*trace(U{domId}'*Lu{domId}*U{domId});
+          %              normH = delta*norm(projB, 'fro');
+           %             objectiveScore = normEmp + smoothU + normH;
+            %            newObjectiveScore = newObjectiveScore + objectiveScore;
+             %       end
+
+			newObjectiveScore=objective({CP1,CP2,CP3,CP4},YMatrix,U,V,Lu,W,lambda,delta,numDom,targetDomain,'fro');
+		    objTrack{deltaOrder, fold} = [objTrack{deltaOrder, fold} newObjectiveScore];
                     diff = oldObjectiveScore - newObjectiveScore;
                     oldObjectiveScore = newObjectiveScore;
                 end
+		HTrack{deltaOrder, fold} = projB;
                 foldObjectiveScores(fold) = newObjectiveScore;
                 
                 %calculate validationScore
-                [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
+                [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, domId);
                 projB = A*sumFi*E';
                 result = U{targetDomain}*projB*V{targetDomain}';
                 
@@ -141,6 +152,8 @@ for lambdaOrder = 0:6
                 end
                 validateIndex = validateIndex + CVFoldSize;
             end
+		save objTrack;
+		save HTrack;
             trainAndPredictTime = toc(trainAndPredictTimer);
             
             accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
