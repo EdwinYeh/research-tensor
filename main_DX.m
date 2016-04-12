@@ -4,9 +4,9 @@
 % parpool('open', 'local', 4);
 
 % disp('Start training');
-for tuneGama = 0:6
+for tuneGama = 0:0
     gama = 0.00000001 * 10 ^ tuneGama;
-    for tuneLambda = 0:6
+    for tuneLambda = 0:0
         lambda = 0.00000001 * 10 ^ tuneLambda;
         time = round(clock);
         fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
@@ -25,17 +25,15 @@ for tuneGama = 0:6
             iter = 0;
             diff = Inf;
             convergeTimer = tic;
-            while (diff >= 0.0001  && iter < maxIter)%(abs(oldObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
+            while (diff >= 0.000001  && iter < maxIter)%(abs(oldObjectiveScore - newObjectiveScore) >= 0.1 && iter < maxIter)
                 iter = iter + 1;
+                fprintf('Iteration:%d, ObjectiveScore:%f\n', iter, newObjectiveScore);
                 oldObjectiveScore = newObjectiveScore;
-                %                 fprintf('\t#Iterator:%d\n', iter);
-                %                 disp(newObjectiveScore);
                 newObjectiveScore = 0;
                 for dom = 1:numDom
                     % Compute projection of tensor by domain
                     [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
                     projB = A*sumFi*E';
-                    % disp(sprintf('\t\tupdate V...'));
                     % Update V
                     V{dom} = V{dom}.*sqrt((X{dom}'*U{dom}*projB + gama*Sv{dom}*V{dom})./(V{dom}*projB'*U{dom}'*U{dom}*projB + gama*Dv{dom}*V{dom}));
                     V{dom}(isnan(V{dom})) = 0;
@@ -51,13 +49,16 @@ for tuneGama = 0:6
                     end
                     V{dom}(isnan(V{dom})) = 0;
                     V{dom}(~isfinite(V{dom})) = 0;
+                    tmpObjectiveScore = showObjectiveDX(U, V, X, Lu, Lv, CP1, CP2, CP3, CP4, lambda, gama);
+                    if tmpObjectiveScore > oldObjectiveScore
+                        fprintf('Objective increased when update V(%f -> %f)\n', oldObjectiveScore, tmpObjectiveScore);
+                    end
                     
-                    %disp(sprintf('\t\tupdate U...'));
                     %update U
-                    U{dom} = U{dom}.*sqrt((X{dom}*V{dom}*projB'+lambda*Su{dom}*U{dom})./(U{dom}*projB*V{dom}'*V{dom}*projB'+lambda*Du{dom}*U{dom}));
-                    U{dom}(isnan(U{dom})) = 0;
-                    U{dom}(~isfinite(U{dom})) = 0;
-                    %col normalize
+%                     U{dom} = U{dom}.*sqrt((X{dom}*V{dom}*projB'+lambda*Su{dom}*U{dom})./(U{dom}*projB*V{dom}'*V{dom}*projB'+lambda*Du{dom}*U{dom}));
+%                     U{dom}(isnan(U{dom})) = 0;
+%                     U{dom}(~isfinite(U{dom})) = 0;
+%                     %col normalize
                     [r ,~] = size(U{dom});
                     for tmpI = 1:r
                         bot = sum(abs(U{dom}(tmpI,:)));
@@ -68,41 +69,51 @@ for tuneGama = 0:6
                     end
                     U{dom}(isnan(U{dom})) = 0;
                     U{dom}(~isfinite(U{dom})) = 0;
-                    
+                    tmpObjectiveScore = showObjectiveDX(U, V, X, Lu, Lv, CP1, CP2, CP3, CP4, lambda, gama);
+                    if tmpObjectiveScore > oldObjectiveScore
+                        fprintf('Objective increased when update U(%f -> %f)\n', oldObjectiveScore, tmpObjectiveScore);
+                    end
                     %update fi
                     
-                    %disp(sprintf('\t\tupdate A...'));
+%                     disp('update A...');
                     [rA, cA] = size(A);
                     onesA = ones(rA, cA);
                     A = A.*sqrt((U{dom}'*X{dom}*V{dom}*E*sumFi + alpha*(onesA))./(U{dom}'*U{dom}*A*sumFi*E'*V{dom}'*V{dom}*E*sumFi));
                     A(isnan(A)) = 0;
                     A(~isfinite(A)) = 0;
                     %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
-                    A(isnan(A)) = 0;
-                    A(~isfinite(A)) = 0;
+               
+                    if dom == sourceDomain
+                        CP1 = A;
+                    else
+                        CP3 = A;
+                    end
+                    tmpObjectiveScore = showObjectiveDX(U, V, X, Lu, Lv, CP1, CP2, CP3, CP4, lambda, gama);
+                    if tmpObjectiveScore > oldObjectiveScore
+                        fprintf('Objective increased when update A(%f -> %f)\n', oldObjectiveScore, tmpObjectiveScore);
+                    end
                     
-                    %disp(sprintf('\t\tupdate E...'));
                     [rE ,cE] = size(E);
                     onesE = ones(rE, cE);
                     E = E.*sqrt((V{dom}'*X{dom}'*U{dom}*A*sumFi + beta*(onesE))./(V{dom}'*V{dom}*E*sumFi*A'*U{dom}'*U{dom}*A*sumFi));
                     E(isnan(E)) = 0;
                     E(~isfinite(E)) = 0;
                     %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
-                    E(isnan(E)) = 0;
-                    E(~isfinite(E)) = 0;
                     
                     if dom == sourceDomain
-                        CP1 = A;
                         CP2 = E;
                     else
-                        CP3 = A;
                         CP4 = E;
+                    end
+                    
+                    tmpObjectiveScore = showObjectiveDX(U, V, X, Lu, Lv, CP1, CP2, CP3, CP4, lambda, gama);
+                    if tmpObjectiveScore > oldObjectiveScore
+                        fprintf('Objective increased when update  E(%f -> %f)\n', oldObjectiveScore, tmpObjectiveScore);
                     end
                     
                 end
                 %disp(sprintf('\tCalculate this iterator error'));
                 for dom = 1:numDom
-                    %for i = 1:numDom
                     [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
                     projB = A*sumFi*E';
                     result = U{dom}*projB*V{dom}';
@@ -111,10 +122,8 @@ for tuneGama = 0:6
                     smoothV = gama*trace(V{dom}'*Lv{dom}*V{dom});
                     objectiveScore = normEmp + smoothU + smoothV;
                     newObjectiveScore = newObjectiveScore + objectiveScore;
-                    %disp(sprintf('\t\tdomain #%d => empTerm:%f, smoothU:%f, smoothV:%f ==> objective score:%f', i, normEmp, smoothU, smoothV, objectiveScore));
+%                     fprintf('\t\tdomain #%d => empTerm:%g, smoothU:%g, smoothV:%g ==> objective score:%g\n', dom, normEmp, smoothU, smoothV, objectiveScore);
                 end
-                %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
-                %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
                 diff = oldObjectiveScore - newObjectiveScore;
             end
             convergeTime = toc(convergeTimer);
