@@ -43,6 +43,7 @@ for t = 1: randomTryTime
                 [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, i);
                 projB = A*sumFi*E';
                 
+                disp('Update V');
 %                 V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}')*U{i}*projB));
                 if i == targetDomain
                     V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
@@ -53,16 +54,14 @@ for t = 1: randomTryTime
                 V{i}(~isfinite(V{i})) = 0;
                 
                 %col normalize
-                [r, ~] = size(V{i});
-                for tmpI = 1:r
-                    bot = sum(abs(V{i}(tmpI,:)));
-                    if bot == 0
-                        bot = 1;
-                    end
-                    V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
-                end
-                V{i}(isnan(V{i})) = 0;
-                V{i}(~isfinite(V{i})) = 0;
+%                 [r, ~] = size(V{i});
+%                 for tmpI = 1:r
+%                     bot = sum(abs(V{i}(tmpI,:)));
+%                     if bot == 0
+%                         bot = 1;
+%                     end
+%                     V{i}(tmpI,:) = V{i}(tmpI,:)/bot;
+%                 end
                 ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 %update U
                 disp('Update U');
@@ -75,17 +74,17 @@ for t = 1: randomTryTime
                 U{i}(isnan(U{i})) = 0;
                 U{i}(~isfinite(U{i})) = 0;
                 
-                %col normalize
-                [r, ~] = size(U{i});
-                for tmpI = 1:r
-                    bot = sum(abs(U{i}(tmpI,:)));
-                    if bot == 0
-                        bot = 1;
-                    end
-                    U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
-                end
-                U{i}(isnan(U{i})) = 0;
-                U{i}(~isfinite(U{i})) = 0;
+%                 %col normalize
+%                 [r, ~] = size(U{i});
+%                 for tmpI = 1:r
+%                     bot = sum(abs(U{i}(tmpI,:)));
+%                     if bot == 0
+%                         bot = 1;
+%                     end
+%                     U{i}(tmpI,:) = U{i}(tmpI,:)/bot;
+%                 end
+%                 U{i}(isnan(U{i})) = 0;
+%                 U{i}(~isfinite(U{i})) = 0;
                 ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 %update fi
                 disp('Update A');
@@ -94,11 +93,6 @@ for t = 1: randomTryTime
                 A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
                 A(isnan(A)) = 0;
                 A(~isfinite(A)) = 0;
-                if i == sourceDomain
-                    CP1 = A;
-                else
-                    CP3 = A;
-                end
                 ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 disp('Update E');
                 [rE ,cE] = size(E);
@@ -106,12 +100,17 @@ for t = 1: randomTryTime
                 E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
                 E(isnan(E)) = 0;
                 E(~isfinite(E)) = 0;
+                %Normalize U,V & rescale H
+                [newU, newV, newA, newE]= normalizeAndRescale(U{i},V{i},A,E);
                 if i == sourceDomain
+                   CP1 = A;
                    CP2 = E;
                 else
+                   CP3 = A;
                    CP4 = E;
                end
-                ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+               ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+               U
             end
             for i = 1:numDom
                 [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, i);
