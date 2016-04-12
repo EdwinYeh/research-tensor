@@ -65,11 +65,8 @@ for dom = 1: numDom
     Lu{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
     
     fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
-    Su{dom} = gaussianSimilarityMatrix(X{dom}, sigma);
-    Su{dom}(isnan(Su{dom})) = 0;
-    Su{dom}(~isfinite(Su{dom})) = 1;
-    % Calculate similarity in kernel space
-    Su{dom} = gaussianSimilarityMatrix(Su{dom}, sigma2);
+    Su{dom} = computeGraphInKernel(X{dom}, sigma, sigma2);
+    
     for useri = 1:numSampleInstance(dom)
         Du{dom}(useri,useri) = sum(Su{dom}(useri,:));
     end
