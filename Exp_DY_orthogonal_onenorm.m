@@ -12,7 +12,7 @@ for sigmaTryTime = 1:length(sigmaList)
         for deltaOrder = 0:deltaTryTime
             delta = 0.000000001 * 10 ^ deltaOrder;
             lambda = 0.00000001 * 10 ^ lambdaOrder;
-            main_DY_orthognal_onenorm;
+            main_DY_orthogonal_onenorm;
         end
     end
 end
