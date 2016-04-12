@@ -1,12 +1,4 @@
 % configuration
-isSampleInstance = true;
-isSampleFeature = true;
-isRandom = true;
-numSampleInstance = [500, 500];
-numSampleFeature = [2000, 2000];
-maxIter = 500;
-randomTryTime = 5;
-numClass = 2;
 
 if datasetId <= 6
     dataType = 1;
@@ -61,9 +53,9 @@ for dom = 1: numDom
         sampledLabel{dom} = allLabel{dom}(sampleDataIndex, :);
     end
     if isSampleFeature == true
-        denseFeatures = findDenseFeature(X{dom}, numSampleFeature(dom));
+        denseFeatures = findDenseFeature(X{dom}, numSampleFeature);
         X{dom} = X{dom}(:, denseFeatures);
-        numFeature(dom) = numSampleFeature(dom);
+        numFeature(dom) = numSampleFeature;
     end
 end
 
