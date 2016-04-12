@@ -1,7 +1,7 @@
 disp('Start training');
 
 if isTestPhase
-    resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'w');
+    resultFile = fopen(sprintf('../exp_result/result_%s.csv', exp_title), 'a');
     fprintf(resultFile, 'sigma,lambda,objectiveScore,accuracy,trainingTime\n');
 end
 
@@ -19,14 +19,17 @@ for t = 1: randomTryTime
     foldObjectiveScores = zeros(1,numCVFold);
     TotalTimer = tic;
     totalPredictResult = zeros(numSampleInstance(targetDomain), 1);
+    CP1 = rand(numInstanceCluster, cpRank);
+    CP2 = rand(numFeatureCluster, cpRank);
+    CP3 = rand(numInstanceCluster, cpRank);
+    CP4 = rand(numFeatureCluster, cpRank);
+    U = initU(t, :);
+    V = initV(t, :);
     for fold = 1:numCVFold
         YMatrix = TrueYMatrix;
         YMatrix{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(1));
         W = ones(numSampleInstance(targetDomain), numClass(1));
         W(validateIndex, :) = 0;
-        U = initU(t, :);
-        V = initV(t, :);
-        B = initB{t};
         iter = 0;
         diff = Inf;
         newObjectiveScore = Inf;
@@ -37,17 +40,9 @@ for t = 1: randomTryTime
             oldObjectiveScore = newObjectiveScore;
             newObjectiveScore = 0;
             for i = 1:numDom
-                [projB, threeMatrixB] = SumOfMatricize(B, 2*(i - 1)+1);
-                bestCPR = 20;
-                CP = cp_apr(tensor(threeMatrixB), bestCPR, 'printitn', 0, 'alg', 'mu');%parafac_als(tensor(threeMatrixB), bestCPR);
+                [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, i);
+                projB = A*sumFi*E';
                 
-                A = CP.U{1};
-                E = CP.U{2};
-                U3 = CP.U{3};
-                
-                fi = cell(1, length(CP.U{3}));
-                
-                disp('Update V');
 %                 V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}')*U{i}*projB));
                 if i == targetDomain
                     V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./((V{i}*projB'*U{i}'.*W')*U{i}*projB));
@@ -68,7 +63,7 @@ for t = 1: randomTryTime
                 end
                 V{i}(isnan(V{i})) = 0;
                 V{i}(~isfinite(V{i})) = 0;
-                ShowObjective(B, U, V, W, YMatrix, Lu, lambda);
+                ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 %update U
                 disp('Update U');
 %                 U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB'+lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB'+lambda*Du{i}*U{i}));
@@ -91,45 +86,36 @@ for t = 1: randomTryTime
                 end
                 U{i}(isnan(U{i})) = 0;
                 U{i}(~isfinite(U{i})) = 0;
-                ShowObjective(B, U, V, W, YMatrix, Lu, lambda);
+                ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 %update fi
-                [r, c] = size(U3);
-                nextThreeB = zeros(numInstanceCluster, numFeatureCluster, r);
-                sumFi = zeros(c, c);
-                CPLamda = CP.lambda(:);
-                for idx = 1:r
-                    fi{idx} = diag(CPLamda.*U3(idx,:)');
-                    sumFi = sumFi + fi{idx};
-                end
                 disp('Update A');
                 [rA, cA] = size(A);
                 onesA = ones(rA, cA);
                 A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
                 A(isnan(A)) = 0;
                 A(~isfinite(A)) = 0;
-                A(isnan(A)) = 0;
-                A(~isfinite(A)) = 0;
-                for idx = 1:r
-                    nextThreeB(:,:,idx) = A*fi{idx}*E';
+                if i == sourceDomain
+                    CP1 = A;
+                else
+                    CP3 = A;
                 end
-                B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, originalSize);
-                ShowObjective(B, U, V, W, YMatrix, Lu, lambda);
+                ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 disp('Update E');
                 [rE ,cE] = size(E);
                 onesE = ones(rE, cE);
                 E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
                 E(isnan(E)) = 0;
                 E(~isfinite(E)) = 0;
-                E(isnan(E)) = 0;
-                E(~isfinite(E)) = 0;
-                for idx = 1:r
-                    nextThreeB(:,:,idx) = A*fi{idx}*E';
-                end
-                B = InverseThreeToOriginalB(tensor(nextThreeB), 2*(i-1)+1, originalSize);
-                ShowObjective(B, U, V, W, YMatrix, Lu, lambda);
+                if i == sourceDomain
+                   CP2 = E;
+                else
+                   CP4 = E;
+               end
+                ShowObjective(U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
             end
             for i = 1:numDom
-                [projB, ~] = SumOfMatricize(B, 2*(i - 1)+1);
+                [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, i);
+                projB = A*sumFi*E';
                 result = U{i}*projB*V{i}';
                 if i == targetDomain
                     normEmp = norm((YMatrix{i} - result).*W, 'fro')*norm((YMatrix{i} - result).*W, 'fro');
@@ -145,7 +131,8 @@ for t = 1: randomTryTime
         foldObjectiveScores(fold) = newObjectiveScore;
         
         %calculate validationScore
-        [projB, ~] = SumOfMatricize(B, 2*(targetDomain - 1)+1);
+        [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, targetDomain);
+        projB = A*sumFi*E';
         result = U{targetDomain}*projB*V{targetDomain}';
         
         [~, maxIndex] = max(result, [], 2);

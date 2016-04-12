@@ -41,7 +41,7 @@ for lambdaOrder = 0:6
                     iter = iter + 1;
                     newObjectiveScore = 0;
                     for domId = 1:numDom
-                        [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
+                        [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, domId);
                         projB = A*sumFi*E';
                         
                         if domId == targetDomain
@@ -109,7 +109,7 @@ for lambdaOrder = 0:6
                         end
                     end
                     for domId = 1:numDom
-                        [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
+                        [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, domId);
                         projB = A*sumFi*E';
                         result = U{domId}*projB*V{domId}';
                         if domId == targetDomain
@@ -128,7 +128,7 @@ for lambdaOrder = 0:6
                 foldObjectiveScores(fold) = newObjectiveScore;
                 
                 %calculate validationScore
-                [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
+                [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, domId);
                 projB = A*sumFi*E';
                 result = U{targetDomain}*projB*V{targetDomain}';
                 
