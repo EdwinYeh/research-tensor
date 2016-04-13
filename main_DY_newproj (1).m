@@ -2,15 +2,17 @@ disp('Start training');
 
 if isTestPhase
     resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
-    fprintf(resultFile, 'sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
+    fprintf(resultFile, 'sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 end
 
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-fprintf('Use (Sigma, Lambda, Delta):(%g,%g,%g)\n', sigma, lambda, delta);
+fprintf('Use (Sigma, Sigma2, Lambda, Delta):(%g,%g,%g,%g)\n', sigma, sigma2, lambda, delta);
 %each pair is (objective score, accuracy);
 resultCellArray = cell(randomTryTime);
 bestObjectiveScore = Inf;
+bestAccuracy = 0;
+bestTime = 0;
 SU=cell(1,2);
 SV=cell(1,2);
 for t = 1: randomTryTime
@@ -121,7 +123,7 @@ for t = 1: randomTryTime
                 %update fi
                 [rA, cA] = size(A);
                 onesA = ones(rA, cA);
-                A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi+delta*repmat(sum(sumFi*E',2)',[rA,1])));
+                A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
                 A(isnan(A)) = 0;
                 A(~isfinite(A)) = 0;
                 if i == sourceDomain
@@ -137,7 +139,7 @@ for t = 1: randomTryTime
                 
                 [rE ,cE] = size(E);
                 onesE = ones(rE, cE);
-                E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi+delta*repmat(sum(A*sumFi,1),[rE,1])));
+                E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
                 E(isnan(E)) = 0;
                 E(~isfinite(E)) = 0;
                 if i == sourceDomain
@@ -202,10 +204,8 @@ for t = 1: randomTryTime
     fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
 end
 
-if isTestPhase
-    fprintf(resultFile, '%g,%g,%g,%g,%g,%g\n', sigma, lambda, delta, bestObjectiveScore, bestAccuracy, bestTime);
-    %     csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);
-    fclose(resultFile);
-end
+fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g\n', sigma, sigma2, lambda, delta, bestObjectiveScore, bestAccuracy, bestTime);
+%     csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);
+fclose(resultFile);
 fprintf('done\n\n');
 % matlabpool close;
