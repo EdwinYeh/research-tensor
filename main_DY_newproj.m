@@ -107,11 +107,12 @@ for t = 1: randomTryTime
                     tmpOldObj=tmpObjectiveScore;
                     %update AE
                     [rA, cA] = size(A);
+		    [rE, cE] = size(E);
                     onesA = ones(rA, cA);
                     if i ==targetDomain
-                        A = A.*sqrt((U{i}'*(YMatrix{i}.*W)*V{i}*E*sumFi)./(U{i}'*(U{i}*A*sumFi*E'*V{i}'.*W)*V{i}*E*sumFi));
+                        A = A.*sqrt((U{i}'*(YMatrix{i}.*W)*V{i}*E*sumFi)./(U{i}'*(U{i}*A*sumFi*E'*V{i}'.*W)*V{i}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
                     else
-                        A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+                        A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
                     end
                     
                     A(isnan(A)) = 0;
@@ -129,9 +130,9 @@ for t = 1: randomTryTime
                     [rE ,cE] = size(E);
                     onesE = ones(rE, cE);
                     if i == targetDomain
-                        E = E.*sqrt((V{i}'*(YMatrix{i}.*W)'*U{i}*A*sumFi)./(V{i}'*(V{i}*E*sumFi*A'*U{i}'.*W')*U{i}*A*sumFi));
+                        E = E.*sqrt((V{i}'*(YMatrix{i}.*W)'*U{i}*A*sumFi)./(V{i}'*(V{i}*E*sumFi*A'*U{i}'.*W')*U{i}*A*sumFi+delta*ones(rE,rA)*A*psi));
                     else
-                        E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
+                        E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi+delta*ones(rE,rA)*A*psi));
                     end
                     
                     E(isnan(E)) = 0;
