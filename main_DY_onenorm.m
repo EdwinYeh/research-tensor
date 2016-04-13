@@ -19,27 +19,27 @@ realU = cell(2,1);
 realV = cell(2,1);
 
 for t = 1: randomTryTime
-    
+
     CP1 = rand(numInstanceCluster, cpRank);
     CP2 = rand(numFeatureCluster, cpRank);
     CP3 = rand(numInstanceCluster, cpRank);
     CP4 = rand(numFeatureCluster, cpRank);
-    
+
     for i = 1:2
         U{i} = rand(numSampleInstance(i), numInstanceCluster);
         V{i} = rand(2, numFeatureCluster);
     end
-    
+
     realCP1 = rand(numInstanceCluster, cpRank);
     realCP2 = rand(numFeatureCluster, cpRank);
     realCP3 = rand(numInstanceCluster, cpRank);
     realCP4 = rand(numFeatureCluster, cpRank);
-    
+
     for i = 1:2
         realU{i} = rand(numSampleInstance(i), numInstanceCluster);
         realV{i} = rand(2, numFeatureCluster);
     end
-    
+
     for fakeOptimization = 1:2
         numCorrectPredict = 0;
         validateIndex = 1: CVFoldSize;
@@ -53,7 +53,7 @@ for t = 1: randomTryTime
             U = realU;
             V = realV;
         end
-        
+
         for fold = 1:numCVFold
             YMatrix = TrueYMatrix;
             YMatrix{targetDomain}(validateIndex, :) = zeros(CVFoldSize, numClass(1));
@@ -67,7 +67,7 @@ for t = 1: randomTryTime
             iter = 0;
             diff = Inf;
             newObjectiveScore = Inf;
-            
+
             while (diff >= 0.001  && iter < maxIter)
                 iter = iter + 1;
                 fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fold, iter, newObjectiveScore);
@@ -77,7 +77,7 @@ for t = 1: randomTryTime
                 for i = 1:numDom
                     [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, i);
                     projB = A*sumFi*E';
-                    
+
                     if i == targetDomain
                         V{i} = V{i}.*sqrt(((YMatrix{i}.*W)'*U{i}*projB)./(V{i}*V{i}'*(V{i}*projB'*U{i}'.*W')*U{i}*projB));
                     else
@@ -85,7 +85,7 @@ for t = 1: randomTryTime
                     end
                     V{i}(isnan(V{i})) = 0;
                     V{i}(~isfinite(V{i})) = 0;
-                    
+
                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                     if tmpObjectiveScore > tmpOldObj
                         fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
@@ -99,7 +99,7 @@ for t = 1: randomTryTime
                     end
                     U{i}(isnan(U{i})) = 0;
                     U{i}(~isfinite(U{i})) = 0;
-                    
+
                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                     if tmpObjectiveScore > tmpOldObj
                         fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
@@ -114,7 +114,7 @@ for t = 1: randomTryTime
                     else
                         A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
                     end
-                    
+
                     A(isnan(A)) = 0;
                     A(~isfinite(A)) = 0;
                     if i == sourceDomain
@@ -130,11 +130,11 @@ for t = 1: randomTryTime
                     [rE ,cE] = size(E);
                     onesE = ones(rE, cE);
                     if i == targetDomain
-                        E = E.*sqrt((V{i}'*(YMatrix{i}.*W)'*U{i}*A*sumFi)./(V{i}'*(V{i}*E*sumFi*A'*U{i}'.*W')*U{i}*A*sumFi+delta*ones(rE,rA)*A*psi));
+                        E = E.*sqrt((V{i}'*(YMatrix{i}.*W)'*U{i}*A*sumFi)./(V{i}'*(V{i}*E*sumFi*A'*U{i}'.*W')*U{i}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
                     else
-                        E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi+delta*ones(rE,rA)*A*psi));
+                        E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
                     end
-                    
+
                     E(isnan(E)) = 0;
                     E(~isfinite(E)) = 0;
                     if i == sourceDomain
@@ -152,12 +152,12 @@ for t = 1: randomTryTime
                 diff = oldObjectiveScore - newObjectiveScore;
             end
             foldObjectiveScores(fold) = newObjectiveScore;
-            
+
             %calculate validationScore
             [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, targetDomain);
             projB = A*sumFi*E';
             result = U{targetDomain}*projB*V{targetDomain}';
-            
+
             [~, maxIndex] = max(result, [], 2);
             predictResult = maxIndex;
             totalPredictResult(validateIndex) = predictResult(validateIndex);
@@ -168,7 +168,7 @@ for t = 1: randomTryTime
             end
             validateIndex = validateIndex + CVFoldSize;
         end
-        
+
         if fakeOptimization == 1
             realCP1 = CP1;
             realCP2 = CP2;
@@ -177,12 +177,12 @@ for t = 1: randomTryTime
             realU = U;
             realV = V;
         end
-        
+
         if fakeOptimization == 2
             accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
             avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
             avgTime = toc(TotalTimer)/ numCVFold;
-            
+
             if avgObjectiveScore < bestObjectiveScore
                 bestObjectiveScore = avgObjectiveScore;
                 bestAccuracy = accuracy*100;
