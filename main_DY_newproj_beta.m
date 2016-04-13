@@ -2,15 +2,17 @@ disp('Start training');
 
 if isTestPhase
     resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
-    fprintf(resultFile, 'sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
+    fprintf(resultFile, 'sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 end
 
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-fprintf('Use (Sigma, Lambda, Delta):(%g,%g,%g)\n', sigma, lambda, delta);
+fprintf('Use (Sigma, Sigma2, Lambda, Delta):(%g,%g,%g,%g)\n', sigma, sigma2, lambda, delta);
 %each pair is (objective score, accuracy);
 resultCellArray = cell(randomTryTime);
 bestObjectiveScore = Inf;
+bestAccuracy = 0;
+bestTime = 0;
 SU=cell(1,2);
 SV=cell(1,2);
 for t = 1: randomTryTime
@@ -48,7 +50,7 @@ for t = 1: randomTryTime
         
         while (diff >= 0.001  && iter < maxIter)
             iter = iter + 1;
-            %             fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fold, iter, newObjectiveScore);
+                         fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fold, iter, newObjectiveScore);
             oldObjectiveScore = newObjectiveScore;
             tmpOldObj=oldObjectiveScore;
             newObjectiveScore = 0;
@@ -62,8 +64,8 @@ for t = 1: randomTryTime
                 else
                     V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./(V{i}*V{i}'*(V{i}*projB'*U{i}')*U{i}*projB));
                 end
-                V{i}(isnan(V{i})) = 0;
-                V{i}(~isfinite(V{i})) = 0;
+                %V{i}(isnan(V{i})) = 0;
+                %V{i}(~isfinite(V{i})) = 0;
                 
                 %col normalize
                 %[r, ~] = size(V{i});
@@ -81,11 +83,11 @@ for t = 1: randomTryTime
                 
                 %V{i}(isnan(V{i})) = 0;
                 %V{i}(~isfinite(V{i})) = 0;
-                %                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                %                 if tmpObjectiveScore > tmpOldObj
-                %                     fprintf('Objective increased when update V (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                %                 end
-                %                 tmpOldObj=tmpObjectiveScore;
+                                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                                 if tmpObjectiveScore > tmpOldObj
+                                     fprintf('Objective increased when update V (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
+                                 end
+                                 tmpOldObj=tmpObjectiveScore;
                 %update U
                 %                 U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB'+lambda*Su{i}*U{i})./(U{i}*projB*V{i}'*V{i}*projB'+lambda*Du{i}*U{i}));
                 if i == targetDomain
@@ -93,8 +95,8 @@ for t = 1: randomTryTime
                 else
                     U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB'+lambda*Su{i}*U{i})./(U{i}*U{i}'*U{i}*projB*V{i}'*V{i}*projB'+lambda*Du{i}*U{i}));
                 end
-                U{i}(isnan(U{i})) = 0;
-                U{i}(~isfinite(U{i})) = 0;
+                %U{i}(isnan(U{i})) = 0;
+                %U{i}(~isfinite(U{i})) = 0;
                 
                 %col normalize
                 %[r, ~] = size(U{i});
@@ -113,43 +115,52 @@ for t = 1: randomTryTime
                 
                 %U{i}(isnan(U{i})) = 0;
                 %U{i}(~isfinite(U{i})) = 0;
-                %                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                %                 if tmpObjectiveScore > tmpOldObj
-                %                     fprintf('Objective increased when update U (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                %                 end
-                %                 tmpOldObj=tmpObjectiveScore;
+                                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                                 if tmpObjectiveScore > tmpOldObj
+                                     fprintf('Objective increased when update U (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
+                                 end
+                                 tmpOldObj=tmpObjectiveScore;
                 %update fi
                 [rA, cA] = size(A);
                 onesA = ones(rA, cA);
-                A = A.*sqrt((U{i}'*(YMatrix{i}.*W)*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi+delta*repmat(sum(sumFi*E',2)',[rA,1])));
-                A(isnan(A)) = 0;
-                A(~isfinite(A)) = 0;
+		if i== targetDomain
+                	A = A.*sqrt((U{i}'*(YMatrix{i}.*W)*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+		else
+		 	A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+		end
+	
+                %A(isnan(A)) = 0;
+                %A(~isfinite(A)) = 0;
                 if i == sourceDomain
                     CP1 = A;
                 else
                     CP3 = A;
                 end
-                %                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                %                 if tmpObjectiveScore > tmpOldObj
-                %                     fprintf('Objective increased when update A (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                %                 end
-                %                 tmpOldObj = oldObjectiveScore;
+                                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                                 if tmpObjectiveScore > tmpOldObj
+                                     fprintf('Objective increased when update A (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
+                                 end
+                                 tmpOldObj = oldObjectiveScore;
                 
                 [rE ,cE] = size(E);
                 onesE = ones(rE, cE);
-                E = E.*sqrt((V{i}'*(YMatrix{i}.*W)'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi+delta*repmat(sum(A*sumFi,1),[rE,1])));
-                E(isnan(E)) = 0;
-                E(~isfinite(E)) = 0;
+		if i==targetDomain
+	                E = E.*sqrt((V{i}'*(YMatrix{i}.*W)'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
+		else
+			E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));	
+		end
+		%E(isnan(E)) = 0;
+                %E(~isfinite(E)) = 0;
                 if i == sourceDomain
                     CP2 = E;
                 else
                     CP4 = E;
                 end
-                %                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                %                 if tmpObjectiveScore > tmpOldObj
-                %                     fprintf('Objective increased when update E (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                %                 end
-                %                 tmpOldObj=tmpObjectiveScore;
+                                 tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                                 if tmpObjectiveScore > tmpOldObj
+                                     fprintf('Objective increased when update E (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
+                                 end
+                                 tmpOldObj=tmpObjectiveScore;
                 
             end
             %for i = 1:numDom
@@ -202,10 +213,8 @@ for t = 1: randomTryTime
     fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
 end
 
-if isTestPhase
-    fprintf(resultFile, '%g,%g,%g,%g,%g,%g\n', sigma, lambda, delta, bestObjectiveScore, bestAccuracy, bestTime);
-    %     csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);
-    fclose(resultFile);
-end
+fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g\n', sigma, sigma2, lambda, delta, bestObjectiveScore, bestAccuracy, bestTime);
+%     csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);
+fclose(resultFile);
 fprintf('done\n\n');
 % matlabpool close;
