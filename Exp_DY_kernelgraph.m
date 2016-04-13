@@ -10,10 +10,10 @@ for sigmaOrder = 1:sigmaMaxOrder
     sigma = (1) * (10^sigmaOrder);
     for sigma2Order = 1:sigma2MaxOrder
         sigma2 = (1) * (10^sigma2Order);
-        PrepareExperimentKernelGraph;
+        prepareExperimentKernelGraph;
         for tuneLambda = 0:lambdaTryTime
             lambda = 0.00000001 * 10 ^ tuneLambda;
-            main_DY_newproj;
+            main_DY_onenorm;
         end
     end
 end
