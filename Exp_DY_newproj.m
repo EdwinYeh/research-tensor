@@ -1,9 +1,9 @@
 SetParameter;
 isTestPhase = true;
 exp_title = sprintf('DY_newproj_%d', datasetId);
-lambdaTryTime = 10;
-randomTryTime = 5;
-sigmaList = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.45, 0.5];
+lambdaTryTime = 0;
+randomTryTime = 1;
+sigmaList = [0.05];
 delta = -1;
 sigma2 = -1;
 for sigmaTryTime = 1:length(sigmaList)

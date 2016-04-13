@@ -1,7 +1,9 @@
 disp('Start training');
 
-resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
-fprintf(resultFile, 'sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
+if isTestPhase
+    resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
+    fprintf(resultFile, 'sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
+end
 
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
@@ -15,44 +17,31 @@ SU=cell(1,2);
 SV=cell(1,2);
 U = cell(2,1);
 V = cell(2,1);
-realU = cell(2,1);
-realV = cell(2,1);
-
 for t = 1: randomTryTime
+    numCorrectPredict = 0;
+    avgIterationUsed = 0;
+    validateIndex = 1: CVFoldSize;
+    foldObjectiveScores = zeros(1,numCVFold);
+    TotalTimer = tic;
+    totalPredictResult = zeros(numSampleInstance(targetDomain), 1);
     
     CP1 = rand(numInstanceCluster, cpRank);
     CP2 = rand(numFeatureCluster, cpRank);
     CP3 = rand(numInstanceCluster, cpRank);
     CP4 = rand(numFeatureCluster, cpRank);
     
-    for i = 1:2
-        U{i} = rand(numSampleInstance(i), numInstanceCluster);
-        V{i} = rand(2, numFeatureCluster);
-    end
+    U{i} = rand(numSampleInstance(i), numInstanceCluster);
+    V{i} = rand(2, numFeatureCluster);
     
     realCP1 = rand(numInstanceCluster, cpRank);
     realCP2 = rand(numFeatureCluster, cpRank);
     realCP3 = rand(numInstanceCluster, cpRank);
     realCP4 = rand(numFeatureCluster, cpRank);
     
-    for i = 1:2
-        realU{i} = rand(numSampleInstance(i), numInstanceCluster);
-        realV{i} = rand(2, numFeatureCluster);
-    end
+    realU{i} = rand(numSampleInstance(i), numInstanceCluster);
+    realV{i} = rand(2, numFeatureCluster);
     
     for fakeOptimization = 1:2
-        numCorrectPredict = 0;
-        validateIndex = 1: CVFoldSize;
-        TotalTimer = tic;
-        foldObjectiveScores = zeros(1,numCVFold);
-        if fakeOptimization == 2
-            CP1 = realCP1;
-            CP2 = realCP2;
-            CP3 = realCP3;
-            CP4 = realCP4;
-            U = realU;
-            V = realV;
-        end
         
         for fold = 1:numCVFold
             YMatrix = TrueYMatrix;
@@ -168,31 +157,23 @@ for t = 1: randomTryTime
             validateIndex = validateIndex + CVFoldSize;
         end
         
-        if fakeOptimization == 1
-            realCP1 = CP1;
-            realCP2 = CP2;
-            realCP3 = CP3;
-            realCP4 = CP4;
-            realU = U;
-            realV = V;
+        accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
+        avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
+        avgTime = toc(TotalTimer)/ numCVFold;
+        
+        if avgObjectiveScore < bestObjectiveScore
+            bestObjectiveScore = avgObjectiveScore;
+            bestAccuracy = accuracy*100;
+            bestTime = avgTime;
+            bestPredictResult = totalPredictResult;
         end
         
-        if fakeOptimization == 2
-            accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
-            avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
-            avgTime = toc(TotalTimer)/ numCVFold;
-            
-            if avgObjectiveScore < bestObjectiveScore
-                bestObjectiveScore = avgObjectiveScore;
-                bestAccuracy = accuracy*100;
-                bestTime = avgTime;
-                bestPredictResult = totalPredictResult;
-            end
-            time = round(clock);
-            fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
-        end
+        time = round(clock);
+        fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
+        fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
     end
+    
+    
 end
 
 fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g\n', sigma, sigma2, lambda, delta, bestObjectiveScore, bestAccuracy, bestTime);
