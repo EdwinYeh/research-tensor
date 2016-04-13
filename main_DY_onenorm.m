@@ -70,7 +70,7 @@ for t = 1: randomTryTime
 
             while (diff >= 0.001  && iter < maxIter)
                 iter = iter + 1;
-                fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fold, iter, newObjectiveScore);
+                % fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fold, iter, newObjectiveScore);
                 oldObjectiveScore = newObjectiveScore;
                 tmpOldObj=oldObjectiveScore;
                 newObjectiveScore = 0;
@@ -86,11 +86,11 @@ for t = 1: randomTryTime
                     V{i}(isnan(V{i})) = 0;
                     V{i}(~isfinite(V{i})) = 0;
 
-                    tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                    if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
-                    end
-                    tmpOldObj=tmpObjectiveScore;
+                    % tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                    % if tmpObjectiveScore > tmpOldObj
+                    %     fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                    % end
+                    % tmpOldObj=tmpObjectiveScore;
                     %update U
                     if i == targetDomain
                         U{i} = U{i}.*sqrt(((YMatrix{i}.*W)*V{i}*projB'+lambda*Su{i}*U{i})./(U{i}*U{i}'*(U{i}*projB*V{i}'.*W)*V{i}*projB'+lambda*Du{i}*U{i}));
@@ -100,14 +100,14 @@ for t = 1: randomTryTime
                     U{i}(isnan(U{i})) = 0;
                     U{i}(~isfinite(U{i})) = 0;
 
-                    tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                    if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
-                    end
-                    tmpOldObj=tmpObjectiveScore;
+                    % tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                    % if tmpObjectiveScore > tmpOldObj
+                    %     fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                    % end
+                    % tmpOldObj=tmpObjectiveScore;
                     %update AE
                     [rA, cA] = size(A);
-		    [rE, cE] = size(E);
+		                [rE, cE] = size(E);
                     onesA = ones(rA, cA);
                     if i ==targetDomain
                         A = A.*sqrt((U{i}'*(YMatrix{i}.*W)*V{i}*E*sumFi)./(U{i}'*(U{i}*A*sumFi*E'*V{i}'.*W)*V{i}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
@@ -122,11 +122,11 @@ for t = 1: randomTryTime
                     else
                         CP3 = A;
                     end
-                    tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                    if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update A (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
-                    end
-                    tmpOldObj = tmpObjectiveScore;
+                    % tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                    % if tmpObjectiveScore > tmpOldObj
+                    %     fprintf('Domain:%d, Objective increased when update A (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                    % end
+                    % tmpOldObj = tmpObjectiveScore;
                     [rE ,cE] = size(E);
                     onesE = ones(rE, cE);
                     if i == targetDomain
@@ -142,11 +142,11 @@ for t = 1: randomTryTime
                     else
                         CP4 = E;
                     end
-                    tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                    if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update E (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
-                    end
-                    tmpOldObj=tmpObjectiveScore;
+                    % tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                    % if tmpObjectiveScore > tmpOldObj
+                    %     fprintf('Domain:%d, Objective increased when update E (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                    % end
+                    % tmpOldObj=tmpObjectiveScore;
                 end
                 newObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 diff = oldObjectiveScore - newObjectiveScore;
