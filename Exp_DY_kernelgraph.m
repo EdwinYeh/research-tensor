@@ -11,8 +11,8 @@ for sigmaOrder = 1:sigmaMaxOrder
     for sigma2Order = 1:sigma2MaxOrder
         sigma2 = (1) * (10^sigma2Order);
         prepareExperimentKernelGraph;
-        for tuneLambda = 0:lambdaTryTime
-            lambda = 0.00000001 * 10 ^ tuneLambda;
+        for lambdaOrder = 0:lambdaMaxOrder
+            lambda = 0.00000001 * 10 ^ lambdaOrder;
             main_DY_onenorm;
         end
     end
