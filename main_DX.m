@@ -62,6 +62,13 @@ for t = 1: randomTryTime
                 U{dom}(isnan(U{dom})) = 0;
                 U{dom}(~isfinite(U{dom})) = 0;
                 % Update A E
+                if dom == sourceDomain
+                    A = CP1;
+                    E = CP2;
+                else
+                    A = CP3;
+                    E = CP4;
+                end
                 [rA, cA] = size(A);
                 [rE, cE] = size(E);
                 

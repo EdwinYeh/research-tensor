@@ -10,8 +10,8 @@ numSampleFeature = 2000;
 sigma = 0.1;
 sigma2 = 0.1;
 cpRank = 20;
-numInstanceCluster = 10;
-numFeatureCluster = 10;
+numInstanceCluster = 20;
+numFeatureCluster = 20;
 numClass = [2, 2];
 
 maxIter = 1000;
