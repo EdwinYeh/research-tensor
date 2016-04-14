@@ -9,7 +9,7 @@ gamaMaxOrder = 10;
 deltaMaxOrder = 10;
 lambdaStart = 10^-8;
 gamaStart = 10^-8;
-delta = 10^-12;
+deltaStart = 10^-12;
 lambdaScale = 10;
 gamaScale = 10;
 deltaScale = 10;
@@ -17,11 +17,12 @@ deltaScale = 10;
 expTitle = 'DX';
 directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
 mkdir(directoryName);
-resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
+resultFile = fopen(sprintf('../exp_result/%s.csv', expTitle), 'a');
 fprintf(resultFile, 'lambda, gama, objectiveScore, accuracy, convergeTime\n');
 
 for tuneSigma = 1: length(sigmaList)
     sigma = sigmaList(tuneSigma);
+    prepareDXExperiment;
     for tuneCPRank = 1: length(cpRankList)
         cpRank = cpRankList(tuneCPRank);
         for tuneNumFeatureCluster = 1: length(numFeatureClusterList)
@@ -36,7 +37,6 @@ for tuneSigma = 1: length(sigmaList)
                             for deltaOrder = 0: deltaMaxOrder
                                 delta = deltaStart * deltaScale^deltaOrder;
                                 %                     try
-                                prepareDXExperiment;
                                 main_DX;
                                 %                     catch exception
                                 %                         fprintf('%g,%g,%g,%d,%d,%d\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);

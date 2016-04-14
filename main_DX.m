@@ -17,7 +17,7 @@ for t = 1: randomTryTime
     
     for dom = 1:2
         U{dom} = rand(numSampleInstance(dom), numInstanceCluster);
-        V{dom} = rand(2, numFeatureCluster);
+        V{dom} = rand(numSampleFeature, numFeatureCluster);
     end
     
     realCP1 = rand(numInstanceCluster, cpRank);
@@ -27,7 +27,7 @@ for t = 1: randomTryTime
     
     for dom = 1:2
         realU{dom} = rand(numSampleInstance(dom), numInstanceCluster);
-        realV{dom} = rand(2, numFeatureCluster);
+        realV{dom} = rand(numSampleFeature, numFeatureCluster);
     end
     
     for fakeOptimization = 1:2
@@ -65,7 +65,7 @@ for t = 1: randomTryTime
                 [rA, cA] = size(A);
                 [rE, cE] = size(E);
                 
-                A = A.*sqrt((U{dom}'*YMatrix{dom}*V{dom}*E*sumFi)./(U{dom}'*U{dom}*A*sumFi*E'*V{dom}'*V{dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
+                A = A.*sqrt((U{dom}'*X{dom}*V{dom}*E*sumFi)./(U{dom}'*U{dom}*A*sumFi*E'*V{dom}'*V{dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
                 A(isnan(A)) = 0;
                 A(~isfinite(A)) = 0;
                 if dom == sourceDomain
@@ -74,7 +74,7 @@ for t = 1: randomTryTime
                     CP3 = A;
                 end
                 %disp(sprintf('\t\tupdate E...'));
-                E = E.*sqrt((V{dom}'*YMatrix{dom}'*U{dom}*A*sumFi)./(V{dom}'*V{dom}*E*sumFi*A'*U{dom}'*U{dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
+                E = E.*sqrt((V{dom}'*X{dom}'*U{dom}*A*sumFi)./(V{dom}'*V{dom}*E*sumFi*A'*U{dom}'*U{dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
                 E(isnan(E)) = 0;
                 E(~isfinite(E)) = 0;
                 if dom == sourceDomain
@@ -96,9 +96,10 @@ for t = 1: randomTryTime
                 newObjectiveScore = newObjectiveScore + objectiveScore;
             end
             %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
-            %fprintf('iter:%d, error = %f\n', iter, newObjectiveScore);
+            fprintf('fake:%d, iter:%d, error = %f\n', fakeOptimization, iter, newObjectiveScore);
             diff = oldObjectiveScore - newObjectiveScore;
         end
+        
         if fakeOptimization == 1
             realCP1 = CP1;
             realCP2 = CP2;
