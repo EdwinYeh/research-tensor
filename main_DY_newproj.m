@@ -25,9 +25,9 @@ for t = 1: randomTryTime
     CP3 = rand(numInstanceCluster, cpRank);
     CP4 = rand(numFeatureCluster, cpRank);
     
-    for i = 1:2
-        U{i} = rand(numSampleInstance(i), numInstanceCluster);
-        V{i} = rand(2, numFeatureCluster);
+    for dom = 1:2
+        U{dom} = rand(numSampleInstance(dom), numInstanceCluster);
+        V{dom} = rand(2, numFeatureCluster);
     end
     
     realCP1 = rand(numInstanceCluster, cpRank);
@@ -35,16 +35,18 @@ for t = 1: randomTryTime
     realCP3 = rand(numInstanceCluster, cpRank);
     realCP4 = rand(numFeatureCluster, cpRank);
     
-    for i = 1:2
-        realU{i} = rand(numSampleInstance(i), numInstanceCluster);
-        realV{i} = rand(2, numFeatureCluster);
+    for dom = 1:2
+        realU{dom} = rand(numSampleInstance(dom), numInstanceCluster);
+        realV{dom} = rand(2, numFeatureCluster);
     end
     
+    % When fakeOptimization == 1, will train U
     for fakeOptimization = 1:2
         numCorrectPredict = 0;
         validateIndex = 1: CVFoldSize;
         TotalTimer = tic;
         foldObjectiveScores = zeros(1,numCVFold);
+        
         if fakeOptimization == 2
             CP1 = realCP1;
             CP2 = realCP2;
@@ -74,76 +76,76 @@ for t = 1: randomTryTime
                 oldObjectiveScore = newObjectiveScore;
                 tmpOldObj=oldObjectiveScore;
                 newObjectiveScore = 0;
-                for i = 1:numDom
-                    [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, i);
+                for dom = 1:numDom
+                    [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, dom);
                     projB = A*sumFi*E';
                     
-                    if i == targetDomain
-                        V{i} = V{i}.*sqrt(((YMatrix{i}.*W)'*U{i}*projB)./(V{i}*V{i}'*(V{i}*projB'*U{i}'.*W')*U{i}*projB));
+                    if dom == targetDomain
+                        V{dom} = V{dom}.*sqrt(((YMatrix{dom}.*W)'*U{dom}*projB)./(V{dom}*V{dom}'*(V{dom}*projB'*U{dom}'.*W')*U{dom}*projB));
                     else
-                        V{i} = V{i}.*sqrt((YMatrix{i}'*U{i}*projB)./(V{i}*V{i}'*(V{i}*projB'*U{i}')*U{i}*projB));
+                        V{dom} = V{dom}.*sqrt((YMatrix{dom}'*U{dom}*projB)./(V{dom}*V{dom}'*(V{dom}*projB'*U{dom}')*U{dom}*projB));
                     end
-                    V{i}(isnan(V{i})) = 0;
-                    V{i}(~isfinite(V{i})) = 0;
+                    V{dom}(isnan(V{dom})) = 0;
+                    V{dom}(~isfinite(V{dom})) = 0;
                     
                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                     if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                        fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
                     end
                     tmpOldObj=tmpObjectiveScore;
                     %update U
-                    if i == targetDomain
-                        U{i} = U{i}.*sqrt(((YMatrix{i}.*W)*V{i}*projB'+lambda*Su{i}*U{i})./(U{i}*U{i}'*(U{i}*projB*V{i}'.*W)*V{i}*projB'+lambda*Du{i}*U{i}));
+                    if dom == targetDomain
+                        U{dom} = U{dom}.*sqrt(((YMatrix{dom}.*W)*V{dom}*projB'+lambda*Su{dom}*U{dom})./(U{dom}*U{dom}'*(U{dom}*projB*V{dom}'.*W)*V{dom}*projB'+lambda*Du{dom}*U{dom}));
                     else
-                        U{i} = U{i}.*sqrt((YMatrix{i}*V{i}*projB'+lambda*Su{i}*U{i})./(U{i}*U{i}'*U{i}*projB*V{i}'*V{i}*projB'+lambda*Du{i}*U{i}));
+                        U{dom} = U{dom}.*sqrt((YMatrix{dom}*V{dom}*projB'+lambda*Su{dom}*U{dom})./(U{dom}*U{dom}'*U{dom}*projB*V{dom}'*V{dom}*projB'+lambda*Du{dom}*U{dom}));
                     end
-                    U{i}(isnan(U{i})) = 0;
-                    U{i}(~isfinite(U{i})) = 0;
+                    U{dom}(isnan(U{dom})) = 0;
+                    U{dom}(~isfinite(U{dom})) = 0;
                     
                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                     if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                        fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
                     end
                     tmpOldObj=tmpObjectiveScore;
                     %update AE
                     [rA, cA] = size(A);
                     onesA = ones(rA, cA);
-                    if i ==targetDomain
-                        A = A.*sqrt((U{i}'*(YMatrix{i}.*W)*V{i}*E*sumFi)./(U{i}'*(U{i}*A*sumFi*E'*V{i}'.*W)*V{i}*E*sumFi));
+                    if dom ==targetDomain
+                        A = A.*sqrt((U{dom}'*(YMatrix{dom}.*W)*V{dom}*E*sumFi)./(U{dom}'*(U{dom}*A*sumFi*E'*V{dom}'.*W)*V{dom}*E*sumFi));
                     else
-                        A = A.*sqrt((U{i}'*YMatrix{i}*V{i}*E*sumFi)./(U{i}'*U{i}*A*sumFi*E'*V{i}'*V{i}*E*sumFi));
+                        A = A.*sqrt((U{dom}'*YMatrix{dom}*V{dom}*E*sumFi)./(U{dom}'*U{dom}*A*sumFi*E'*V{dom}'*V{dom}*E*sumFi));
                     end
                     
                     A(isnan(A)) = 0;
                     A(~isfinite(A)) = 0;
-                    if i == sourceDomain
+                    if dom == sourceDomain
                         CP1 = A;
                     else
                         CP3 = A;
                     end
                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                     if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update A (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                        fprintf('Domain:%d, Objective increased when update A (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
                     end
                     tmpOldObj = tmpObjectiveScore;
                     [rE ,cE] = size(E);
                     onesE = ones(rE, cE);
-                    if i == targetDomain
-                        E = E.*sqrt((V{i}'*(YMatrix{i}.*W)'*U{i}*A*sumFi)./(V{i}'*(V{i}*E*sumFi*A'*U{i}'.*W')*U{i}*A*sumFi));
+                    if dom == targetDomain
+                        E = E.*sqrt((V{dom}'*(YMatrix{dom}.*W)'*U{dom}*A*sumFi)./(V{dom}'*(V{dom}*E*sumFi*A'*U{dom}'.*W')*U{dom}*A*sumFi));
                     else
-                        E = E.*sqrt((V{i}'*YMatrix{i}'*U{i}*A*sumFi)./(V{i}'*V{i}*E*sumFi*A'*U{i}'*U{i}*A*sumFi));
+                        E = E.*sqrt((V{dom}'*YMatrix{dom}'*U{dom}*A*sumFi)./(V{dom}'*V{dom}*E*sumFi*A'*U{dom}'*U{dom}*A*sumFi));
                     end
                     
                     E(isnan(E)) = 0;
                     E(~isfinite(E)) = 0;
-                    if i == sourceDomain
+                    if dom == sourceDomain
                         CP2 = E;
                     else
                         CP4 = E;
                     end
                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                     if tmpObjectiveScore > tmpOldObj
-                        fprintf('Domain:%d, Objective increased when update E (%f=>%f)\n', i, tmpOldObj, tmpObjectiveScore);
+                        fprintf('Domain:%d, Objective increased when update E (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
                     end
                     tmpOldObj=tmpObjectiveScore;
                 end
@@ -159,9 +161,8 @@ for t = 1: randomTryTime
             
             [~, maxIndex] = max(result, [], 2);
             predictResult = maxIndex;
-            totalPredictResult(validateIndex) = predictResult(validateIndex);
-            for i = 1: CVFoldSize
-                if(predictResult(validateIndex(i)) == Label{targetDomain}(validateIndex(i)))
+            for dom = 1: CVFoldSize
+                if(predictResult(validateIndex(dom)) == Label{targetDomain}(validateIndex(dom)))
                     numCorrectPredict = numCorrectPredict + 1;
                 end
             end
