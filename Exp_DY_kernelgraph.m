@@ -1,6 +1,8 @@
 SetParameter;
 isTestPhase = true;
 exp_title = sprintf('DY_kernelgraph_%d', datasetId);
+resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
+fprintf(resultFile, 'sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 lambdaMaxOrder = 10;
 sigmaMaxOrder = 15;
 sigma2MaxOrder = 15;
@@ -17,3 +19,4 @@ for sigmaOrder = 1:sigmaMaxOrder
         end
     end
 end
+fclose(resultFile);

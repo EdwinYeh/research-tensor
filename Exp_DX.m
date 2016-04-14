@@ -4,10 +4,21 @@ sigmaList = [0.1];
 numInstanceClusterList = [5];
 numFeatureClusterList = [5];
 cpRankList = [5];
-expTitle = 'DX';
+lambdaMaxOrder = 10;
+gamaMaxOrder = 10;
+deltaMaxOrder = 10;
+lambdaStart = 10^-8;
+gamaStart = 10^-8;
+delta = 10^-12;
+lambdaScale = 10;
+gamaScale = 10;
+deltaScale = 10;
 
+expTitle = 'DX';
 directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
 mkdir(directoryName);
+resultFile = fopen(sprintf('result_%s.csv', exp_title), 'w');
+fprintf(resultFile, 'lambda, gama, objectiveScore, accuracy, convergeTime\n');
 
 for tuneSigma = 1: length(sigmaList)
     sigma = sigmaList(tuneSigma);
@@ -18,16 +29,26 @@ for tuneSigma = 1: length(sigmaList)
             for tuneNumInstanceCluster = 1: length(numInstanceClusterList)
                 numInstanceCluster = numInstanceClusterList(tuneNumInstanceCluster);
                 if numInstanceCluster <= cpRank && numFeatureCluster <= cpRank
-%                     try
-                        prepareDXExperiment;
-                        main_DX;
-%                     catch exception
-%                         fprintf('%g,%g,%g,%d,%d,%d\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
-%                         disp(exception.message);
-%                         continue;
-%                     end
+                    for lambdaOrder = 0: lambdaMaxOrder
+                        lambda = lambdaStart * lambdaScale^lambdaOrder;
+                        for gamaOrder = 0: gamaMaxOrder
+                            gama = gamaStart * gamaScale^gamaOrder;
+                            for deltaOrder = 0: deltaMaxOrder
+                                delta = deltaStart * deltaScale^deltaOrder;
+                                %                     try
+                                prepareDXExperiment;
+                                main_DX;
+                                %                     catch exception
+                                %                         fprintf('%g,%g,%g,%d,%d,%d\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
+                                %                         disp(exception.message);
+                                %                         continue;
+                                %                     end
+                            end
+                        end
+                    end
                 end
             end
         end
     end
 end
+fclose(resultFile);
