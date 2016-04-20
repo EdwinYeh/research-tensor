@@ -7,8 +7,10 @@ bestAccuracy = 0;
 bestTime = 0;
 SU=cell(1,2);
 SV=cell(1,2);
-U = cell(2,1);
-V = cell(2,1);
+U = cell(1,2);
+V = cell(1,2);
+tmpU = cell(1,2);
+tmpV = cell(1,2);
 realU = cell(2,1);
 realV = cell(2,1);
 
@@ -101,7 +103,8 @@ for t = 1: randomTryTime
 %                         fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
 %                     end
 %                     tmpOldObj=tmpObjectiveScore;
-                    %update AE
+                    %update AE       
+                    
                     if dom == sourceDomain
                         A = CP1;
                         E = CP2;
@@ -151,6 +154,7 @@ for t = 1: randomTryTime
                 newObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
                 diff = oldObjectiveScore - newObjectiveScore;
             end
+            disp(iter);
             foldObjectiveScores(fold) = newObjectiveScore;
             %calculate validationScore
             [A,sumFi,E] = projectTensorToMatrix({CP1,CP2,CP3,CP4}, targetDomain);
@@ -186,8 +190,8 @@ for t = 1: randomTryTime
                 bestTime = avgTime;
             end
             time = round(clock);
-%             fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-%             fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
+            fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
+            fprintf('Initial try: %d, ObjectiveScore:%f, Accuracy:%f%%\n', t, avgObjectiveScore, accuracy*100);
         end
     end
 end
