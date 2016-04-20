@@ -17,8 +17,8 @@ for tuneSigma = 1:length(sigmaList)
             delta = 0.0000000001 * 10 ^ deltaOrder;
             main_DY_onenorm;
         end
-        delta = 0;
-        main_DY_onenorm;
+%         delta = 0;
+%         main_DY_onenorm;
     end
 end
 fclose(resultFile);

@@ -39,7 +39,7 @@ for t = 1: randomTryTime
     % during fakeOptimization == 2. Only the report the result of
     % fakeOptimization == 2 will be report
     
-    for fakeOptimization = 1: 3
+    for fakeOptimization = 1: 2
         numCorrectPredict = 0;
         validateIndex = 1: CVFoldSize;
         TotalTimer = tic;
@@ -59,7 +59,7 @@ for t = 1: randomTryTime
             diff = Inf;
             newObjectiveScore = Inf;
             
-            if fakeOptimization == 3
+            if fakeOptimization == 2
                 CP1{t, fold} = realCP1{t, fold};
                 CP2{t, fold} = realCP2{t, fold};
                 CP3{t, fold} = realCP3{t, fold};
@@ -166,7 +166,7 @@ for t = 1: randomTryTime
             end
             validateIndex = validateIndex + CVFoldSize;
             
-            if fakeOptimization == 2
+            if fakeOptimization == 1
                 realCP1{t, fold} = CP1{t, fold};
                 realCP2{t, fold} = CP2{t, fold};
                 realCP3{t, fold} = CP3{t, fold};
@@ -176,7 +176,7 @@ for t = 1: randomTryTime
             end
         end
         
-        if fakeOptimization == 3
+        if fakeOptimization == 2
             accuracy = numCorrectPredict/ numSampleInstance(targetDomain);
             avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
             avgTime = toc(TotalTimer)/ numCVFold;
