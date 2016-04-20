@@ -20,9 +20,7 @@ realCP2 = cell(randomTryTime,numCVFold);
 realCP3 = cell(randomTryTime,numCVFold);
 realCP4 = cell(randomTryTime,numCVFold);
 
-for t = 1: randomTryTime
-<<<<<<< HEAD
-    
+for t = 1: randomTryTime    
     U = cell(numCVFold, 2);
     V = cell(numCVFold, 2);
     tmpU = cell(numCVFold, 2);
@@ -33,34 +31,17 @@ for t = 1: randomTryTime
     CP2 = cell(numCVFold, 1);
     CP3 = cell(numCVFold, 1);
     CP4 = cell(numCVFold, 1);
-    tmpCP1 = cell(numCVFold, 1);
-    tmpCP2 = cell(numCVFold, 1);
-    tmpCP3 = cell(numCVFold, 1);
-    tmpCP4 = cell(numCVFold, 1);
     
     for fold = 1: numCVFold
         CP1{fold} = rand(numInstanceCluster, cpRank);
         CP2{fold} = rand(numFeatureCluster, cpRank);
         CP3{fold} = rand(numInstanceCluster, cpRank);
         CP4{fold} = rand(numFeatureCluster, cpRank);
-        tmpCP1 = CP1;
-        tmpCP2 = CP2;
-        tmpCP3 = CP3;
-        tmpCP4 = CP4;
-=======
-    for fold = 1: numCVFold
-        CP1{t, fold} = rand(numInstanceCluster, cpRank);
-        CP2{t, fold} = rand(numFeatureCluster, cpRank);
-        CP3{t, fold} = rand(numInstanceCluster, cpRank);
-        CP4{t, fold} = rand(numFeatureCluster, cpRank);
->>>>>>> parent of 503cc95... [correct version]
         
         for dom = 1: 2
             U{t, fold, dom} = rand(numSampleInstance(dom), numInstanceCluster);
             V{t, fold, dom} = rand(2, numFeatureCluster);
         end
-        tmpU = U;
-        tmpV = V;
     end
 end
 
@@ -89,20 +70,7 @@ for t = 1: randomTryTime
             diff = Inf;
             newObjectiveScore = Inf;
             
-<<<<<<< HEAD
             while ((fakeOptimization == 2 && diff >= 0.0001 && iter < maxIter)||(fakeOptimization ~= 2 && iter < maxIter))
-=======
-            if fakeOptimization == 2
-                CP1{t, fold} = realCP1{t, fold};
-                CP2{t, fold} = realCP2{t, fold};
-                CP3{t, fold} = realCP3{t, fold};
-                CP4{t, fold} = realCP4{t, fold};
-                U{t, fold} = realU{t, fold};
-                V{t, fold} = realV{t, fold};
-            end
-            
-            while (diff >= 0.001  && iter < maxIter)
->>>>>>> parent of 503cc95... [correct version]
                 iter = iter + 1;
                 fprintf('Fake:%d, Fold:%d, Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
                 oldObjectiveScore = newObjectiveScore;
@@ -112,54 +80,6 @@ for t = 1: randomTryTime
                     projB = A*sumFi*E';
                     
                     if dom == targetDomain
-<<<<<<< HEAD
-                        tmpV{fold,dom} = V{fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(V{fold,dom}*projB'*U{fold,dom}'.*W')*U{fold,dom}*projB));
-                    else
-                        tmpV{fold,dom} = V{fold,dom}.*sqrt((YMatrix{dom}'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(V{fold,dom}*projB'*U{fold,dom}')*U{fold,dom}*projB));
-                    end
-                    tmpV{fold,dom}(isnan(V{fold,dom})) = 0;
-                    tmpV{fold,dom}(~isfinite(V{fold,dom})) = 0;
-                    tmpObjectiveScore = ShowObjective(fold, U, tmpV, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
-                    
-                    if fakeOptimization == 2
-                        if tmpObjectiveScore < tmpOldObj
-                            tmpOldObj = tmpObjectiveScore;
-                            V = tmpV;
-                            fprintf('Update V (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                        else
-                            tmpV = V;
-                            fprintf('Did not update V (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                        end
-                    else
-                        tmpOldObj = tmpObjectiveScore;
-                        V = tmpV;
-                    end
-                    
-                    %update U
-                    if dom == targetDomain
-                        tmpU{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(U{fold,dom}*projB*V{fold,dom}'.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
-                    else
-                        YMatrix{dom}*V{fold,dom}*projB';
-                        tmpU{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*U{fold,dom}*projB*V{fold,dom}'*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
-                    end
-                    tmpU{fold,dom}(isnan(U{fold,dom})) = 0;
-                    tmpU{fold,dom}(~isfinite(U{fold,dom})) = 0;
-                    tmpObjectiveScore = ShowObjective(fold, tmpU, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);                    
-                    if fakeOptimization == 2
-                        if tmpObjectiveScore < tmpOldObj
-                            U = tmpU;
-                            tmpOldObj=tmpObjectiveScore;
-                            fprintf('Update U (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                        else
-                            tmpU = U;
-                            fprintf('Did not update U (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
-                        end                
-                    else
-                        U = tmpU;
-                        tmpOldObj=tmpObjectiveScore;
-                    end
-                    
-=======
                         V{t,fold,dom} = V{t,fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{t,fold,dom}*projB)./(V{t,fold,dom}*V{t,fold,dom}'*(V{t,fold,dom}*projB'*U{t,fold,dom}'.*W')*U{t,fold,dom}*projB));
                     else
                         V{t,fold,dom} = V{t,fold,dom}.*sqrt((YMatrix{dom}'*U{t,fold,dom}*projB)./(V{t,fold,dom}*V{t,fold,dom}'*(V{t,fold,dom}*projB'*U{t,fold,dom}')*U{t,fold,dom}*projB));
@@ -184,7 +104,6 @@ for t = 1: randomTryTime
                     %                         fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
                     %                     end
                     %                     tmpOldObj=tmpObjectiveScore;
->>>>>>> parent of 503cc95... [correct version]
                     %update AE
                     if dom == sourceDomain
                         A = CP1{t,fold};
@@ -197,10 +116,6 @@ for t = 1: randomTryTime
                     [rA, cA] = size(A);
                     [rE, cE] = size(E);
                     
-<<<<<<< HEAD
-                    if dom ==targetDomain                        
-                        A = A.*sqrt((U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*E*sumFi)./(U{fold,dom}'*(U{fold,dom}*A*sumFi*E'*V{fold,dom}'.*W)*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
-=======
                     if dom ==targetDomain
                         A = A.*sqrt((U{t,fold,dom}'*(YMatrix{dom}.*W)*V{t,fold,dom}*E*sumFi)./(U{t,fold,dom}'*(U{t,fold,dom}*A*sumFi*E'*V{t,fold,dom}'.*W)*V{t,fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
 >>>>>>> parent of 503cc95... [correct version]

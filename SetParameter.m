@@ -14,11 +14,7 @@ numInstanceCluster = 20;
 numFeatureCluster = 20;
 numClass = [2, 2];
 
-<<<<<<< HEAD
-maxIter = 50;
-=======
 maxIter = 1000;
->>>>>>> parent of 503cc95... [correct version]
 numCVFold = 5;
 randomTryTime = 1;
 numDom = 2;
