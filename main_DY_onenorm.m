@@ -53,11 +53,14 @@ for t = 1: randomTryTime
                 U = realU;
                 V = realV;
                 maxIter = 1000;
+            else
+                maxIter = 50;
             end
             
-            while ((fakeOptimization==2 && diff>=0.001  && iter<maxIter)||(fakeOptimization~=2 && iter < maxIter))
+            while ((fakeOptimization==2 && diff>=0.001  && iter<maxIter)||(fakeOptimization~=2 && iter<maxIter))
                 iter = iter + 1;
-%                 fprintf('Fake:%d, Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
+                disp(diff);
+                fprintf('Fake:%d, Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
                 oldObjectiveScore = newObjectiveScore;
                 tmpOldObj=oldObjectiveScore;
                 for dom = 1:numDom
