@@ -75,11 +75,12 @@ for t = 1: randomTryTime
                     end
                     V{fold,dom}(isnan(V{fold,dom})) = 0;
                     V{fold,dom}(~isfinite(V{fold,dom})) = 0;
-%                     tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+                    tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
 %                     if tmpObjectiveScore > tmpOldObj
 %                         fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
 %                     end
-%                     tmpOldObj=tmpObjectiveScore;
+                    if tmpObjectiveScore < 
+                    tmpOldObj=tmpObjectiveScore;
                     %update U
                     if dom == targetDomain
                         U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(U{fold,dom}*projB*V{fold,dom}'.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
