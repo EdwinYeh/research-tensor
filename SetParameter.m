@@ -14,7 +14,7 @@ numInstanceCluster = 20;
 numFeatureCluster = 20;
 numClass = [2, 2];
 
-maxIter = 1000;
+maxIter = 20;
 numCVFold = 5;
 randomTryTime = 1;
 numDom = 2;

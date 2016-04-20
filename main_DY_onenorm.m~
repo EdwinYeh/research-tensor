@@ -70,9 +70,9 @@ for t = 1: randomTryTime
             diff = Inf;
             newObjectiveScore = Inf;
             
-            while ((fakeOptimization == 2 && diff >= 0.0001 && iter < maxIter)||(fakeOptimization ~= 2 && iter < maxIter))
+            while ((fakeOptimization == 2 && diff >= 0.001 && iter < maxIter)||(fakeOptimization ~= 2 && iter < maxIter))
                 iter = iter + 1;
-                fprintf('Fake:%d, Fold:%d, Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
+                fprintf('Fake:%d, Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
                 oldObjectiveScore = newObjectiveScore;
                 tmpOldObj=oldObjectiveScore;
                 for dom = 1:numDom
@@ -80,6 +80,7 @@ for t = 1: randomTryTime
                     projB = A*sumFi*E';
                     
                     if dom == targetDomain
+<<<<<<< HEAD
                         V{t,fold,dom} = V{t,fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{t,fold,dom}*projB)./(V{t,fold,dom}*V{t,fold,dom}'*(V{t,fold,dom}*projB'*U{t,fold,dom}'.*W')*U{t,fold,dom}*projB));
                     else
                         V{t,fold,dom} = V{t,fold,dom}.*sqrt((YMatrix{dom}'*U{t,fold,dom}*projB)./(V{t,fold,dom}*V{t,fold,dom}'*(V{t,fold,dom}*projB'*U{t,fold,dom}')*U{t,fold,dom}*projB));
@@ -104,6 +105,33 @@ for t = 1: randomTryTime
                     %                         fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
                     %                     end
                     %                     tmpOldObj=tmpObjectiveScore;
+=======
+                        V{fold,dom} = V{fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(V{fold,dom}*projB'*U{fold,dom}'.*W')*U{fold,dom}*projB));
+                    else
+                        V{fold,dom} = V{fold,dom}.*sqrt((YMatrix{dom}'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(V{fold,dom}*projB'*U{fold,dom}')*U{fold,dom}*projB));
+                    end
+                    V{fold,dom}(isnan(V{fold,dom})) = 0;
+                    V{fold,dom}(~isfinite(V{fold,dom})) = 0;
+                    tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+%                     if tmpObjectiveScore > tmpOldObj
+%                         fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
+%                     end
+                    if tmpObjectiveScore < 
+                    tmpOldObj=tmpObjectiveScore;
+                    %update U
+                    if dom == targetDomain
+                        U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(U{fold,dom}*projB*V{fold,dom}'.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                    else
+                        U{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*U{fold,dom}*projB*V{fold,dom}'*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                    end
+                    U{fold,dom}(isnan(U{fold,dom})) = 0;
+                    U{fold,dom}(~isfinite(U{fold,dom})) = 0;
+%                     tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+%                     if tmpObjectiveScore > tmpOldObj
+%                         fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
+%                     end
+%                     tmpOldObj=tmpObjectiveScore;
+>>>>>>> parent of 506960d... Do not update variables if the objective increases in the update
                     %update AE
                     if dom == sourceDomain
                         A = CP1{t,fold};
@@ -117,7 +145,11 @@ for t = 1: randomTryTime
                     [rE, cE] = size(E);
                     
 <<<<<<< HEAD
+<<<<<<< HEAD
                     if dom ==targetDomain                        
+=======
+                    if dom ==targetDomain
+>>>>>>> parent of 506960d... Do not update variables if the objective increases in the update
                         A = A.*sqrt((U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*E*sumFi)./(U{fold,dom}'*(U{fold,dom}*A*sumFi*E'*V{fold,dom}'.*W)*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
 =======
                     if dom ==targetDomain
@@ -130,12 +162,16 @@ for t = 1: randomTryTime
                     A(~isfinite(A)) = 0;
                     if dom == sourceDomain
 <<<<<<< HEAD
+<<<<<<< HEAD
                         tmpCP1{fold} = A;              
                         tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, tmpCP1, CP2, CP3, CP4, lambda);
+=======
+                        CP1{fold} = A;
+>>>>>>> parent of 506960d... Do not update variables if the objective increases in the update
                     else
-                        tmpCP3{fold} = A;
-                        tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, tmpCP3, CP4, lambda);
+                        CP3{fold} = A;
                     end
+<<<<<<< HEAD
                     if fakeOptimization == 2
                         if tmpObjectiveScore < tmpOldObj
                             fprintf('Update A (%f=>%f)\n', tmpOldObj, tmpObjectiveScore);
@@ -209,15 +245,39 @@ for t = 1: randomTryTime
                     
 =======
                         CP2{t,fold} = E;
+=======
+%                     tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+%                     if tmpObjectiveScore > tmpOldObj
+%                         fprintf('Domain:%d, Objective increased when update A (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
+%                     end
+%                     tmpOldObj = tmpObjectiveScore;
+                    if dom == targetDomain
+                        E = E.*sqrt((V{fold,dom}'*(YMatrix{dom}.*W)'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*(V{fold,dom}*E*sumFi*A'*U{fold,dom}'.*W')*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
+                    else
+                        E = E.*sqrt((V{fold,dom}'*YMatrix{dom}'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*V{fold,dom}*E*sumFi*A'*U{fold,dom}'*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
+                    end
+                    E(isnan(E)) = 0;
+                    E(~isfinite(E)) = 0;
+                    if dom == sourceDomain
+                        CP2{fold} = E;
+>>>>>>> parent of 506960d... Do not update variables if the objective increases in the update
                     else
                         CP4{t,fold} = E;
                     end
+<<<<<<< HEAD
                     %                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1{t,fold}, CP2{t,fold}, CP3{t,fold}, CP4{t,fold}, lambda);
                     %                     if tmpObjectiveScore > tmpOldObj
                     %                         fprintf('Domain:%d, Objective increased when update E (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
                     %                     end
                     %                     tmpOldObj=tmpObjectiveScore;
 >>>>>>> parent of 503cc95... [correct version]
+=======
+%                     tmpObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+%                     if tmpObjectiveScore > tmpOldObj
+%                         fprintf('Domain:%d, Objective increased when update E (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
+%                     end
+%                     tmpOldObj=tmpObjectiveScore;
+>>>>>>> parent of 506960d... Do not update variables if the objective increases in the update
                 end
                 newObjectiveScore = ShowObjective(U, V, W, YMatrix, Lu, CP1{t,fold}, CP2{t,fold}, CP3{t,fold}, CP4{t,fold}, lambda);
                 diff = oldObjectiveScore - newObjectiveScore;
