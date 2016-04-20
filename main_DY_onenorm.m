@@ -57,7 +57,7 @@ for t = 1: randomTryTime
             
             while ((fakeOptimization==2 && diff>=0.001  && iter<maxIter)||(fakeOptimization~=2 && iter < maxIter))
                 iter = iter + 1;
-                fprintf('Fake:%d, Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
+%                 fprintf('Fake:%d, Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
                 oldObjectiveScore = newObjectiveScore;
                 tmpOldObj=oldObjectiveScore;
                 for dom = 1:numDom
