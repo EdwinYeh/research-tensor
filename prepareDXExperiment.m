@@ -58,9 +58,9 @@ for dom = 1: numDom
     Su{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
     Du{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
     Lu{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
-    Sv{dom} = zeros(numSampleFeature(dom), numSampleFeature(dom));
-    Dv{dom} = zeros(numSampleFeature(dom), numSampleFeature(dom));
-    Lv{dom} = zeros(numSampleFeature(dom), numSampleFeature(dom));
+    Sv{dom} = zeros(numSampleFeature, numSampleFeature);
+    Dv{dom} = zeros(numSampleFeature, numSampleFeature);
+    Lv{dom} = zeros(numSampleFeature, numSampleFeature);
     
     %user
     fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
@@ -77,14 +77,14 @@ for dom = 1: numDom
     Lu{dom} = Du{dom} - Su{dom};
     %item
     fprintf('Domain%d: calculating Sv, Dv, Lv\n', dom);
-    for itemi = 1:numSampleFeature(dom)
-        for itemj = 1:numSampleFeature(dom)
+    for itemi = 1:numSampleFeature
+        for itemj = 1:numSampleFeature
             %ndsparse does not support norm()
             dif = norm((X{dom}(:,itemi) - X{dom}(:,itemj)));
             Sv{dom}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
         end
     end
-    for itemi = 1:numSampleFeature(dom)
+    for itemi = 1:numSampleFeature
         Dv{dom}(itemi,itemi) = sum(Sv{dom}(itemi,:));
     end
     Lv{dom} = Dv{dom} - Sv{dom};
