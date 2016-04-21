@@ -20,11 +20,7 @@ X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 sampleSourceDataIndex = csvread(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
 sampleTargetDataIndex = csvread(sprintf('sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
 
-numInstance = [size(X{1}, 1) size(X{2}, 1)];
-numFeature = [size(X{1}, 2) size(X{2}, 2)];
-
-alpha = 0;
-beta = 0;
+numSampleInstance = [0 0];
 
 Sv = cell(1, numDom);
 Dv = cell(1, numDom);
@@ -42,78 +38,57 @@ end
 
 for dom = 1: numDom
     X{dom} = normr(X{dom});
-    if dom == sourceDomain
-        sampleDataIndex = sampleSourceDataIndex;
-    elseif dom == targetDomain
-        sampleDataIndex = sampleTargetDataIndex;
-    end
     if isSampleInstance == true
-        X{dom} = X{dom}(sampleDataIndex, :);
-        numInstance(dom) = numSampleInstance(dom);
-        sampledLabel{dom} = allLabel{dom}(sampleDataIndex, :);
+        if dom == sourceDomain
+            X{dom} = X{dom}(sampleSourceDataIndex, :);
+            sampledLabel{dom} = allLabel{dom}(sampleSourceDataIndex, :);
+        elseif dom == targetDomain
+            X{dom} = X{dom}(sampleTargetDataIndex, :);
+            sampledLabel{dom} = allLabel{dom}(sampleTargetDataIndex, :);
+        end
     end
+     [numSampleInstance(dom), ~] = size(X{dom});
     if isSampleFeature == true
         denseFeatures = findDenseFeature(X{dom}, numSampleFeature);
         X{dom} = X{dom}(:, denseFeatures);
-        numFeature(dom) = numSampleFeature;
     end
 end
 
 for dom = 1: numDom
-    Su{dom} = zeros(numInstance(dom), numInstance(dom));
-    Du{dom} = zeros(numInstance(dom), numInstance(dom));
-    Lu{dom} = zeros(numInstance(dom), numInstance(dom));
-    Sv{dom} = zeros(numFeature(dom), numFeature(dom));
-    Dv{dom} = zeros(numFeature(dom), numFeature(dom));
-    Lv{dom} = zeros(numFeature(dom), numFeature(dom));
+    Su{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
+    Du{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
+    Lu{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
+    Sv{dom} = zeros(numSampleFeature(dom), numSampleFeature(dom));
+    Dv{dom} = zeros(numSampleFeature(dom), numSampleFeature(dom));
+    Lv{dom} = zeros(numSampleFeature(dom), numSampleFeature(dom));
     
     %user
     fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
-    for useri = 1:numInstance(dom)
-        for userj = 1:numInstance(dom)
+    for useri = 1:numSampleInstance(dom)
+        for userj = 1:numSampleInstance(dom)
             %ndsparse does not support norm()
             dif = norm((X{dom}(useri, :) - X{dom}(userj,:)));
             Su{dom}(useri, userj) = exp(-(dif*dif)/(2*sigma));
         end
     end
-    for useri = 1:numInstance(dom)
+    for useri = 1:numSampleInstance(dom)
         Du{dom}(useri,useri) = sum(Su{dom}(useri,:));
     end
     Lu{dom} = Du{dom} - Su{dom};
     %item
     fprintf('Domain%d: calculating Sv, Dv, Lv\n', dom);
-    for itemi = 1:numFeature(dom)
-        for itemj = 1:numFeature(dom)
+    for itemi = 1:numSampleFeature(dom)
+        for itemj = 1:numSampleFeature(dom)
             %ndsparse does not support norm()
             dif = norm((X{dom}(:,itemi) - X{dom}(:,itemj)));
             Sv{dom}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
         end
     end
-    for itemi = 1:numFeature(dom)
+    for itemi = 1:numSampleFeature(dom)
         Dv{dom}(itemi,itemi) = sum(Sv{dom}(itemi,:));
     end
     Lv{dom} = Dv{dom} - Sv{dom};
 end
 
-%initialize B, U, V
-initV = cell(randomTryTime, numDom);
-initU = cell(randomTryTime, numDom);
-initB = cell(randomTryTime);
-
-str = '';
-for dom = 1:numDom
-    str = sprintf('%s%d,%d,', str, numInstanceCluster, numFeatureCluster);
-end
-str = str(1:length(str)-1);
-for t = 1: randomTryTime
-    for dom = 1: numDom
-        initU{t,dom} = rand(numInstance(dom), numInstanceCluster);
-        initV{t,dom} = rand(numFeature(dom), numFeatureCluster);
-    end
-    randStr = eval(sprintf('rand(%s)', str), sprintf('[%s]', str));
-    randStr = round(randStr);
-    initB{t} = tensor(randStr);
-end
-
 numCVFold = 5;
-CVFoldSize = numInstance(targetDomain)/ numCVFold;
+CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
