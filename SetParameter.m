@@ -9,9 +9,9 @@ numSampleInstance = [500, 500];
 numSampleFeature = 2000;
 sigma = 0.1;
 sigma2 = 0.1;
-cpRank = 5;
-numInstanceCluster = 5;
-numFeatureCluster = 5;
+cpRank = 10;
+numInstanceCluster = 10;
+numFeatureCluster = 10;
 numClass = [2, 2];
 
 maxIter = 100;
