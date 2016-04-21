@@ -1,7 +1,6 @@
-function sampleDataAndSave(datasetId)
+function sampleDataAndSave(datasetId, numSampleInstance)
 
-numSampleInstance = [500, 500];
-numValidateInstance = 100;
+numValidateInstance = 0;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
@@ -34,7 +33,7 @@ elseif datasetId >=14 && datasetId <=23
 end
 
 sampleSourceDataIndex = randperm(numSourceInstance, numSampleInstance(sourceDomain));
-sampleTargetDataIndex = randperm(numTargetInstance, numSampleInstance(targetDomain)+100);
+sampleTargetDataIndex = randperm(numTargetInstance, numSampleInstance(targetDomain));
 sampleValidateDataIndex = sampleTargetDataIndex(numSampleInstance(targetDomain)+1:numSampleInstance(targetDomain)+numValidateInstance);
 sampleTargetDataIndex = sampleTargetDataIndex(1:numSampleInstance(targetDomain));
 csvwrite(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId), sampleSourceDataIndex);

@@ -9,12 +9,12 @@ numSampleInstance = [500, 500];
 numSampleFeature = 2000;
 sigma = 0.1;
 sigma2 = 0.1;
-cpRank = 20;
-numInstanceCluster = 20;
-numFeatureCluster = 20;
+cpRank = 5;
+numInstanceCluster = 5;
+numFeatureCluster = 5;
 numClass = [2, 2];
 
-maxIter = 50;
+maxIter = 100;
 numCVFold = 5;
 randomTryTime = 1;
 numDom = 2;
