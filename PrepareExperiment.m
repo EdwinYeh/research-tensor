@@ -31,7 +31,7 @@ initB = cell(randomTryTime);
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 
 sampleSourceDataIndex = csvread(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
-sampleValidateDataIndex = csvread(sprintf('sampleIndex/sampleValidateDataIndex%d.csv', datasetId));
+% sampleValidateDataIndex = csvread(sprintf('sampleIndex/sampleValidateDataIndex%d.csv', datasetId));
 sampleTestDataIndex = csvread(sprintf('sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
 % [numSourceInstance, ~] = size(X{sourceDomain});
 % [numTargetInstance, ~] = size(X{targetDomain});
