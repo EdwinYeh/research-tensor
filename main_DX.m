@@ -130,7 +130,7 @@ end
 targetTestingDataIndex = 1:CVFoldSize;
 numCorrectPredict = 0;
 for cvFold = 1: numCVFold
-    targetTrainingDataIndex = setdiff(1:numInstance(targetDomain),targetTestingDataIndex);
+    targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),targetTestingDataIndex);
     trainingData = [bestU{sourceDomain}; bestU{targetDomain}(targetTrainingDataIndex,:)];
     trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
     svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf');

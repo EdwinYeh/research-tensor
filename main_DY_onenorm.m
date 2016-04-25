@@ -68,9 +68,9 @@ for t = 1: randomTryTime
                     projB = A*sumFi*E';
                     
                     if dom == targetDomain
-                        V{fold,dom} = V{fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(V{fold,dom}*projB'*U{fold,dom}'.*W')*U{fold,dom}*projB));
+                        V{fold,dom} = V{fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(YMatrix{dom}'.*W')*U{fold,dom}*projB));
                     else
-                        V{fold,dom} = V{fold,dom}.*sqrt((YMatrix{dom}'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(V{fold,dom}*projB'*U{fold,dom}')*U{fold,dom}*projB));
+                        V{fold,dom} = V{fold,dom}.*sqrt((YMatrix{dom}'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(YMatrix{dom}')*U{fold,dom}*projB));
                     end
                     V{fold,dom}(isnan(V{fold,dom})) = 0;
                     V{fold,dom}(~isfinite(V{fold,dom})) = 0;
@@ -81,9 +81,9 @@ for t = 1: randomTryTime
                     %                     tmpOldObj=tmpObjectiveScore;
                     %update U
                     if dom == targetDomain
-                        U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(U{fold,dom}*projB*V{fold,dom}'.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                        U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(YMatrix{dom}'.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
                     else
-                        U{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*U{fold,dom}*projB*V{fold,dom}'*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                        U{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*YMatrix{dom}'*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
                     end
                     U{fold,dom}(isnan(U{fold,dom})) = 0;
                     U{fold,dom}(~isfinite(U{fold,dom})) = 0;
