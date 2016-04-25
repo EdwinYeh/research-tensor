@@ -1,6 +1,6 @@
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-fprintf('Use (Sigma, Sigma2, Lambda, Delta):(%g,%g,%g,%g)\n', sigma, sigma2, lambda, delta);
+fprintf('Use (cpRank, instanceCluster, featureCluster, Sigma, Sigma2, Lambda, Delta):(%g,%g,%g,%g,%g,%g,%g)\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, delta);
 
 bestObjectiveScore = Inf;
 bestAccuracy = 0;
@@ -179,5 +179,5 @@ for t = 1: randomTryTime
     end
 end
 
-fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g\n', sigma, sigma2, lambda, delta, bestObjectiveScore, bestAccuracy, bestTime);
+fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, delta, bestObjectiveScore, bestAccuracy, bestTime);
 %     csvwrite(sprintf('../exp_result/predict_result/%s_predict_result.csv', exp_title), bestPredictResult);

@@ -2,23 +2,41 @@ SetParameter;
 isTestPhase = true;
 exp_title = sprintf('DY_onenorm_%d', datasetId);
 resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
-fprintf(resultFile, 'sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
-lambdaMaxOrder = 6;
-deltaMaxOrder = 6;
-randomTryTime = 1;
-sigmaList = 0.05:0.05:0.05;
+fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
+lambdaStart = 10^-9;
+lambdaMaxOrder = 3;
+lambdaScale = 1000;
+deltaStart = 10^-9;
+deltaMaxOrder = 3;
+deltaScale = 1000;
+randomTryTime = 2;
+sigmaList = 0.02:0.02:0.5;
+cpRankList = 10:10:100;
+instanceClusterList = 10:10:100;
+featureClusterList = 10:10:100;
 sigma2 = -1;
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
     PrepareExperiment;
-    for lambdaOrder = 0:lambdaMaxOrder
-        lambda = 10^-12 * 100 ^ lambdaOrder;
-        for deltaOrder = 0:deltaMaxOrder
-            delta = 10^-12 * 100 ^ deltaOrder;
-            main_DY_onenorm;
+    for tuneCPRank = 1: length(cpRankList)
+        cpRank = cpRankList(tuneCPRank);
+        for tuneInstanceCluster = 1: length(instanceClusterList)
+            numInstanceCluster = instanceClusterList(tuneInstanceCluster);
+            for tuneFeatureCluster = 1: length(featureClusterList)
+                numFeatureCluster = featureClusterList(tuneFeatureCluster);
+                if numInstanceCluster <= cpRank && numFeatureCluster <= cpRank
+                    for lambdaOrder = 0: lambdaMaxOrder
+                        lambda = lambdaStart * lambdaScale ^ lambdaOrder;
+                        for deltaOrder = 0: deltaMaxOrder
+                            delta = deltaStart * deltaScale ^ deltaOrder;
+                            main_DY_onenorm;
+                        end
+                        delta = 0;
+                        main_DY_onenorm;
+                    end
+                end
+                fclose(resultFile);
+            end
         end
-        delta = 0;
-        main_DY_onenorm;
     end
 end
-fclose(resultFile);
