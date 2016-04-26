@@ -1,8 +1,8 @@
 % Please assign datasetId in the commend line
 SetParameter;
 sigmaList = [0.1];
-numInstanceClusterList = [100];
-numFeatureClusterList = [100];
+numInstanceClusterList = [10];
+numFeatureClusterList = [10];
 cpRankList = [500];
 lambdaMaxOrder = 10;
 gamaMaxOrder = 10;
