@@ -3,17 +3,17 @@ isTestPhase = true;
 exp_title = sprintf('DY_onenorm_%d', datasetId);
 resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
-lambdaStart = 10^-9;
-lambdaMaxOrder = 0;
-lambdaScale = 1000;
-deltaStart = 10^-9;
-deltaMaxOrder = 0;
-deltaScale = 1000;
-randomTryTime = 1;
-sigmaList = 0.02:0.02:0.02;
-cpRankList = 10:10:10;
-instanceClusterList = 10:10:10;
-featureClusterList = 10:10:10;
+lambdaStart = 10^-8;
+lambdaMaxOrder = 5;
+lambdaScale = 100;
+deltaStart = 10^-8;
+deltaMaxOrder = 3;
+deltaScale = 100;
+randomTryTime = 5;
+sigmaList = 0.25:0.25:1;
+cpRankList = [5, 10, 50, 100];
+instanceClusterList = [5, 10, 50, 100];
+featureClusterList = [5, 10, 50, 100];
 sigma2 = -1;
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
@@ -35,8 +35,8 @@ for tuneSigma = 1:length(sigmaList)
                         main_DY_onenorm;
                     end
                 end
-                fclose(resultFile);
             end
         end
     end
 end
+fclose(resultFile);
