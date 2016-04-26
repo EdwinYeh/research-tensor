@@ -1,15 +1,17 @@
 % Please assign datasetId in the commend line
 SetParameter;
 sigmaList = [0.1];
-numInstanceClusterList = [5];
-numFeatureClusterList = [5];
-cpRankList = [5];
+numInstanceClusterList = [100];
+numFeatureClusterList = [100];
+cpRankList = [500];
 lambdaMaxOrder = 10;
 gamaMaxOrder = 10;
 deltaMaxOrder = 10;
+
 lambdaStart = 10^-8;
 gamaStart = 10^-8;
 deltaStart = 10^-12;
+
 lambdaScale = 10;
 gamaScale = 10;
 deltaScale = 10;
