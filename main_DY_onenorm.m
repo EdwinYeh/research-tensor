@@ -33,7 +33,7 @@ for t = 1: randomTryTime
     % during fakeOptimization == 2. Only the report the result of
     % fakeOptimization == 2 will be report
     
-    for fakeOptimization = 1: 2
+    for fakeOptimization = 1: 1
         numCorrectPredict = 0;
         validateIndex = 1: CVFoldSize;
         TotalTimer = tic;
@@ -54,13 +54,13 @@ for t = 1: randomTryTime
                 V = realV;
                 maxIter = 1000;
             else
-                maxIter = 50;
+                maxIter = 500;
             end
             
             while ((fakeOptimization==2 && diff>=0.001  && iter<maxIter)||(fakeOptimization~=2 && iter<maxIter))
                 iter = iter + 1;
 %                 disp(diff);
-%                 fprintf('Fake:%d, Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
+                fprintf('Fake:%d, Fold:%d,Iteration:%d, ObjectiveScore:%g\n', fakeOptimization, fold, iter, newObjectiveScore);
                 oldObjectiveScore = newObjectiveScore;
                 tmpOldObj=oldObjectiveScore;
                 for dom = 1:numDom
@@ -72,8 +72,8 @@ for t = 1: randomTryTime
                     else
                         V{fold,dom} = V{fold,dom}.*sqrt((YMatrix{dom}'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(YMatrix{dom}')*U{fold,dom}*projB));
                     end
-                    V{fold,dom}(isnan(V{fold,dom})) = 0;
-                    V{fold,dom}(~isfinite(V{fold,dom})) = 0;
+%                     V{fold,dom}(isnan(V{fold,dom})) = 0;
+%                     V{fold,dom}(~isfinite(V{fold,dom})) = 0;
                     %                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1{fold}, CP2{fold}, CP3{fold}, CP4{fold}, lambda);
                     %                     if tmpObjectiveScore > tmpOldObj
                     %                         fprintf('Domain:%d, Objective increased when update V (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
@@ -81,12 +81,12 @@ for t = 1: randomTryTime
                     %                     tmpOldObj=tmpObjectiveScore;
                     %update U
                     if dom == targetDomain
-                        U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(YMatrix{dom}'.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                        U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
                     else
-                        U{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*YMatrix{dom}'*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                        U{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*YMatrix{dom}*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
                     end
-                    U{fold,dom}(isnan(U{fold,dom})) = 0;
-                    U{fold,dom}(~isfinite(U{fold,dom})) = 0;
+%                     U{fold,dom}(isnan(U{fold,dom})) = 0;
+%                     U{fold,dom}(~isfinite(U{fold,dom})) = 0;
                     %                     tmpObjectiveScore = ShowObjectiveS(SU,SV,U, V, W, YMatrix, Lu, CP1{fold}, CP2{fold}, CP3{fold}, CP4{fold}, lambda);
                     %                     if tmpObjectiveScore > tmpOldObj
                     %                         fprintf('Domain:%d, Objective increased when update U (%f=>%f)\n', dom, tmpOldObj, tmpObjectiveScore);
@@ -109,8 +109,8 @@ for t = 1: randomTryTime
                     else
                         A = A.*sqrt((U{fold,dom}'*YMatrix{dom}*V{fold,dom}*E*sumFi)./(U{fold,dom}'*U{fold,dom}*A*sumFi*E'*V{fold,dom}'*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
                     end
-                    A(isnan(A)) = 0;
-                    A(~isfinite(A)) = 0;
+%                     A(isnan(A)) = 0;
+%                     A(~isfinite(A)) = 0;
                     if dom == sourceDomain
                         CP1{fold} = A;
                     else
@@ -126,8 +126,8 @@ for t = 1: randomTryTime
                     else
                         E = E.*sqrt((V{fold,dom}'*YMatrix{dom}'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*V{fold,dom}*E*sumFi*A'*U{fold,dom}'*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
                     end
-                    E(isnan(E)) = 0;
-                    E(~isfinite(E)) = 0;
+%                     E(isnan(E)) = 0;
+%                     E(~isfinite(E)) = 0;
                     if dom == sourceDomain
                         CP2{fold} = E;
                     else
