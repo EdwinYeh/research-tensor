@@ -9,9 +9,9 @@ isTestPhase = false;
 numSampleFeature = 2000;
 sigma = 0.1;
 sigma2 = 0.1;
-cpRank = 10;
-numInstanceCluster = 10;
-numFeatureCluster = 10;
+cpRank = 50;
+numInstanceCluster = 50;
+numFeatureCluster = 50;
 numClass = [2, 2];
 
 maxIter = 1000;

@@ -1,20 +1,21 @@
 % Please assign datasetId in the commend line
 SetParameter;
-sigmaList = [0.1];
-numInstanceClusterList = [10];
-numFeatureClusterList = [10];
-cpRankList = [500];
-lambdaMaxOrder = 10;
-gamaMaxOrder = 10;
-deltaMaxOrder = 10;
+randomTryTime = 2;
+sigmaList = 0.25:0.25:1;
+numInstanceClusterList = [5, 10, 15, 30];
+numFeatureClusterList = [5, 10, 15, 30];
+cpRankList = [5, 10, 15, 30];
+lambdaMaxOrder = 5;
+gamaMaxOrder = 5;
+deltaMaxOrder = 3;
 
 lambdaStart = 10^-8;
 gamaStart = 10^-8;
-deltaStart = 10^-12;
+deltaStart = 10^-8;
 
-lambdaScale = 10;
-gamaScale = 10;
-deltaScale = 10;
+lambdaScale = 100;
+gamaScale = 100;
+deltaScale = 100;
 
 expTitle = 'DX';
 directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
@@ -39,7 +40,9 @@ for tuneSigma = 1: length(sigmaList)
                             for deltaOrder = 0: deltaMaxOrder
                                 delta = deltaStart * deltaScale^deltaOrder;
                                 %                     try
-                                main_DX;
+                                if numInstanceCluster <= cpRank && numFeatureCluster <= cpRank
+                                    main_DX;
+                                end
                                 %                     catch exception
                                 %                         fprintf('%g,%g,%g,%d,%d,%d\n', lambda, gama, sigma, numInstanceCluster, numFeatureCluster, cpRank);
                                 %                         disp(exception.message);
