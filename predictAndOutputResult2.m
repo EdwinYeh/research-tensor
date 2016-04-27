@@ -1,6 +1,7 @@
 function predictAndOutputResult2(resultDirectoryName)
 
 for datasetId = 1:13
+    numSampleData = 500;
     fprintf('datasetId: %d\n', datasetId);
     if datasetId <= 6
         labelPrefixDirectory = '../20-newsgroup/';
@@ -32,15 +33,15 @@ for datasetId = 1:13
         fileName = FileNames(fileId + 3).name;
         fileParameters = strsplit(fileName, '_');
         UDirectory = sprintf('%s%s', UDirectoryPrefix, fileName);
-        load(UDirectory);
+        U = load(UDirectory);
         targetTestingDataIndex = 1:100;
         numCorrectPredict = 0;
         for fold = 1: 5
             targetTrainingDataIndex = setdiff(1:500,targetTestingDataIndex);
-            trainingData = [bestU{1}; bestU{2}(targetTrainingDataIndex,:)];
+            trainingData = [U{1}; U{2}(targetTrainingDataIndex,:)];
             trainingLabel = [sourceDomainLabel; targetDomainLabel(targetTrainingDataIndex, :)];
             svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
-            predictLabel = predict(svmModel, bestU{2}(targetTestingDataIndex,:));
+            predictLabel = predict(svmModel, U{2}(targetTestingDataIndex,:));
             for dataIndex = 1: 100
                 if targetDomainLabel(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
                     numCorrectPredict = numCorrectPredict + 1;
@@ -48,7 +49,7 @@ for datasetId = 1:13
             end
             targetTestingDataIndex = targetTestingDataIndex + 100;
         end
-        accuracy = numCorrectPredict/ (500);
+        accuracy = numCorrectPredict/ (numSampleData);
         try
             fprintf(resultFile, '%f,%s,%s,%s,%s,%s,%s\n', accuracy, fileParameters{2}, fileParameters{3}, fileParameters{4}, fileParameters{5}, fileParameters{6}, fileParameters{7});
         catch exception
