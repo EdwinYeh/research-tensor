@@ -2,20 +2,21 @@
 SetParameter;
 randomTryTime = 2;
 sigmaList = 0.25:0.25:1;
-numInstanceClusterList = [5, 10, 15, 30];
-numFeatureClusterList = [5, 10, 15, 30];
-cpRankList = [5, 10, 15, 30];
-lambdaMaxOrder = 5;
-gamaMaxOrder = 5;
-deltaMaxOrder = 3;
+numInstanceClusterList = [5, 15];
+numFeatureClusterList = [5, 15];
+cpRankList = [15];
 
-lambdaStart = 10^-8;
-gamaStart = 10^-8;
-deltaStart = 10^-8;
+lambdaMaxOrder = 4;
+gamaMaxOrder = 4;
+deltaMaxOrder = 4;
 
-lambdaScale = 100;
-gamaScale = 100;
-deltaScale = 100;
+lambdaStart = 10^-12;
+gamaStart = 10^-12;
+deltaStart = 10^-12;
+
+lambdaScale = 1000;
+gamaScale = 1000;
+deltaScale = 1000;
 
 expTitle = 'DX';
 directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
@@ -49,6 +50,8 @@ for tuneSigma = 1: length(sigmaList)
                                 %                         continue;
                                 %                     end
                             end
+                            delta = 0;
+                            main_DX;
                         end
                     end
                 end

@@ -1,6 +1,6 @@
-function predictAndOutputResult2(resultDirectoryName)
+function predictAndOutputResult2(algorithmName)
 
-for datasetId = 1:13
+for datasetId = 1:1
     numSampleData = 500;
     fprintf('datasetId: %d\n', datasetId);
     if datasetId <= 6
@@ -22,26 +22,30 @@ for datasetId = 1:13
     sourceDomainLabel = allLabel{1}(sampleSourceDataIndex, :);
     targetDomainLabel = allLabel{2}(sampleTargetDataIndex, :);
     
-    UDirectoryPrefix = sprintf('../exp_result/%s/%d/', resultDirectoryName, datasetId);
-    
+    UDirectoryPrefix = sprintf('../exp_result/%s/%d/', algorithmName, datasetId);
+    disp(UDirectoryPrefix);
     FileNames = dir(UDirectoryPrefix);
     numFiles = length(FileNames) - 3;
-    resultFile = fopen(sprintf('../exp_result/%s%d.csv', resultDirectoryName,   datasetId), 'w');
-    fprintf(resultFile, 'accuracy, lambda, gama, sigma, instanceCluster, featureCluster, cpRank\n');
+    resultFileGaussin = fopen(sprintf('../exp_result/%s%d_gaussian.csv', algorithmName,   datasetId), 'w');
+    resultFileLinear = fopen(sprintf('../exp_result/%s%d_linear.csv', algorithmName,   datasetId), 'w');
+    fprintf(resultFileGaussin, 'accuracy, sigma, cpRank, instanceCluster, featureCluster, lambda, gama, delta\n');
+    fprintf(resultFileLinear, 'accuracy, sigma, cpRank, instanceCluster, featureCluster, lambda, gama, delta\n');
     for fileId = 1:numFiles
         fprintf('dataset %d, file %d\n', datasetId, fileId);
         fileName = FileNames(fileId + 3).name;
         fileParameters = strsplit(fileName, '_');
+        tmpSplitArray = strsplit(fileParameters{8}, '.');
+        fileParameters{8} = tmpSplitArray{1};
         UDirectory = sprintf('%s%s', UDirectoryPrefix, fileName);
-        U = load(UDirectory);
+        load(UDirectory);
         targetTestingDataIndex = 1:100;
         numCorrectPredict = 0;
         for fold = 1: 5
             targetTrainingDataIndex = setdiff(1:500,targetTestingDataIndex);
-            trainingData = [U{1}; U{2}(targetTrainingDataIndex,:)];
+            trainingData = [bestU{1}; bestU{2}(targetTrainingDataIndex,:)];
             trainingLabel = [sourceDomainLabel; targetDomainLabel(targetTrainingDataIndex, :)];
             svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
-            predictLabel = predict(svmModel, U{2}(targetTestingDataIndex,:));
+            predictLabel = predict(svmModel, bestU{2}(targetTestingDataIndex,:));
             for dataIndex = 1: 100
                 if targetDomainLabel(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
                     numCorrectPredict = numCorrectPredict + 1;
@@ -51,11 +55,33 @@ for datasetId = 1:13
         end
         accuracy = numCorrectPredict/ (numSampleData);
         try
-            fprintf(resultFile, '%f,%s,%s,%s,%s,%s,%s\n', accuracy, fileParameters{2}, fileParameters{3}, fileParameters{4}, fileParameters{5}, fileParameters{6}, fileParameters{7});
+            fprintf(resultFileGaussin, '%f,%s,%s,%s,%s,%s,%s,%s\n', accuracy, fileParameters{2}, fileParameters{3}, fileParameters{4}, fileParameters{5}, fileParameters{6}, fileParameters{7}, fileParameters{8});
+        catch exception
+            disp(exception.message);
+        end
+        
+        targetTestingDataIndex = 1:100;
+        numCorrectPredict = 0;
+        for fold = 1: 5
+            targetTrainingDataIndex = setdiff(1:500,targetTestingDataIndex);
+            trainingData = [bestU{1}; bestU{2}(targetTrainingDataIndex,:)];
+            trainingLabel = [sourceDomainLabel; targetDomainLabel(targetTrainingDataIndex, :)];
+            svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'linear', 'KernelScale', 'auto', 'Standardize', true);
+            predictLabel = predict(svmModel, bestU{2}(targetTestingDataIndex,:));
+            for dataIndex = 1: 100
+                if targetDomainLabel(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
+                    numCorrectPredict = numCorrectPredict + 1;
+                end
+            end
+            targetTestingDataIndex = targetTestingDataIndex + 100;
+        end
+        accuracy = numCorrectPredict/ (numSampleData);
+        try
+            fprintf(resultFileLinear, '%f,%s,%s,%s,%s,%s,%s,%s\n', accuracy, fileParameters{2}, fileParameters{3}, fileParameters{4}, fileParameters{5}, fileParameters{6}, fileParameters{7}, fileParameters{8});
         catch exception
             disp(exception.message);
         end
     end
-    fclose(resultFile);
+    fclose(resultFileLinear);
 end
 end
