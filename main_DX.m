@@ -1,6 +1,6 @@
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-fprintf('Use Sigma:%g, Lambda:%g, Gama:%g, Delta:%g\n', sigma, lambda, gama, delta);
+fprintf('Use (cpRank, instanceCluster, featureCluster, sigma, lambda, gama, delta):(%g,%g,%g,%g,%g,%g,%g)\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, gama, delta);
 
 bestRandomInitialObjectiveScore = Inf;
 U = cell(2,1);
