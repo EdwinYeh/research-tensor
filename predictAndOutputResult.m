@@ -1,6 +1,6 @@
-function predictAndOutputResult2(algorithmName)
+function predictAndOutputResult(algorithmName)
 
-for datasetId = 1:1
+for datasetId = 1:13
     numSampleData = 500;
     fprintf('datasetId: %d\n', datasetId);
     if datasetId <= 6
@@ -82,6 +82,7 @@ for datasetId = 1:1
             disp(exception.message);
         end
     end
+    fclose(resultFileGaussian);
     fclose(resultFileLinear);
 end
 end
