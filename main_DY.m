@@ -159,7 +159,7 @@ for t = 1: randomTryTime
     validationAccuracyList(t) = accuracy;
     objectiveScoreList(t) = avgObjectiveScore;
     timeList(t) = avgTime;
-    fprintf('randomTime:%d, accuracy: %g, objectiveScore:%g\n', t, accuracy, avgObjectiveScore);
+%     fprintf('randomTime:%d, accuracy: %g, objectiveScore:%g\n', t, accuracy, avgObjectiveScore);
 end
 
 if isTestPhase
@@ -168,7 +168,7 @@ else
     avgValidationAccuracy = sum(validationAccuracyList)/ randomTryTime;
     avgObjectiveScore = sum(objectiveScoreList)/ randomTryTime;
     avgTime = sum(timeList)/ randomTryTime;
-    fprintf('accuracy: %g, objectiveScore:%g\n', avgValidationAccuracy, avgObjectiveScore);
+    fprintf('avgValidationAccuracy: %g, objectiveScore:%g\n', avgValidationAccuracy, avgObjectiveScore);
     compareWithTheBest(avgValidationAccuracy, avgObjectiveScore, avgTime, sigma, lambda, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle)
     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, avgValidationAccuracy, avgTime);
 end
