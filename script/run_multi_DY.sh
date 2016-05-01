@@ -1,3 +1,4 @@
+rm -r ../../exp_result/DY/
 Idx_dataset="1 2 3 4 5 6"
 
 for idx in $Idx_dataset

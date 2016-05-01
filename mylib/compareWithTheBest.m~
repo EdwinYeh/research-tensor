@@ -11,7 +11,7 @@ try
         delta = newDelta;
         cpRank = newCpRank;
         numInstanceCluster = newNumInstanceCluster;
-        numFeatureCluster = newNumFeatureCluster;
+        numFeatureCluster = newFeatureCluster;
         save(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle) , 'bestValidationAccuracy', 'bestObjectiveScore', 'bestTime', 'sigma', 'lambda', 'delta', 'cpRank', 'numInstanceCluster', 'numFeatureCluster');
     end
 catch
@@ -24,7 +24,7 @@ catch
     delta = newDelta;
     cpRank = newCpRank;
     numInstanceCluster = newNumInstanceCluster;
-    numFeatureCluster = newNumFeatureCluster;
+    numFeatureCluster = newNujFeatureCluster;
     save(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle) , 'bestValidationAccuracy', 'bestObjectiveScore', 'bestTime', 'sigma', 'lambda', 'delta', 'cpRank', 'numInstanceCluster', 'numFeatureCluster');
 end
 end
