@@ -56,7 +56,7 @@ for t = 1: randomTryTime
         while (stopTag < 5 && iter < maxIter)
             iter = iter + 1;
             %                 disp(diff);
-%             fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n',fold, iter, newObjectiveScore);
+            %             fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n',fold, iter, newObjectiveScore);
             oldObjectiveScore = newObjectiveScore;
             tmpOldObj=oldObjectiveScore;
             for dom = 1:numDom
@@ -64,18 +64,33 @@ for t = 1: randomTryTime
                 projB = A*sumFi*E';
                 
                 if dom == targetDomain
-                    V{fold,dom} = V{fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(YMatrix{dom}'.*W')*U{fold,dom}*projB));
+                    V{fold,dom} = V{fold,dom}.*sqrt(((YMatrix{dom}.*W)'*U{fold,dom}*projB)./((U{fold,dom}*projB*V{fold,dom}'.*W)'*U{fold,dom}*projB));
                 else
-                    V{fold,dom} = V{fold,dom}.*sqrt((YMatrix{dom}'*U{fold,dom}*projB)./(V{fold,dom}*V{fold,dom}'*(YMatrix{dom}')*U{fold,dom}*projB));
+                    V{fold,dom} = V{fold,dom}.*sqrt((YMatrix{dom}'*U{fold,dom}*projB)./((U{fold,dom}*projB*V{fold,dom}')'*U{fold,dom}*projB));
                 end
-                
+                %row normalize
+                [r, ~] = size(V{dom});
+                for tmpI = 1:r
+                    bot = sum(abs(V{dom}(tmpI,:)));
+                    if bot == 0
+                        bot = 1;
+                    end
+                    V{dom}(tmpI,:) = V{dom}(tmpI,:)/bot;
+                end
                 %update U
                 if dom == targetDomain
-                    U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                    U{fold,dom} = U{fold,dom}.*sqrt(((YMatrix{dom}.*W)*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./((U{fold,dom}*projB*V{fold,dom}'.*W)*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
                 else
-                    U{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./(U{fold,dom}*U{fold,dom}'*YMatrix{dom}*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
+                    U{fold,dom} = U{fold,dom}.*sqrt((YMatrix{dom}*V{fold,dom}*projB'+lambda*Su{dom}*U{fold,dom})./((U{fold,dom}*projB*V{fold,dom}')*V{fold,dom}*projB'+lambda*Du{dom}*U{fold,dom}));
                 end
-                
+                [r, ~] = size(U{dom});
+                for tmpI = 1:r
+                    bot = sum(abs(U{dom}(tmpI,:)));
+                    if bot == 0
+                        bot = 1;
+                    end
+                    U{dom}(tmpI,:) = U{dom}(tmpI,:)/bot;
+                end
                 %update AE
                 if dom == sourceDomain
                     A = CP1{fold};

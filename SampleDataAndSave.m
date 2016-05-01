@@ -1,6 +1,5 @@
-function sampleDataAndSave(datasetId, numSampleInstance)
+function sampleDataAndSave(datasetId, numValidationInstance, numTestInstance)
 
-numValidateInstance = 0;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
@@ -32,12 +31,12 @@ elseif datasetId >=14 && datasetId <=23
     
 end
 
-sampleSourceDataIndex = randperm(numSourceInstance, numSampleInstance(sourceDomain));
-sampleTargetDataIndex = randperm(numTargetInstance, numSampleInstance(targetDomain));
-sampleValidateDataIndex = sampleTargetDataIndex(numSampleInstance(targetDomain)+1:numSampleInstance(targetDomain)+numValidateInstance);
-sampleTargetDataIndex = sampleTargetDataIndex(1:numSampleInstance(targetDomain));
+sampleSourceDataIndex = randperm(numSourceInstance, numValidationInstance(sourceDomain));
+sampleTargetDataIndex = randperm(numTargetInstance, numValidationInstance(targetDomain) + numTestInstance);
+sampleTestDataIndex = sampleTargetDataIndex(numValidationInstance(targetDomain)+1:numValidationInstance(targetDomain)+numTestInstance);
+sampleValidationDataIndex = sampleTargetDataIndex(1:numValidationInstance(targetDomain));
 csvwrite(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId), sampleSourceDataIndex);
-csvwrite(sprintf('sampleIndex/sampleTargetDataIndex%d.csv', datasetId), sampleTargetDataIndex);
-csvwrite(sprintf('sampleIndex/sampleValidateDataIndex%d.csv', datasetId), sampleValidateDataIndex);
+csvwrite(sprintf('sampleIndex/sampleValidationDataIndex%d.csv', datasetId), sampleValidationDataIndex);
+csvwrite(sprintf('sampleIndex/sampleTestDataIndex%d.csv', datasetId), sampleTestDataIndex);
 
 end

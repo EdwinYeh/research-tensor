@@ -1,20 +1,21 @@
 SetParameter;
-isTestPhase = true;
-exp_title = sprintf('DY_onenorm_%d', datasetId);
-resultFile = fopen(sprintf('../exp_result/%s.csv', exp_title), 'a');
-fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,sigma2,lambda,delta,objectiveScore,accuracy,trainingTime\n');
-lambdaStart = 10^-14;
-lambdaMaxOrder = 2;
+resultDirectory = sprintf('../exp_result/DY/%d/', datasetId);
+mkdir(resultDirectory);
+expTitle = sprintf('DY_%d', datasetId);
+resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
+fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
+lambdaStart = 10^-6;
+lambdaMaxOrder = 0;
 lambdaScale = 10000;
-deltaStart = 10^-14;
-deltaMaxOrder = 2;
+deltaStart = 10^-12;
+deltaMaxOrder = 0;
 deltaScale = 10000;
 randomTryTime = 5;
-sigmaList = 0.05:0.05:0.5;
-cpRankList = [15];
-instanceClusterList = [5, 15];
-featureClusterList = [5, 15];
-sigma2 = -1;
+sigmaList = 0.1:0.01:0.1;
+cpRankList = [10];
+instanceClusterList = [10];
+featureClusterList = [5];
+isTestPhase = false;
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
     PrepareExperiment;
@@ -29,14 +30,19 @@ for tuneSigma = 1:length(sigmaList)
                         lambda = lambdaStart * lambdaScale ^ lambdaOrder;
                         for deltaOrder = 0: deltaMaxOrder
                             delta = deltaStart * deltaScale ^ deltaOrder;
-                            main_DY_onenorm;
+                            main_DY;
                         end
-                        delta = 0;
-                        main_DY_onenorm;
                     end
                 end
             end
         end
     end
 end
+fclose(resultFile);
+isTestPhase = true;
+resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
+fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
+load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));
+PrepareExperiment;
+main_DY;
 fclose(resultFile);

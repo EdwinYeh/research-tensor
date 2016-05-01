@@ -37,7 +37,8 @@ for dom = 1:numDom
 end
 
 for dom = 1: numDom
-    X{dom} = normr(X{dom});
+    
+%     X{dom} = normc(X{dom});
     if isSampleInstance == true
         if dom == sourceDomain
             X{dom} = X{dom}(sampleSourceDataIndex, :);
@@ -52,6 +53,7 @@ for dom = 1: numDom
         denseFeatures = findDenseFeature(X{dom}, numSampleFeature);
         X{dom} = X{dom}(:, denseFeatures);
     end
+    X{dom} = normr(X{dom});
 end
 
 for dom = 1: numDom
@@ -81,7 +83,7 @@ for dom = 1: numDom
         for itemj = 1:numSampleFeature
             %ndsparse does not support norm()
             dif = norm((X{dom}(:,itemi) - X{dom}(:,itemj)));
-            Sv{dom}(itemi, itemj) = exp(-(dif*dif)/(2*sigma));
+            Sv{dom}(itemi, itemj) = exp(-(dif*dif)/(2*sigma2));
         end
     end
     for itemi = 1:numSampleFeature

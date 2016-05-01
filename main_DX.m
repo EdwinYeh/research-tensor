@@ -1,6 +1,6 @@
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-fprintf('Use (cpRank, instanceCluster, featureCluster, sigma, lambda, gama, delta):(%g,%g,%g,%g,%g,%g,%g)\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, gama, delta);
+fprintf('Use (cpRank, instanceCluster, featureCluster, sigma, sigma2, lambda, gama, delta):(%g,%g,%g,%g,%g,%g,%g,%g)\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta);
 
 bestRandomInitialObjectiveScore = Inf;
 U = cell(2,1);
@@ -87,41 +87,23 @@ for t = 1: randomTryTime
     end
 end
 
-save(sprintf('%sU_%g_%g_%g_%g_%g_%g_%g.mat', directoryName, sigma, cpRank, numInstanceCluster, numFeatureCluster, lambda, gama, delta), 'bestU');
-% 
-% targetTestingDataIndex = 1:CVFoldSize;
-% numCorrectPredict = 0;
-% for cvFold = 1: numCVFold
-%     targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),targetTestingDataIndex);
-%     trainingData = [bestU{sourceDomain}; bestU{targetDomain}(targetTrainingDataIndex,:)];
-%     trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
-%     svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
-%     predictLabel = predict(svmModel, bestU{targetDomain}(targetTestingDataIndex,:));
-%     for dataIndex = 1: CVFoldSize
-%         if sampledLabel{targetDomain}(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
-%             numCorrectPredict = numCorrectPredict + 1;
-%         end
-%     end
-%     targetTestingDataIndex = targetTestingDataIndex + CVFoldSize;
-% end
-% accuracy = numCorrectPredict/ (CVFoldSize*numCVFold);
-% fprintf('Gaussian Accuracy:%g%%\n', accuracy);
-% fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g\n', sigma, lambda, gama, delta, bestRandomInitialObjectiveScore, accuracy, bestConvergeTime);
-% 
-% targetTestingDataIndex = 1:CVFoldSize;
-% numCorrectPredict = 0;
-% for cvFold = 1: numCVFold
-%     targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),targetTestingDataIndex);
-%     trainingData = [bestU{sourceDomain}; bestU{targetDomain}(targetTrainingDataIndex,:)];
-%     trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
-%     svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'linear', 'KernelScale', 'auto', 'Standardize', true);
-%     predictLabel = predict(svmModel, bestU{targetDomain}(targetTestingDataIndex,:));
-%     for dataIndex = 1: CVFoldSize
-%         if sampledLabel{targetDomain}(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
-%             numCorrectPredict = numCorrectPredict + 1;
-%         end
-%     end
-%     targetTestingDataIndex = targetTestingDataIndex + CVFoldSize;
-% end
-% accuracy = numCorrectPredict/ (CVFoldSize*numCVFold);
-% fprintf('Linear Accuracy:%g%%\n', accuracy);
+save(sprintf('%sU_%g_%g_%g_%g_%g_%g_%g_%g.mat', directoryName, sigma, sigma2, cpRank, numInstanceCluster, numFeatureCluster, lambda, gama, delta), 'bestU', 'bestRandomInitialObjectiveScore');
+
+targetTestingDataIndex = 1:CVFoldSize;
+numCorrectPredict = 0;
+for cvFold = 1: numCVFold
+    targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),targetTestingDataIndex);
+    trainingData = [bestU{sourceDomain}; bestU{targetDomain}(targetTrainingDataIndex,:)];
+    trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
+    svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
+    predictLabel = predict(svmModel, bestU{targetDomain}(targetTestingDataIndex,:));
+    for dataIndex = 1: CVFoldSize
+        if sampledLabel{targetDomain}(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
+            numCorrectPredict = numCorrectPredict + 1;
+        end
+    end
+    targetTestingDataIndex = targetTestingDataIndex + CVFoldSize;
+end
+accuracy = numCorrectPredict/ (CVFoldSize*numCVFold);
+fprintf('Objective:%g, Accuracy:%g%%\n', bestRandomInitialObjectiveScore, accuracy);
+fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestRandomInitialObjectiveScore, accuracy, bestConvergeTime);

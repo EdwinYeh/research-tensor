@@ -6,17 +6,11 @@ isRandom = true;
 isUsingTensor = true;
 isTestPhase = false;
 
-numSampleFeature = 2000;
-sigma = 0.1;
-sigma2 = 0.1;
-cpRank = 50;
-numInstanceCluster = 50;
-numFeatureCluster = 50;
+numSampleFeature = 4000;
 numClass = [2, 2];
 
-maxIter = 300;
+maxIter = 500;
 numCVFold = 5;
-randomTryTime = 1;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;

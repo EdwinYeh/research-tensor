@@ -1,15 +1,15 @@
 % Please assign datasetId in the commend line
 SetParameter;
-randomTryTime = 2;
-sigmaList = 0.05:0.05:1;
-sigma2List = 0.05:0.05:1;
+randomTryTime = 1;
+sigmaList = 0.05:0.05:0.05;
+sigma2List = 0.05:0.05:0.05;
 numInstanceClusterList = [15];
 numFeatureClusterList = [15];
 cpRankList = [15];
 
-lambdaMaxOrder = 3;
-gamaMaxOrder = 3;
-deltaMaxOrder = 3;
+lambdaMaxOrder = 0;
+gamaMaxOrder = 0;
+deltaMaxOrder = 0;
 
 lambdaStart = 10^-8;
 gamaStart = 10^-8;
@@ -19,9 +19,9 @@ lambdaScale = 1000;
 gamaScale = 1000;
 deltaScale = 1000;
 
-expTitle = sprintf('DX%d', datasetId);
-directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
-mkdir(directoryName);
+expTitle = sprintf('DX_row%d', datasetId);
+% directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
+% mkdir(directoryName);
 resultFile = fopen(sprintf('../exp_result/%s.csv', expTitle), 'a');
 fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestRandomInitialObjectiveScore, accuracy, bestConvergeTime\n');
 
@@ -44,7 +44,7 @@ for tuneSigma = 1: length(sigmaList)
                                 for deltaOrder = 0: deltaMaxOrder
                                     delta = deltaStart * deltaScale^deltaOrder;
                                     if numInstanceCluster <= cpRank && numFeatureCluster <= cpRank
-                                        main_DX;
+                                        main_DX_row;
                                     end
                                 end
                             end
@@ -56,4 +56,4 @@ for tuneSigma = 1: length(sigmaList)
     end
 end
 
-fclose(resultFile);
+% fclose(resultFile);

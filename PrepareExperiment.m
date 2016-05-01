@@ -24,15 +24,11 @@ Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);
 
-initV = cell(randomTryTime, numDom);
-initU = cell(randomTryTime, numDom);
-initB = cell(randomTryTime);
-
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 
-sampleSourceDataIndex = csvread(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
-% sampleValidateDataIndex = csvread(sprintf('sampleIndex/sampleValidateDataIndex%d.csv', datasetId));
-sampleTestDataIndex = csvread(sprintf('sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
+sourceDataIndex = csvread(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
+validationDataIndex = csvread(sprintf('sampleIndex/sampleValidationDataIndex%d.csv', datasetId));
+testDataIndex = csvread(sprintf('sampleIndex/sampleTestDataIndex%d.csv', datasetId));
 % [numSourceInstance, ~] = size(X{sourceDomain});
 % [numTargetInstance, ~] = size(X{targetDomain});
 % sampleSourceDataIndex = randperm(numSourceInstance, numSampleInstance(sourceDomain));
@@ -50,15 +46,15 @@ for i = 1: numDom
 %     fprintf('Sample domain %d data\n', i);
     if isSampleInstance == true
         if i == sourceDomain
-            X{i} = X{i}(sampleSourceDataIndex, :);
-            Label{i} = Label{i}(sampleSourceDataIndex, :);
+            X{i} = X{i}(sourceDataIndex, :);
+            Label{i} = Label{i}(sourceDataIndex, :);
         elseif i == targetDomain
             if isTestPhase == true
-                X{i} = X{i}(sampleTestDataIndex, :);
-                Label{i} = Label{i}(sampleTestDataIndex, :);
+                X{i} = [X{i}(validationDataIndex, :); X{i}(testDataIndex, :)];
+                Label{i} = [Label{i}(validationDataIndex, :); Label{i}(testDataIndex, :)];
             else
-                X{i} = X{i}(sampleValidateDataIndex, :);
-                Label{i} = Label{i}(sampleValidateDataIndex, :);
+                X{i} = X{i}(validationDataIndex, :);
+                Label{i} = Label{i}(validationDataIndex, :);
             end
         end
     end
@@ -73,6 +69,8 @@ for i = 1: numDom
     end
     X{i} = normr(X{i});
 end
+numValidationInstance = length(validationDataIndex);
+numTestInstance = length(testDataIndex);
 % 
 for dom = 1: numDom
     Su{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
@@ -90,18 +88,8 @@ for dom = 1: numDom
     Lu{dom} = Du{dom} - Su{dom};
 end
 
-str = '';
-for i = 1:numDom
-    str = sprintf('%s%d,%d,', str, numInstanceCluster, numFeatureCluster);
+if ~isTestPhase
+    CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
+else
+    CVFoldSize = numTestInstance/ numCVFold;
 end
-str = str(1:length(str)-1);
-eval(sprintf('originalSize = [%s];', str));
-
-%Randomly initialize B, U, V
-if isRandom == true
-    for t = 1: randomTryTime
-        [initU(t,:),initB{t},initV(t,:)] = randomInitialize(numSampleInstance, numClass, numInstanceCluster, numFeatureCluster, numDom, isUsingTensor);
-    end
-end
-
-CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
