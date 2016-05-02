@@ -20,11 +20,12 @@ gamaScale = 1000;
 deltaScale = 1000;
 
 expTitle = sprintf('DX%d', datasetId);
-directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
-mkdir(directoryName);
-resultFile = fopen(sprintf('../exp_result/%s.csv', expTitle), 'a');
-fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestRandomInitialObjectiveScore, accuracy, bestConvergeTime\n');
+resultDirectory = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
+mkdir(resultDirectory);
+resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
+fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
 
+isTestPhase = false;
 for tuneSigma = 1: length(sigmaList)
     sigma = sigmaList(tuneSigma);
     for tuneSigma2 = 1:length(sigma2List)
@@ -55,5 +56,12 @@ for tuneSigma = 1: length(sigmaList)
         end
     end
 end
-
+fclose(resultFile);
+isTestPhase = true;
+randomTryTime = 10;
+resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
+fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
+load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));
+PrepareExperiment;
+main_DX;
 fclose(resultFile);

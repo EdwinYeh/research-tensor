@@ -1,8 +1,3 @@
-% if matlabpool('size') > 0
-%     matlabpool close;
-% end
-% matlabpool(4);
-
 if datasetId <= 6
     dataType = 1;
     prefix = '../20-newsgroup/'; 
@@ -19,7 +14,6 @@ domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', da
 TrueYMatrix = cell(1, numDom);
 YMatrix = cell(1, numDom);
 Label = cell(1, numDom);
-uc = cell(1, numDom);
 Su = cell(1, numDom);
 Du = cell(1, numDom);
 Lu = cell(1, numDom);

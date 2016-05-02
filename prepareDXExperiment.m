@@ -1,5 +1,3 @@
-% configuration
-
 if datasetId <= 6
     dataType = 1;
     prefix = '../20-newsgroup/';
@@ -17,8 +15,9 @@ targetDomain = 2;
 domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', datasetId)};
 
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
-sampleSourceDataIndex = csvread(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
-sampleTargetDataIndex = csvread(sprintf('sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
+sourceDataIndex = csvread(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
+validationDataIndex = csvread(sprintf('sampleIndex/sampleValidationDataIndex%d.csv', datasetId));
+testDataIndex = csvread(sprintf('sampleIndex/sampleTestDataIndex%d.csv', datasetId));
 
 numSampleInstance = [0 0];
 
@@ -31,30 +30,33 @@ Lu = cell(1, numDom);
 allLabel = cell(1, numDom);
 sampledLabel = cell(1, numDom);
 
-for dom = 1:numDom
+for dom = 1: numDom
     domainName = domainNameList{dom};
     allLabel{dom} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
-end
-
-for dom = 1: numDom
-    
-%     X{dom} = normc(X{dom});
     if isSampleInstance == true
         if dom == sourceDomain
-            X{dom} = X{dom}(sampleSourceDataIndex, :);
-            sampledLabel{dom} = allLabel{dom}(sampleSourceDataIndex, :);
+            X{dom} = X{dom}(sourceDataIndex, :);
+            sampledLabel{dom} = allLabel{dom}(sourceDataIndex, :);
         elseif dom == targetDomain
-            X{dom} = X{dom}(sampleTargetDataIndex, :);
-            sampledLabel{dom} = allLabel{dom}(sampleTargetDataIndex, :);
+            if isTestPhase == true
+                X{dom} = [X{dom}(validationDataIndex, :); X{dom}(testDataIndex, :)];
+                sampledLabel{dom} = [allLabel{dom}(validationDataIndex, :); allLabel{dom}(validationDataIndex)];
+            else
+                X{dom} = X{dom}(validationDataIndex, :);
+                sampledLabel{dom} = allLabel{dom}(validationDataIndex, :);
+            end
         end
     end
-     [numSampleInstance(dom), ~] = size(X{dom});
+    [numSampleInstance(dom), ~] = size(X{dom});
     if isSampleFeature == true
         denseFeatures = findDenseFeature(X{dom}, numSampleFeature);
         X{dom} = X{dom}(:, denseFeatures);
     end
     X{dom} = normr(X{dom});
 end
+
+numValidationInstance = length(validationDataIndex);
+numTestInstance = length(testDataIndex);
 
 for dom = 1: numDom
     Su{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
@@ -92,5 +94,8 @@ for dom = 1: numDom
     Lv{dom} = Dv{dom} - Sv{dom};
 end
 
-numCVFold = 5;
-CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
+if ~isTestPhase
+    CVFoldSize = numSampleInstance(targetDomain)/ numCVFold;
+else
+    CVFoldSize = numTestInstance/ numCVFold;
+end

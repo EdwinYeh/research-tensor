@@ -44,7 +44,6 @@ for t = 1: randomTryTime
     
     for fold = 1:numCVFold
         YMatrix = TrueYMatrix;
-        YMatrix{targetDomain}(hiddenIndex, :) = zeros(CVFoldSize, numClass(1));
         W = ones(numSampleInstance(targetDomain), numClass(1));
         W(hiddenIndex, :) = 0;
         [rY,cY]=size(YMatrix{1});
@@ -53,7 +52,7 @@ for t = 1: randomTryTime
         newObjectiveScore = Inf;
         stopTag = 0;
         
-        while (stopTag < 5 && iter < maxIter)
+        while (stopTag < 50 && iter < maxIter)
             iter = iter + 1;
             %                 disp(diff);
 %             fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n',fold, iter, newObjectiveScore);
@@ -115,7 +114,7 @@ for t = 1: randomTryTime
                 end
                 
             end
-            newObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+            newObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda, delta);
             objTrack{fold} = [objTrack{fold}, newObjectiveScore];
             diff = oldObjectiveScore - newObjectiveScore;
             if diff < 0.01
