@@ -4,17 +4,17 @@ mkdir(resultDirectory);
 expTitle = sprintf('DY_row_%d', datasetId);
 resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
-lambdaStart = 10^-6;
-lambdaMaxOrder = 0;
-lambdaScale = 10000;
-deltaStart = 10^-6;
-deltaMaxOrder = 0;
-deltaScale = 10000;
+lambdaStart = 10^-3;
+lambdaMaxOrder = 4;
+lambdaScale = 20;
+deltaStart = 10^-15;
+deltaMaxOrder = 3;
+deltaScale = 1000;
 randomTryTime = 5;
-sigmaList = 0.1:0.01:0.1;
-cpRankList = [25];
-instanceClusterList = [25];
-featureClusterList = [25];
+sigmaList = 0.01:0.03:0.2;
+cpRankList = [10];
+instanceClusterList = [10];
+featureClusterList = [10];
 isTestPhase = false;
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
@@ -40,6 +40,7 @@ for tuneSigma = 1:length(sigmaList)
 end
 fclose(resultFile);
 isTestPhase = true;
+randomTryTime = 10;
 resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));

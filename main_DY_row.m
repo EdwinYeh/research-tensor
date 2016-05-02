@@ -53,7 +53,7 @@ for t = 1: randomTryTime
         newObjectiveScore = Inf;
         stopTag = 0;
         
-        while (stopTag < 5 && iter < maxIter)
+        while (stopTag < 100 && iter < maxIter)
             iter = iter + 1;
             %                 disp(diff);
             %             fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n',fold, iter, newObjectiveScore);
@@ -104,9 +104,9 @@ for t = 1: randomTryTime
                 [rE, cE] = size(E);
                 
                 if dom ==targetDomain
-                    A = A.*sqrt((U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*E*sumFi)./(U{fold,dom}'*(U{fold,dom}*A*sumFi*E'*V{fold,dom}'.*W)*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
+                    A = A.*sqrt((U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*E*sumFi)./(U{fold,dom}'*(U{fold,dom}*A*sumFi*E'*V{fold,dom}'.*W)*V{fold,dom}*E*sumFi));
                 else
-                    A = A.*sqrt((U{fold,dom}'*YMatrix{dom}*V{fold,dom}*E*sumFi)./(U{fold,dom}'*U{fold,dom}*A*sumFi*E'*V{fold,dom}'*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
+                    A = A.*sqrt((U{fold,dom}'*YMatrix{dom}*V{fold,dom}*E*sumFi)./(U{fold,dom}'*U{fold,dom}*A*sumFi*E'*V{fold,dom}'*V{fold,dom}*E*sumFi));
                 end
                 %                     A(isnan(A)) = 0;
                 %                     A(~isfinite(A)) = 0;
@@ -117,9 +117,9 @@ for t = 1: randomTryTime
                 end
                 
                 if dom == targetDomain
-                    E = E.*sqrt((V{fold,dom}'*(YMatrix{dom}.*W)'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*(V{fold,dom}*E*sumFi*A'*U{fold,dom}'.*W')*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
+                    E = E.*sqrt((V{fold,dom}'*(YMatrix{dom}.*W)'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*(V{fold,dom}*E*sumFi*A'*U{fold,dom}'.*W')*U{fold,dom}*A*sumFi));
                 else
-                    E = E.*sqrt((V{fold,dom}'*YMatrix{dom}'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*V{fold,dom}*E*sumFi*A'*U{fold,dom}'*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
+                    E = E.*sqrt((V{fold,dom}'*YMatrix{dom}'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*V{fold,dom}*E*sumFi*A'*U{fold,dom}'*U{fold,dom}*A*sumFi));
                 end
                 %                     E(isnan(E)) = 0;
                 %                     E(~isfinite(E)) = 0;
@@ -130,7 +130,7 @@ for t = 1: randomTryTime
                 end
                 
             end
-            newObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda);
+            newObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda, delta);
             objTrack{fold} = [objTrack{fold}, newObjectiveScore];
             diff = oldObjectiveScore - newObjectiveScore;
             if diff < 0.01
@@ -144,8 +144,7 @@ for t = 1: randomTryTime
         [A,sumFi,E] = projectTensorToMatrix({CP1{fold},CP2{fold},CP3{fold},CP4{fold}}, targetDomain);
         projB = A*sumFi*E';
         result = U{fold,targetDomain}*projB*V{fold,targetDomain}';
-        [~, maxIndex] = max(result, [], 2);
-        predictResult = maxIndex;
+        [~, predictResult] = max(result, [], 2);
         for dom = 1: CVFoldSize
             if(predictResult(hiddenIndex(dom)) == Label{targetDomain}(hiddenIndex(dom)))
                 numCorrectPredict = numCorrectPredict + 1;
@@ -154,6 +153,7 @@ for t = 1: randomTryTime
         hiddenIndex = hiddenIndex + CVFoldSize;
     end
     
+    %avg accuracy of all folds
     if isTestPhase
         accuracy = numCorrectPredict/ numTestInstance;
     else
