@@ -6,6 +6,15 @@ bestRandomInitialObjectiveScore = Inf;
 U = cell(2,1);
 V = cell(2,1);
 
+validationAccuracyList = zeros(randomTryTime, 1);
+validationObjectiveScoreList = zeros(randomTryTime, 1);
+validationTimeList = zeros(randomTryTime, 1);
+
+bestTestObjectiveScore = Inf;
+bestTestAccuracy = 0;
+bestTestTime = Inf;
+
+objTrack = cell(randomTryTime, 1);
 for t = 1: randomTryTime
     
     CP1 = rand(numInstanceCluster, cpRank);
@@ -22,9 +31,10 @@ for t = 1: randomTryTime
     newObjectiveScore = Inf;
     iter = 0;
     diff = Inf;
+    stopTag = 0;
     convergeTimer = tic;
     
-    while (diff >= 0.001  && iter < maxIter)
+    while (stopTag < 50  && iter < maxIter)
         iter = iter + 1;
         oldObjectiveScore = newObjectiveScore;
         newObjectiveScore = 0;
@@ -74,36 +84,60 @@ for t = 1: randomTryTime
             objectiveScore = normEmp + smoothU + smoothV + oneNormH;
             newObjectiveScore = newObjectiveScore + objectiveScore;
         end
+        objTrack{t} = [objTrack{t}, newObjectiveScore];
         %disp(sprintf('\tEmperical Error:%f', newObjectiveScore));
-%         fprintf('iter:%d, objective = %f\n', iter, newObjectiveScore);
+        %         fprintf('iter:%d, objective = %f\n', iter, newObjectiveScore);
         diff = oldObjectiveScore - newObjectiveScore;
+        if diff < 0.1
+            stopTag = stopTag + 1;
+        else
+            stopTag = 0;
+        end
     end
     
     convergeTime = toc(convergeTimer);
-    if newObjectiveScore < bestRandomInitialObjectiveScore
-        bestRandomInitialObjectiveScore = newObjectiveScore;
-        bestU = U;
-        bestConvergeTime = convergeTime;
+    
+    holdoutIndex = 1:CVFoldSize;
+    if isTestPhase
+        holdoutIndex = holdoutIndex + numValidationInstance;
     end
-end
-
-save(sprintf('%sU_%g_%g_%g_%g_%g_%g_%g_%g.mat', directoryName, sigma, sigma2, cpRank, numInstanceCluster, numFeatureCluster, lambda, gama, delta), 'bestU', 'bestRandomInitialObjectiveScore');
-
-targetTestingDataIndex = 1:CVFoldSize;
-numCorrectPredict = 0;
-for cvFold = 1: numCVFold
-    targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),targetTestingDataIndex);
-    trainingData = [bestU{sourceDomain}; bestU{targetDomain}(targetTrainingDataIndex,:)];
-    trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
-    svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
-    predictLabel = predict(svmModel, bestU{targetDomain}(targetTestingDataIndex,:));
-    for dataIndex = 1: CVFoldSize
-        if sampledLabel{targetDomain}(targetTestingDataIndex(dataIndex)) == predictLabel(dataIndex)
-            numCorrectPredict = numCorrectPredict + 1;
+    
+    numCorrectPredict = 0;
+    for cvFold = 1: numCVFold
+        targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),holdoutIndex);
+        trainingData = [U{sourceDomain}; U{targetDomain}(targetTrainingDataIndex,:)];
+        trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
+        svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
+        predictLabel = predict(svmModel, U{targetDomain}(holdoutIndex,:));
+        for dataIndex = 1: CVFoldSize
+            if sampledLabel{targetDomain}(holdoutIndex(dataIndex)) == predictLabel(dataIndex)
+                numCorrectPredict = numCorrectPredict + 1;
+            end
         end
+        holdoutIndex = holdoutIndex + CVFoldSize;
     end
-    targetTestingDataIndex = targetTestingDataIndex + CVFoldSize;
+    if isTestPhase
+        testAccuracy = numCorrect/ numTestInstance;
+        if newObjectiveScore < bestTestObjectiveScore
+            bestTestObjectiveScore = newObjectiveScore;
+            bestTestAccuracy = testAccuracy;
+            bestTestTime = convergeTime;
+        end
+    else
+        validationAccuracy = numCorrectPredict/ numValidationInstance;
+        validationTimeList(t) = convergeTime;
+        validationObjectiveScoreList(t) = newObjectiveScore;
+    end
 end
-accuracy = numCorrectPredict/ (CVFoldSize*numCVFold);
-fprintf('Objective:%g, Accuracy:%g%%\n', bestRandomInitialObjectiveScore, accuracy);
-fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestRandomInitialObjectiveScore, accuracy, bestConvergeTime);
+
+if isTestPhase
+    fprtinf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestTestObjectiveScore, bestTestAccuracy, bestTestTime);
+    fprintf('bestTestAccuracy: %g, objectiveScore: %g\n', bestTestAccuracy, bestTestObjectiveScore);
+else
+    avgValidationAccuracy = sum(validationAccuracyList)/ randomTryTime;
+    avgObjectiveScore = sum(validationObjectiveScoreList)/ randomTryTime;
+    avgValidationTime = sum(validationTimeList)/ randomTryTime;
+    fprintf('avgValidationAccuracy: %g, objectiveScore:%g\n', avgValidationAccuracy, avgObjectiveScore);
+    compareWithTheBestDX(avgValidationAccuracy, avgObjectiveScore, avgValidationTime, sigma, sigma2, lambda, gama, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle);
+    fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, validationObjectiveScore, ValidationAccuracy, bestConvergeTime);
+end

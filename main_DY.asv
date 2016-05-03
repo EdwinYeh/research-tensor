@@ -154,11 +154,12 @@ for t = 1: randomTryTime
             bestTestTime = avgTime;
         end
     else
-        time = round(clock);
-        validationAccuracyList(t) = accuracy;
-        validationObjectiveScoreList(t) = avgObjectiveScore;
-        validationTimeList(t) = avgTime;
+        
     end
+    time = round(clock);
+    validationAccuracyList(t) = accuracy;
+    validationObjectiveScoreList(t) = avgObjectiveScore;
+    validationTimeList(t) = avgTime;
 %     fprintf('randomTime:%d, accuracy: %g, objectiveScore:%g\n', t, accuracy, avgObjectiveScore);
 end
 
@@ -169,6 +170,6 @@ else
     avgObjectiveScore = sum(validationObjectiveScoreList)/ randomTryTime;
     avgTime = sum(validationTimeList)/ randomTryTime;
     fprintf('avgValidationAccuracy: %g, objectiveScore:%g\n', avgValidationAccuracy, avgObjectiveScore);
-    compareWithTheBest(avgValidationAccuracy, avgObjectiveScore, avgTime, sigma, lambda, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle);
+    compareWithTheBest(avgValidationAccuracy, avgObjectiveScore, avgTime, sigma, lambda, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle)
     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, avgValidationAccuracy, avgTime);
 end

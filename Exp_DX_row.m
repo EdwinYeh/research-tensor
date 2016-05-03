@@ -1,15 +1,15 @@
 % Please assign datasetId in the commend line
 SetParameter;
-randomTryTime = 1;
-sigmaList = 0.05:0.05:0.05;
-sigma2List = 0.05:0.05:0.05;
+randomTryTime = 2;
+sigmaList = 0.05:0.05:1;
+sigma2List = 0.05:0.05:1;
 numInstanceClusterList = [15];
 numFeatureClusterList = [15];
 cpRankList = [15];
 
-lambdaMaxOrder = 0;
-gamaMaxOrder = 0;
-deltaMaxOrder = 0;
+lambdaMaxOrder = 3;
+gamaMaxOrder = 3;
+deltaMaxOrder = 3;
 
 lambdaStart = 10^-8;
 gamaStart = 10^-8;
@@ -19,12 +19,13 @@ lambdaScale = 1000;
 gamaScale = 1000;
 deltaScale = 1000;
 
-expTitle = sprintf('DX_row%d', datasetId);
-% directoryName = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
-% mkdir(directoryName);
-resultFile = fopen(sprintf('../exp_result/%s.csv', expTitle), 'a');
-fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestRandomInitialObjectiveScore, accuracy, bestConvergeTime\n');
+expTitle = sprintf('DX%d', datasetId);
+resultDirectory = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
+mkdir(resultDirectory);
+resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
+fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
 
+isTestPhase = false;
 for tuneSigma = 1: length(sigmaList)
     sigma = sigmaList(tuneSigma);
     for tuneSigma2 = 1:length(sigma2List)
@@ -55,5 +56,12 @@ for tuneSigma = 1: length(sigmaList)
         end
     end
 end
-
-% fclose(resultFile);
+fclose(resultFile);
+isTestPhase = true;
+randomTryTime = 10;
+resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
+fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
+load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));
+PrepareExperiment;
+main_DX_row;
+fclose(resultFile);
