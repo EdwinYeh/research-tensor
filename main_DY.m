@@ -112,7 +112,6 @@ for t = 1: randomTryTime
                 else
                     CP4{fold} = E;
                 end
-                
             end
             newObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda, delta);
             objTrack{fold} = [objTrack{fold}, newObjectiveScore];
@@ -136,6 +135,9 @@ for t = 1: randomTryTime
             end
         end
         hiddenIndex = hiddenIndex + CVFoldSize;
+        if fold == numCVFold && t ==randomTryTime
+            save('result.mat', 'U', 'V', 'CP1', 'CP2', 'CP3', 'CP4');
+        end
     end
     
     if isTestPhase
