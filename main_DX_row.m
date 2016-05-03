@@ -113,48 +113,48 @@ for t = 1: randomTryTime
     end
     
     convergeTime = toc(convergeTimer);
-    
-    holdoutIndex = 1:CVFoldSize;
-    if isTestPhase
-        holdoutIndex = holdoutIndex + numValidationInstance;
-    end
-    
-    numCorrectPredict = 0;
-    for cvFold = 1: numCVFold
-        targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),holdoutIndex);
-        trainingData = [U{sourceDomain}; U{targetDomain}(targetTrainingDataIndex,:)];
-        trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
-        svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
-        predictLabel = predict(svmModel, U{targetDomain}(holdoutIndex,:));
-        for dataIndex = 1: CVFoldSize
-            if sampledLabel{targetDomain}(holdoutIndex(dataIndex)) == predictLabel(dataIndex)
-                numCorrectPredict = numCorrectPredict + 1;
-            end
-        end
-        holdoutIndex = holdoutIndex + CVFoldSize;
-    end
-    if isTestPhase
-        testAccuracy = numCorrect/ numTestInstance;
-        if newObjectiveScore < bestTestObjectiveScore
-            bestTestObjectiveScore = newObjectiveScore;
-            bestTestAccuracy = testAccuracy;
-            bestTestTime = convergeTime;
-        end
-    else
-        validationAccuracy = numCorrectPredict/ numValidationInstance;
-        validationTimeList(t) = convergeTime;
-        validationObjectiveScoreList(t) = newObjectiveScore;
-    end
+    save(sprintf('%sU(%d)_%g_%g_%g_%g_%g_%g_%g_%g.mat', resultDirectory, t, cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta), 'U', 'newObjectiveScore');
+%     holdoutIndex = 1:CVFoldSize;
+%     if isTestPhase
+%         holdoutIndex = holdoutIndex + numValidationInstance;
+%     end
+%     
+%     numCorrectPredict = 0;
+%     for cvFold = 1: numCVFold
+%         targetTrainingDataIndex = setdiff(1:numSampleInstance(targetDomain),holdoutIndex);
+%         trainingData = [U{sourceDomain}; U{targetDomain}(targetTrainingDataIndex,:)];
+%         trainingLabel = [sampledLabel{sourceDomain}; sampledLabel{targetDomain}(targetTrainingDataIndex, :)];
+%         svmModel = fitcsvm(trainingData, trainingLabel, 'KernelFunction', 'rbf', 'KernelScale', 'auto', 'Standardize', true);
+%         predictLabel = predict(svmModel, U{targetDomain}(holdoutIndex,:));
+%         for dataIndex = 1: CVFoldSize
+%             if sampledLabel{targetDomain}(holdoutIndex(dataIndex)) == predictLabel(dataIndex)
+%                 numCorrectPredict = numCorrectPredict + 1;
+%             end
+%         end
+%         holdoutIndex = holdoutIndex + CVFoldSize;
+%     end
+%     if isTestPhase
+%         testAccuracy = numCorrect/ numTestInstance;
+%         if newObjectiveScore < bestTestObjectiveScore
+%             bestTestObjectiveScore = newObjectiveScore;
+%             bestTestAccuracy = testAccuracy;
+%             bestTestTime = convergeTime;
+%         end
+%     else
+%         validationAccuracy = numCorrectPredict/ numValidationInstance;
+%         validationTimeList(t) = convergeTime;
+%         validationObjectiveScoreList(t) = newObjectiveScore;
+%     end
 end
 
-if isTestPhase
-    fprtinf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestTestObjectiveScore, bestTestAccuracy, bestTestTime);
-    fprintf('bestTestAccuracy: %g, objectiveScore: %g\n', bestTestAccuracy, bestTestObjectiveScore);
-else
-    avgValidationAccuracy = sum(validationAccuracyList)/ randomTryTime;
-    avgObjectiveScore = sum(validationObjectiveScoreList)/ randomTryTime;
-    avgValidationTime = sum(validationTimeList)/ randomTryTime;
-    fprintf('avgValidationAccuracy: %g, objectiveScore:%g\n', avgValidationAccuracy, avgObjectiveScore);
-    compareWithTheBestDX(avgValidationAccuracy, avgObjectiveScore, avgValidationTime, sigma, sigma2, lambda, gama, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle);
-    fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, validationObjectiveScore, ValidationAccuracy, bestConvergeTime);
-end
+% if isTestPhase
+%     fprtinf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, bestTestObjectiveScore, bestTestAccuracy, bestTestTime);
+%     fprintf('bestTestAccuracy: %g, objectiveScore: %g\n', bestTestAccuracy, bestTestObjectiveScore);
+% else
+%     avgValidationAccuracy = sum(validationAccuracyList)/ randomTryTime;
+%     avgObjectiveScore = sum(validationObjectiveScoreList)/ randomTryTime;
+%     avgValidationTime = sum(validationTimeList)/ randomTryTime;
+%     fprintf('avgValidationAccuracy: %g, objectiveScore:%g\n', avgValidationAccuracy, avgObjectiveScore);
+%     compareWithTheBestDX(avgValidationAccuracy, avgObjectiveScore, avgValidationTime, sigma, sigma2, lambda, gama, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle);
+%     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, validationObjectiveScore, ValidationAccuracy, bestConvergeTime);
+% end

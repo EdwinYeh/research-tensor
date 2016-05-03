@@ -1,26 +1,26 @@
 % Please assign datasetId in the commend line
 SetParameter;
-randomTryTime = 2;
-sigmaList = 0.05:0.05:1;
-sigma2List = 0.05:0.05:1;
-numInstanceClusterList = [15];
-numFeatureClusterList = [15];
-cpRankList = [15];
+randomTryTime = 1;
+sigmaList = 0.01:0.03:0.1;
+sigma2List = 0.01:0.03:0.1;
+numInstanceClusterList = [10];
+numFeatureClusterList = [10];
+cpRankList = [10];
 
-lambdaMaxOrder = 3;
-gamaMaxOrder = 3;
-deltaMaxOrder = 3;
-
-lambdaStart = 10^-8;
-gamaStart = 10^-8;
-deltaStart = 10^-8;
+lambdaStart = 10^-3;
+gamaStart = 10^-3;
+deltaStart = 10^-15;
 
 lambdaScale = 1000;
 gamaScale = 1000;
 deltaScale = 1000;
 
+lambdaMaxOrder = 2;
+gamaMaxOrder = 2;
+deltaMaxOrder = 3;
+
 expTitle = sprintf('DX%d', datasetId);
-resultDirectory = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
+resultDirectory = sprintf('../exp_result/DX_row/%d/', datasetId);
 mkdir(resultDirectory);
 resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
@@ -57,11 +57,11 @@ for tuneSigma = 1: length(sigmaList)
     end
 end
 fclose(resultFile);
-isTestPhase = true;
-randomTryTime = 10;
-resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
-fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
-load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));
-PrepareExperiment;
-main_DX_row;
-fclose(resultFile);
+% isTestPhase = true;
+% randomTryTime = 10;
+% resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
+% fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
+% load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));
+% PrepareExperiment;
+% main_DX_row;
+% fclose(resultFile);

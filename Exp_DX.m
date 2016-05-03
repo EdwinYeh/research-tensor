@@ -1,26 +1,26 @@
 % Please assign datasetId in the commend line
 SetParameter;
-randomTryTime = 2;
-sigmaList = 0.05:0.05:0.05;
-sigma2List = 0.05:0.05:0.05;
+randomTryTime = 1;
+sigmaList = 0.01:0.03:0.1;
+sigma2List = 0.01:0.03:0.1;
 numInstanceClusterList = [10];
 numFeatureClusterList = [10];
 cpRankList = [10];
 
-lambdaMaxOrder = 0;
-gamaMaxOrder = 0;
-deltaMaxOrder = 0;
-
-lambdaStart = 10^-1;
-gamaStart = 10^-1;
-deltaStart = 10^-8;
+lambdaStart = 10^-3;
+gamaStart = 10^-3;
+deltaStart = 10^-15;
 
 lambdaScale = 1000;
 gamaScale = 1000;
 deltaScale = 1000;
 
+lambdaMaxOrder = 2;
+gamaMaxOrder = 2;
+deltaMaxOrder = 3;
+
 expTitle = sprintf('DX%d', datasetId);
-resultDirectory = sprintf('../exp_result/%s/%d/', expTitle, datasetId);
+resultDirectory = sprintf('../exp_result/DX/%d/', datasetId);
 mkdir(resultDirectory);
 resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'cpRank, numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, delta, objectiveScore, accuracy, convergeTime\n');
