@@ -6,14 +6,14 @@ resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a')
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 
 lambdaStart = 10^-4;
-lambdaScale = 100;
+lambdaScale = 40;
 lambdaMaxOrder = 4;
 
 deltaStart = 10^-16;
 deltaScale = 1000;
 deltaMaxOrder = 3;
 
-sigmaList = 0.001:0.005:0.021;
+sigmaList = 0.005:0.01:0.035;
 
 cpRankList = [10];
 instanceClusterList = [10];
