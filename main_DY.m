@@ -1,6 +1,6 @@
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-fprintf('Use (cpRank, instanceCluster, featureCluster, Sigma, Lambda, Delta):(%g,%g,%g,%g,%g,%g)\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta);
+fprintf('DatasetId:%d, (cpRank, instanceCluster, featureCluster, Sigma, Lambda, Delta):(%g,%g,%g,%g,%g,%g)\n', datasetId, cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta);
 
 bestTestObjectiveScore = Inf;
 bestTestAccuracy = 0;
@@ -52,7 +52,7 @@ for t = 1: randomTryTime
         newObjectiveScore = Inf;
         stopTag = 0;
         
-        while (stopTag < 50 && iter < maxIter)
+        while (stopTag < 75 && iter < maxIter)
             iter = iter + 1;
             %                 disp(diff);
 %             fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n',fold, iter, newObjectiveScore);

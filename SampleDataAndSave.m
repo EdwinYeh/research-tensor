@@ -22,6 +22,7 @@ if datasetId <= 13
     X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
     [numSourceInstance, ~] = size(X{sourceDomain});
     [numTargetInstance, ~] = size(X{targetDomain});
+    fprintf('dataset:%d=>[%d,%d]\n', datasetId, numSourceInstance, numTargetInstance);
     
 elseif datasetId >=14 && datasetId <=23
     fileName = sprintf('%sDBLP%d.mat', prefix, datasetId - 13);

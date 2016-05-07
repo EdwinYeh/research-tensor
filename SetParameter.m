@@ -4,7 +4,6 @@ isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
 isUsingTensor = true;
-isTestPhase = false;
 
 numSampleFeature = 3000;
 numClass = [2, 2];

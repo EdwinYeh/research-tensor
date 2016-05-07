@@ -72,7 +72,7 @@ for dom = 1: numDom
     Lu{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
     
     %user
-    fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
+%     fprintf('Domain%d: calculating Su, Du, Lu\n', dom);
     Su{dom} = gaussianSimilarityMatrix(X{dom}, sigma);
     Su{dom}(isnan(Su{dom})) = 0;
     Su{dom}(~isfinite(Su{dom})) = 1;

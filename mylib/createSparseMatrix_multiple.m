@@ -1,7 +1,7 @@
 function X = createSparseMatrix_multiple(prefix, domainNameList, numDomain, dataType)
 outputCell = cell(1,2);
 for i = 1:numDomain
-    fprintf('Create sparse matrix: %s\n', [prefix, domainNameList{i}]);
+%     fprintf('Create sparse matrix: %s\n', [prefix, domainNameList{i}]);
     data = load([prefix, domainNameList{i}]);
     if dataType == 1
         x = data(:, 1);
