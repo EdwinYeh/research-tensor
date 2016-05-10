@@ -1,5 +1,3 @@
-disp('Start training');
-
 if isTestPhase
     resultFile = fopen(sprintf('result_%s.csv', exp_title), 'a');
     fprintf(resultFile, 'sigma,gama,lambda,objectiveScore,accuracy,trainingTime\n');
@@ -94,7 +92,6 @@ for t = 1: randomTryTime
                 H = H.*sqrt(HChild./HMother);
             end
             avgIterationUsed  = avgIterationUsed + iter/ numCVFold;
-            foldObjectiveScores(fold) = newObjectiveScore;
             %disp(sprintf('\tCalculate this iterator error'));
             for i = 1:numDom
                 result = U{i}*H*V{i}';

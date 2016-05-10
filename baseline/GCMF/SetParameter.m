@@ -1,19 +1,17 @@
-sourceDomain =1;
-targetDomain =2;
-numSampleInstance = [0, 0];
-numSampleFeature = [2000, 2000];
-numDom = 2;
-numClass = [2, 2];
-numInstanceCluster = 10;
-numFeatureCluster = 10;
-
-isRandom = true;
+% Set default parameter (can be modified later)
+isUpdateAE = true;
 isSampleInstance = true;
 isSampleFeature = true;
-isUsingTensor = false;
-isTestPhase = false;
+isRandom = true;
+isUsingTensor = true;
+
+numSampleFeature = 3000;
+numClass = [2, 2];
 
 maxIter = 500;
 numCVFold = 5;
-randomTryTime = 5;
-sigma = 0.1;
+numDom = 2;
+sourceDomain = 1;
+targetDomain = 2;
+alpha = 0;
+beta = 0;
