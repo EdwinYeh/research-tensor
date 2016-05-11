@@ -1,7 +1,7 @@
-% % % datasetId = 6;
+% % datasetId = 6;
 tic;
 numDom = 2;
-numSampleFeature = 3000;
+numSampleFeature = 2000;
 % numSourceData = 500;
 % numValidateData = 100;
 % numTestData = 500;
@@ -65,7 +65,7 @@ sourceY = sourceY(sampleSourceDataIndex);
 targetY = targetY(sampleValidationDataIndex);
 Y = [sourceY; targetY];
 
-resultDirectory = sprintf('../../../exp_result/TCA/%d/', datasetId);
+resultDirectory = sprintf('../../../exp_result/TCA/%d', datasetId);
 mkdir(resultDirectory);
 resultFile = fopen(sprintf('%sresult_TCA_validation%d.csv', resultDirectory, datasetId), 'w');
 fprintf(resultFile, 'mu,sigma,accuracy\n');
@@ -73,10 +73,10 @@ fprintf(resultFile, 'mu,sigma,accuracy\n');
 bestValidationAccuracy = 0;
 bestMu = -1;
 bestSigma = -1;
-for tuneMu = 0:4
-    for tuneSigma = 0:3
-    mu = 0.0001 * 100 ^ tuneMu;
-    sigma = 0.001 * 10 ^ tuneSigma;
+for tuneMu = 0:0
+    for tuneSigma = 0:0
+    mu = 0.001 * 100 ^ tuneMu;
+    sigma = 0.001 * 100 ^ tuneSigma;
     [~, ~, validationAccuracy] = trainAndCvGaussianTCA(mu, sigma, numFold, numSourceData, numValidateData, -1, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, false);
     if validationAccuracy > bestValidationAccuracy
         bestValidationAccuracy = validationAccuracy;

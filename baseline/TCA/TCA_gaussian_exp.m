@@ -1,6 +1,4 @@
-datasetId = 11;
+datasetId = 1;
 main_TCA_gaussian_SVM;
-datasetId = 12;
-main_TCA_gaussian_SVM;
-datasetId = 13;
+datasetId = 2;
 main_TCA_gaussian_SVM;

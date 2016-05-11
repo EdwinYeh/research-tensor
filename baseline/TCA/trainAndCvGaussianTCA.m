@@ -22,7 +22,7 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
         else
             hiddenDataIndex = (fold*sizeOfOneFold+1: fold*sizeOfOneFold+sizeOfOneFold) + numSourceData;
         end
-        fprintf('fold: %d, holdout:(%d~%d)\n', fold, min(hiddenDataIndex), max(hiddenDataIndex));
+%         fprintf('fold: %d, holdout:(%d~%d)\n', fold, min(hiddenDataIndex), max(hiddenDataIndex));
         trainDataIndex = setdiff(1:numAllData, hiddenDataIndex);
         trainY = Y(trainDataIndex);
         validateY = Y(hiddenDataIndex);
@@ -72,6 +72,10 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
         end
     end
     avgEmpError = empErrorSum/ numFold;
-    accuracy = numCorrectPredict/ numValidateData;
+    if isTestPhase
+        accuracy = numCorrectPredict/ numTestData;
+    else
+        accuracy = numCorrectPredict/ numValidateData;
+    end
     disp(accuracy);
 end
