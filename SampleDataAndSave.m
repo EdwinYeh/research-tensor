@@ -36,8 +36,7 @@ sampleSourceDataIndex = randperm(numSourceInstance, numValidationInstance(source
 sampleTargetDataIndex = randperm(numTargetInstance, numValidationInstance(targetDomain) + numTestInstance);
 sampleTestDataIndex = sampleTargetDataIndex(numValidationInstance(targetDomain)+1:numValidationInstance(targetDomain)+numTestInstance);
 sampleValidationDataIndex = sampleTargetDataIndex(1:numValidationInstance(targetDomain));
-length(sampleValidationDataIndex)
-length(sampleTestDataIndex)
+
 csvwrite(sprintf('sampleIndex/sampleSourceDataIndex%d.csv', datasetId), sampleSourceDataIndex);
 csvwrite(sprintf('sampleIndex/sampleValidationDataIndex%d.csv', datasetId), sampleValidationDataIndex);
 csvwrite(sprintf('sampleIndex/sampleTestDataIndex%d.csv', datasetId), sampleTestDataIndex);

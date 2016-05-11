@@ -18,7 +18,6 @@ X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 sourceDataIndex = csvread(sprintf('../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
 validationDataIndex = csvread(sprintf('../../sampleIndex/sampleValidationDataIndex%d.csv', datasetId));
 testDataIndex = csvread(sprintf('../../sampleIndex/sampleTestDataIndex%d.csv', datasetId));
-disp(length(validationDataIndex))
 
 numSampleInstance = [0 0];
 
