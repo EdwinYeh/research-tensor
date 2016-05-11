@@ -16,13 +16,13 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
     H = eye(numAllData) - ((1/(numAllData) * ones(numAllData, numAllData)));
     
     for fold = 0: (numFold-1)
+        % fprintf('fold: %d\n', fold);
         % Compute K, L matrix
         if isTestPhase
             validateDataIndex = (fold*sizeOfOneFold+1+numTestData: fold*sizeOfOneFold+sizeOfOneFold+numTestData) + numSourceData;
         else
             validateDataIndex = (fold*sizeOfOneFold+1: fold*sizeOfOneFold+sizeOfOneFold) + numSourceData;
         end
-        fprintf('fold: %d, (%d~%d)\n', fold, min(validateDataIndex), max(validateDataIndex));
         trainDataIndex = setdiff(1:numAllData, validateDataIndex);
         trainY = Y(trainDataIndex);
         validateY = Y(validateDataIndex);

@@ -67,15 +67,14 @@ targetY = targetY(sampleValidateDataIndex);
 Y = [sourceY; targetY];
 
 resultDirectory = sprintf('../../../exp_result/TCA/%d', datasetId);
-mkdir(resultDirectory);
 resultFile = fopen(sprintf('%sresult_TCA_validation%d.csv', resultDirectory, datasetId), 'w');
 fprintf(resultFile, 'mu,sigma,empError,accuracy\n');
 
 bestValidationAccuracy = 0;
 bestMu = -1;
 bestSigma = -1;
-for tuneMu = 0:0
-    for tuneSigma = 0:0
+for tuneMu = 0:3
+    for tuneSigma = 0:3
     mu = 0.001 * 100 ^ tuneMu;
     sigma = 0.001 * 100 ^ tuneSigma;
     [~, avgEmpError, validationAccuracy] = trainAndCvGaussianTCA(mu, sigma, numFold, numSourceData, numValidateData, -1, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, false);
@@ -92,7 +91,7 @@ resultFile = fopen(sprintf('%sresult_TCA_test%d.csv', resultDirectory, datasetId
 fprintf(resultFile, 'mu,sigma,empError,accuracy\n');
 totalTimer = tic;
 Y = [sourceY; [targetY; testY]];
-[predictLabel, avgEmpError, accuracy] = trainAndCvGaussianTCA(bestMu, BestSigma, 1, numSourceData, numTargetData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y, true); 
+[predictLabel, avgEmpError, accuracy] = trainAndCvGaussianTCA(bestMu, BestSigma, numFold, numSourceData, numTestData, featureDimAfterReduce, sourceDomainData, testData, Y, true); 
 totalTime = toc(totalTimer);
 disp(totalTime/numFold);
 % csvwrite(sprintf('../../../exp_result/predict_result/TCA_gaussian%d_predict_result.csv', datasetId), predictLabel);
