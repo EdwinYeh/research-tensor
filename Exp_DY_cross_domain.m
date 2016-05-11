@@ -19,6 +19,7 @@ isTestPhase = false;
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
     PrepareExperiment;
+    isLoad = true;
     for tuneCPRank = 1: length(cpRankList)
         cpRank = cpRankList(tuneCPRank);
         for tuneInstanceCluster = 1: length(instanceClusterList)

@@ -46,7 +46,7 @@ for t = 1: randomTryTime
         HMotherCell = cell(1, numDom);
         stopTag = 0;
         
-        while (stopTag < 50 && iter < maxIter)
+        while (stopTag < 20 && iter < maxIter)
             iter = iter + 1;
             %disp(diff);
             %fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n',fold, iter, newObjectiveScore);

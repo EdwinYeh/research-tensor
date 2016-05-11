@@ -4,6 +4,7 @@ isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
 isUsingTensor = true;
+isLoad = false;
 
 numSampleFeature = 3000;
 numClass = [2, 2];
@@ -13,5 +14,3 @@ numCVFold = 5;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
-alpha = 0;
-beta = 0;

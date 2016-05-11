@@ -18,7 +18,7 @@
 % 10	10	10	0.015	0.0001	1.00E-10
 % 10	10	10	0.015	0.004	1.00E-16
 % 10	10	10	0.015	0.16	1.00E-07
-% dataset 5 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
+q% dataset 5 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
 % 10	10	10	0.005	0.16	1.00E-13
 % 10	10	10	0.015	0.004	1.00E-10
 % 10	10	10	0.015	0.004	1.00E-07
@@ -90,6 +90,7 @@ isTestPhase = false;
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
     PrepareExperiment;
+    isLoad = true;
     for tuneCPRank = 1: length(cpRankList)
         cpRank = cpRankList(tuneCPRank);
         for tuneInstanceCluster = 1: length(instanceClusterList)
