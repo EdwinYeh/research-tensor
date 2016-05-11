@@ -2,8 +2,8 @@
 SetParameter;
 randomTryTime = 1;
 maxIter = 300;
-sigmaList = [0.1];
-sigma2List = [0.1];
+sigmaList = [0.001, 0.01, 0.1];
+sigma2List = [0.001, 0.01, 0.1];
 numFeatureClusterList = [10];
 
 lambdaStart = 10^-3;
@@ -13,7 +13,7 @@ lambdaScale = 1000;
 gamaScale = 1000;
 
 lambdaMaxOrder = 2;
-gamaMaxOrder = 0;
+gamaMaxOrder = 2;
 
 expTitle = sprintf('GCMF%d', datasetId);
 resultDirectory = sprintf('../../../exp_result/GCMF/%d/', datasetId);
