@@ -1,13 +1,13 @@
-function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sigma, numFold, numSourceData, numTargetData, numTestData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, isTestPhase)
+function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sigma, numFold, numSourceData, numValidateData, numTestData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, isTestPhase)
     fprintf('mu = %f\nsigma = %f\n', mu, sigma);
     numCorrectPredict = 0;
     empErrorSum = 0;
     if isTestPhase
         sizeOfOneFold = numTestData/ numFold;
-        numAllData = numSourceData + numTargetData + numTestData;
+        numAllData = numSourceData + numValidateData + numTestData;
     else
-        sizeOfOneFold = numTargetData/ numFold;
-        numAllData = numSourceData + numTargetData;
+        sizeOfOneFold = numValidateData/ numFold;
+        numAllData = numSourceData + numValidateData;
     end
     
     % Pre-allocate matrix K, L, and compute H
@@ -18,14 +18,14 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
     for fold = 0: (numFold-1)
         % Compute K, L matrix
         if isTestPhase
-            validateDataIndex = (fold*sizeOfOneFold+1+numTestData: fold*sizeOfOneFold+sizeOfOneFold+numTestData) + numSourceData;
+            hiddenDataIndex = (fold*sizeOfOneFold+1+numValidateData: fold*sizeOfOneFold+sizeOfOneFold+numValidateData) + numSourceData;
         else
-            validateDataIndex = (fold*sizeOfOneFold+1: fold*sizeOfOneFold+sizeOfOneFold) + numSourceData;
+            hiddenDataIndex = (fold*sizeOfOneFold+1: fold*sizeOfOneFold+sizeOfOneFold) + numSourceData;
         end
-        fprintf('fold: %d, (%d~%d)\n', fold, min(validateDataIndex), max(validateDataIndex));
-        trainDataIndex = setdiff(1:numAllData, validateDataIndex);
+        fprintf('fold: %d, holdout:(%d~%d)\n', fold, min(hiddenDataIndex), max(hiddenDataIndex));
+        trainDataIndex = setdiff(1:numAllData, hiddenDataIndex);
         trainY = Y(trainDataIndex);
-        validateY = Y(validateDataIndex);
+        validateY = Y(hiddenDataIndex);
         %             fprintf('testIndex: %d~%d\n', min(testDataIndex), max(testDataIndex));
         
         for i = 1:numAllData
@@ -49,9 +49,9 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
                 if i < numSourceData && j < numSourceData
                     L(i, j) = 1/ numSourceData^2;
                 elseif i > numSourceData && j > numSourceData
-                    L(i, j) = 1/ (numTargetData-sizeOfOneFold)^2;
+                    L(i, j) = 1/ (numValidateData-sizeOfOneFold)^2;
                 else
-                    L(i, j) = 1/ (numSourceData*(numTargetData-sizeOfOneFold));
+                    L(i, j) = 1/ (numSourceData*(numValidateData-sizeOfOneFold));
                 end
             end
         end
@@ -63,7 +63,7 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
         trainX = dimReducedMatrix(trainDataIndex, :);
         svmModel = fitcsvm(trainX, trainY, 'KernelFunction', 'gaussian');
         empErrorSum = empErrorSum + loss(svmModel, trainX, trainY);
-        predictLabel = predict(svmModel, dimReducedMatrix(validateDataIndex, :));
+        predictLabel = predict(svmModel, dimReducedMatrix(hiddenDataIndex, :));
         
         for i = 1: sizeOfOneFold
             if(predictLabel(i) == validateY(i))
@@ -72,7 +72,6 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
         end
     end
     avgEmpError = empErrorSum/ numFold;
-    accuracy = numCorrectPredict/ numTargetData;
-    disp(avgEmpError);
+    accuracy = numCorrectPredict/ numValidateData;
     disp(accuracy);
 end

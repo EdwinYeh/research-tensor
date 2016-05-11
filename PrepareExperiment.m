@@ -1,4 +1,3 @@
-if ~isLoad
     if datasetId <= 6
         dataType = 1;
         prefix = '../20-newsgroup/';
@@ -66,7 +65,6 @@ if ~isLoad
     end
     numValidationInstance = length(validationDataIndex);
     numTestInstance = length(testDataIndex);
-end
 
 %
 for dom = 1: numDom

@@ -6,7 +6,7 @@ isRandom = true;
 isUsingTensor = true;
 isLoad = false;
 
-numSampleFeature = 3000;
+numSampleFeature = 2000;
 numClass = [2, 2];
 
 maxIter = 500;
