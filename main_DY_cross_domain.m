@@ -1,10 +1,10 @@
 time = round(clock);
 fprintf('Time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
-fprintf('DatasetId:%d, (cpRank, instanceCluster, featureCluster, Sigma, Lambda, Delta):(%g,%g,%g,%g,%g,%g)\n', datasetId, cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta);
+fprintf('Use (cpRank, instanceCluster, featureCluster, Sigma, Lambda, Delta):(%g,%g,%g,%g,%g,%g)\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta);
 
-bestTestObjectiveScore = Inf;
+bestObjectiveScore = Inf;
 bestTestAccuracy = 0;
-bestTestTime = Inf;
+bestTime = Inf;
 SU=cell(1,2);
 SV=cell(1,2);
 U = cell(numCVFold,2);
@@ -15,8 +15,8 @@ CP3 = cell(numCVFold,1);
 CP4 = cell(numCVFold,1);
 
 validationAccuracyList = zeros(randomTryTime, 1);
-validationObjectiveScoreList = zeros(randomTryTime, 1);
-validationTimeList = zeros(randomTryTime, 1);
+objectiveScoreList = zeros(randomTryTime, 1);
+timeList = zeros(randomTryTime, 1);
 
 for t = 1: randomTryTime
     
@@ -86,11 +86,11 @@ for t = 1: randomTryTime
                 
                 [rA, cA] = size(A);
                 [rE, cE] = size(E);
-                
+                [Num,Den]=cross_domain_term(YMatrix,W,U,V,CP1,CP2,CP3,CP4,dom,fold,'A',delta);
                 if dom ==targetDomain
-                    A = A.*sqrt((U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*E*sumFi)./(U{fold,dom}'*(U{fold,dom}*A*sumFi*E'*V{fold,dom}'.*W)*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
+                    A = A.*sqrt((U{fold,dom}'*(YMatrix{dom}.*W)*V{fold,dom}*E*sumFi+Num)./(U{fold,dom}'*(U{fold,dom}*A*sumFi*E'*V{fold,dom}'.*W)*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'+Den));
                 else
-                    A = A.*sqrt((U{fold,dom}'*YMatrix{dom}*V{fold,dom}*E*sumFi)./(U{fold,dom}'*U{fold,dom}*A*sumFi*E'*V{fold,dom}'*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'));
+                    A = A.*sqrt((U{fold,dom}'*YMatrix{dom}*V{fold,dom}*E*sumFi+Num)./(U{fold,dom}'*U{fold,dom}*A*sumFi*E'*V{fold,dom}'*V{fold,dom}*E*sumFi+delta*ones(rE,rA)'*(sumFi*E')'+Den));
                 end
                 %                     A(isnan(A)) = 0;
                 %                     A(~isfinite(A)) = 0;
@@ -99,11 +99,11 @@ for t = 1: randomTryTime
                 else
                     CP3{fold} = A;
                 end
-                
+                [Num,Den]=cross_domain_term(YMatrix,W,U,V,CP1,CP2,CP3,CP4,dom,fold,'E',delta);
                 if dom == targetDomain
-                    E = E.*sqrt((V{fold,dom}'*(YMatrix{dom}.*W)'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*(V{fold,dom}*E*sumFi*A'*U{fold,dom}'.*W')*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
+                    E = E.*sqrt((V{fold,dom}'*(YMatrix{dom}.*W)'*U{fold,dom}*A*sumFi+Num)./(V{fold,dom}'*(V{fold,dom}*E*sumFi*A'*U{fold,dom}'.*W')*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi+Den));
                 else
-                    E = E.*sqrt((V{fold,dom}'*YMatrix{dom}'*U{fold,dom}*A*sumFi)./(V{fold,dom}'*V{fold,dom}*E*sumFi*A'*U{fold,dom}'*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi));
+                    E = E.*sqrt((V{fold,dom}'*YMatrix{dom}'*U{fold,dom}*A*sumFi+Num)./(V{fold,dom}'*V{fold,dom}*E*sumFi*A'*U{fold,dom}'*U{fold,dom}*A*sumFi+delta*ones(rE,rA)*A*sumFi+Den));
                 end
                 %                     E(isnan(E)) = 0;
                 %                     E(~isfinite(E)) = 0;
@@ -112,6 +112,7 @@ for t = 1: randomTryTime
                 else
                     CP4{fold} = E;
                 end
+                
             end
             newObjectiveScore = ShowObjective(fold, U, V, W, YMatrix, Lu, CP1, CP2, CP3, CP4, lambda, delta);
             objTrack{fold} = [objTrack{fold}, newObjectiveScore];
@@ -135,9 +136,13 @@ for t = 1: randomTryTime
             end
         end
         hiddenIndex = hiddenIndex + CVFoldSize;
-%         if fold == numCVFold && t ==randomTryTime
-%             save('result.mat', 'U', 'V', 'CP1', 'CP2', 'CP3', 'CP4');
-%         end
+	if fold == numCVFold && t == randomTryTime
+		if delta==0
+			save('full_4way_result_delta0.mat', 'U', 'V', 'CP1', 'CP2', 'CP3', 'CP4','objTrack');
+		else
+			save('full_4way_result_deltaNot0.mat', 'U', 'V', 'CP1', 'CP2', 'CP3', 'CP4','objTrack');
+		end
+	end
     end
     
     if isTestPhase
@@ -152,26 +157,25 @@ for t = 1: randomTryTime
     if isTestPhase
         fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, accuracy, avgTime);
         if accuracy > bestTestAccuracy
-            bestTestObjectiveScore = avgObjectiveScore;
+            bestObjectiveScore = avgObjectiveScore;
             bestTestAccuracy = accuracy;
-            bestTestTime = avgTime;
+            bestTime = avgTime;
         end
-    else
-        time = round(clock);
-        validationAccuracyList(t) = accuracy;
-        validationObjectiveScoreList(t) = avgObjectiveScore;
-        validationTimeList(t) = avgTime;
     end
+    time = round(clock);
+    validationAccuracyList(t) = accuracy;
+    objectiveScoreList(t) = avgObjectiveScore;
+    timeList(t) = avgTime;
 %     fprintf('randomTime:%d, accuracy: %g, objectiveScore:%g\n', t, accuracy, avgObjectiveScore);
 end
 
 if isTestPhase
-%     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, bestTestObjectiveScore, bestTestAccuracy, bestTestTime);
+%     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, bestObjectiveScore, bestTestAccuracy, bestTime);
 else
     avgValidationAccuracy = sum(validationAccuracyList)/ randomTryTime;
-    avgObjectiveScore = sum(validationObjectiveScoreList)/ randomTryTime;
-    avgTime = sum(validationTimeList)/ randomTryTime;
+    avgObjectiveScore = sum(objectiveScoreList)/ randomTryTime;
+    avgTime = sum(timeList)/ randomTryTime;
     fprintf('avgValidationAccuracy: %g, objectiveScore:%g\n', avgValidationAccuracy, avgObjectiveScore);
-    compareWithTheBest(avgValidationAccuracy, avgObjectiveScore, avgTime, sigma, lambda, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle);
+    compareWithTheBest(avgValidationAccuracy, avgObjectiveScore, avgTime, sigma, lambda, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle)
     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, avgValidationAccuracy, avgTime);
 end

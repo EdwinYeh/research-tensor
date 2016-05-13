@@ -18,7 +18,7 @@
 % 10	10	10	0.015	0.0001	1.00E-10
 % 10	10	10	0.015	0.004	1.00E-16
 % 10	10	10	0.015	0.16	1.00E-07
-q% dataset 5 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
+% dataset 5 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
 % 10	10	10	0.005	0.16	1.00E-13
 % 10	10	10	0.015	0.004	1.00E-10
 % 10	10	10	0.015	0.004	1.00E-07
@@ -65,6 +65,7 @@ q% dataset 5 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
 % 10	10	10	0.025	0.0001	1.00E-07
 
 SetParameter;
+sampleSizeLevel = '';
 resultDirectory = sprintf('../exp_result/DY/%d/', datasetId);
 mkdir(resultDirectory);
 expTitle = sprintf('DY_%d', datasetId);
@@ -114,7 +115,7 @@ disp('Start testing');
 isTestPhase = true;
 numCVFold = 1;
 randomTryTime = 10;
-resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
+resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'w');
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));
 PrepareExperiment;

@@ -131,6 +131,7 @@ for t = 1: randomTryTime
     avgTime = toc(TotalTimer)/ numCVFold;
     
     if isTestPhase
+        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, avgObjectiveScore, accuracy, avgTime);
         if accuracy > bestTestAccuracy
             bestTestObjectiveScore = avgObjectiveScore;
             bestTestAccuracy = accuracy;
@@ -146,7 +147,7 @@ for t = 1: randomTryTime
 end
 
 if isTestPhase
-    fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, bestTestObjectiveScore, bestTestAccuracy, bestTestTime);
+%     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, bestTestObjectiveScore, bestTestAccuracy, bestTestTime);
 else
     avgValidationAccuracy = sum(validationAccuracyList)/ randomTryTime;
     avgObjectiveScore = sum(validationObjectiveScoreList)/ randomTryTime;
