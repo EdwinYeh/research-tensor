@@ -17,6 +17,7 @@ resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'w');
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 PrepareExperiment;
 for tuneLambda = 1:length(lambdaList)
+    lambda = lambdaList(tuneLambda);
     main_DY_cross_domain_3way;
 end
 fclose(resultFile);
