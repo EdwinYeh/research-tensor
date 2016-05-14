@@ -153,9 +153,10 @@ for t = 1: randomTryTime
     
     avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
     avgTime = toc(TotalTimer)/ numCVFold;
-    
+    fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, accuracy, avgTime);
+
     if isTestPhase
-        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, accuracy, avgTime);
+%        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, accuracy, avgTime);
         if accuracy > bestTestAccuracy
             bestObjectiveScore = avgObjectiveScore;
             bestTestAccuracy = accuracy;

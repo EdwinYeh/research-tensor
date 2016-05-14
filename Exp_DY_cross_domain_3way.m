@@ -1,16 +1,16 @@
 SetParameter;
-resultDirectory = sprintf('../exp_result/DY_cross_3way/%d/', datasetId);
+resultDirectory = sprintf('../exp_result_kj/DY_cross_3way/%d/', datasetId);
 mkdir(resultDirectory);
 expTitle = sprintf('DY_cross_3way_%d', datasetId);
 resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 lambdaStart = 10^-4;
-lambdaMaxOrder = 10;%
+lambdaMaxOrder = 0;%
 lambdaScale = 100;
 deltaStart = 10^-13;
 deltaMaxOrder = 0; %
 deltaScale = 1000;
-randomTryTime = 3;
+randomTryTime = 5;
 sigmaList = 0.015; %-----
 cpRankList = [10];
 instanceClusterList = [10];
@@ -28,8 +28,8 @@ for tuneSigma = 1:length(sigmaList)
                 if numInstanceCluster <= cpRank && numFeatureCluster <= cpRank
                     for lambdaOrder = 0: lambdaMaxOrder
                         lambda = lambdaStart * lambdaScale ^ lambdaOrder;
-                        for deltaOrder = 0: deltaMaxOrder
-                            delta = deltaStart * deltaScale ^ deltaOrder;
+                        for delta=[0,10,100]%deltaOrder = 0: deltaMaxOrder
+                            %delta = deltaStart * deltaScale ^ deltaOrder;
                             main_DY_cross_domain_3way;
                         end
                     end
