@@ -50,6 +50,7 @@ for t = 1: randomTryTime
         diff = Inf;
         newObjectiveScore = Inf;
         stopTag = 0;
+        time = round(clock);
         fprintf('Initial time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         while (stopTag < 50 && iter < maxIter)
             iter = iter + 1;
@@ -127,6 +128,7 @@ for t = 1: randomTryTime
                 stopTag = 0;
             end
         end
+        time = round(clock);
         fprintf('Update time: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
         foldObjectiveScores(fold) = newObjectiveScore;
         %Calculate objectiveScore
@@ -175,6 +177,7 @@ for t = 1: randomTryTime
     
     avgObjectiveScore = sum(foldObjectiveScores)/ numCVFold;
     avgTime = toc(TotalTimer)/ numCVFold;
+    time = round(clock);
     fprintf('PredictionTime: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));
     if isTestPhase
         fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, accuracy, avgTime);
@@ -201,4 +204,5 @@ else
     compareWithTheBest(avgValidationAccuracy, avgObjectiveScore, avgTime, sigma, lambda, delta, cpRank, numInstanceCluster, numFeatureCluster, resultDirectory, expTitle)
     fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, numFeatureCluster, sigma, lambda, delta, avgObjectiveScore, avgValidationAccuracy, avgTime);
 end
+time = round(clock);
 fprintf('OtherTime: %d/%d/%d,%d:%d:%d\n', time(1), time(2), time(3), time(4), time(5), time(6));

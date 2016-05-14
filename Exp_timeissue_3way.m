@@ -12,7 +12,7 @@ numInstanceCluster = 10;
 numFeatureCluster = 10;
 isTestPhase = true;
 randomTryTime = 1;
-nuCVFold = 1;
+numCVFold = 1;
 resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'w');
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 PrepareExperiment;

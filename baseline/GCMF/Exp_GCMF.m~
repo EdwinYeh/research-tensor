@@ -2,8 +2,8 @@
 SetParameter;
 randomTryTime = 1;
 maxIter = 300;
-sigmaList = [0.0001, 0.001];
-sigma2List = [0.0001, 0.001];
+sigmaList = [0.001];
+sigma2List = [0.001];
 numFeatureClusterList = [10];
 
 lambdaStart = 10^-10;
@@ -18,7 +18,7 @@ gamaMaxOrder = 2;
 expTitle = sprintf('GCMF%d', datasetId);
 resultDirectory = sprintf('../../../exp_result/GCMF/%d/', datasetId);
 mkdir(resultDirectory);
-resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'w');
+resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, objectiveScore, accuracy, convergeTime\n');
 
 isTestPhase = false;
@@ -43,9 +43,9 @@ end
 fclose(resultFile);
 disp('Teting phase');
 isTestPhase = true;
-randomTryTime = 10;
+randomTryTime = 2;
 numCVFold = 1;
-resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'w');
+resultFile = fopen(sprintf('%s%s_test.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, objectiveScore, accuracy, convergeTime\n');
 load(sprintf('%sBestParameter_%s.mat', resultDirectory, expTitle));
 PrepareGCMFExperiment;
