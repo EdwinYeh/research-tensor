@@ -22,10 +22,10 @@
 % 10	10	10	0.005	0.16	1.00E-13
 % 10	10	10	0.015	0.004	1.00E-10
 % 10	10	10	0.015	0.004	1.00E-07
-% 10	10	10	0.005	6.4	1.00E-13
+% 10	10	10	0.005	6.4	    1.00E-13
 % dataset 6 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
 % 10	10	10	0.005	0.0001	1.00E-07
-% 10	10	10	0.015	6.4	1.00E-07
+% 10	10	10	0.015	6.4	    1.00E-07
 % 10	10	10	0.005	0.16	1.00E-16
 % 10	10	10	0.005	0.004	1.00E-07
 % dataset 7 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
@@ -55,13 +55,13 @@
 % 10	10	10	0.005	0.16	1.00E-13
 % dataset 12 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
 % 10	10	10	0.025	0.004	1.00E-07
-% 10	10	10	0.025	6.4	1.00E-07
+% 10	10	10	0.025	6.4	    1.00E-07
 % 10	10	10	0.025	0.004	1.00E-13
-% 10	10	10	0.035	6.4	1.00E-13
+% 10	10	10	0.035	6.4	    1.00E-13
 % dataset 13 (cpRank,instanceCluster,featureCluster,sigma,lambda,delta)
 % 10	10	10	0.035	0.004	1.00E-13
 % 10	10	10	0.035	0.16	1.00E-16
-% 10	10	10	0.025	6.4	1.00E-13
+% 10	10	10	0.025	6.4	    1.00E-13
 % 10	10	10	0.025	0.0001	1.00E-07
 
 SetParameter;
