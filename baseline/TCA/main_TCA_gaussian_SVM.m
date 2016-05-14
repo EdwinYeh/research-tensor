@@ -45,9 +45,9 @@ targetDomainData = X{2};
 % sampleSourceDataIndex = randperm(numSourceData, numSampleData);
 % sampleTargetDataIndex = sampleTargetAndTestDataIndex(1:numSampleData);
 % sampleTestDataIndex = sampleTargetAndTestDataIndex((numSampleData+1):(numSampleData+numTestData));
-sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
-sampleValidationDataIndex = csvread(sprintf('../../sampleIndex/sampleValidationDataIndex%d.csv', datasetId));
-sampleTestDataIndex = csvread(sprintf('../../sampleIndex/sampleTestDataIndex%d.csv', datasetId));
+sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/%ssampleSourceDataIndex%d.csv', sampleSizeLevel, datasetId));
+sampleValidationDataIndex = csvread(sprintf('../../sampleIndex/%ssampleValidationDataIndex%d.csv', sampleSizeLevel, datasetId));
+sampleTestDataIndex = csvread(sprintf('../../sampleIndex/%ssampleTestDataIndex%d.csv', sampleSizeLevel, datasetId));
 
 numSourceData = length(sampleSourceDataIndex);
 numValidateData = length(sampleValidationDataIndex);
@@ -66,7 +66,7 @@ sourceY = sourceY(sampleSourceDataIndex);
 targetY = targetY(sampleValidationDataIndex);
 Y = [sourceY; targetY];
 
-resultDirectory = sprintf('../../../exp_result/TCA/%d/', datasetId);
+resultDirectory = sprintf('../../../exp_result/%sTCA/%d/', sampleSizeLevel, datasetId);
 mkdir(resultDirectory);
 % resultFile = fopen(sprintf('%sresult_TCA_validation%d.csv', resultDirectory, datasetId), 'w');
 % fprintf(resultFile, 'mu,sigma,accuracy\n');
