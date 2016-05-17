@@ -18,8 +18,7 @@ X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 sourceDataIndex = csvread(sprintf('../../sampleIndex/%ssampleSourceDataIndex%d.csv', sampleSizeLevel, datasetId));
 validationDataIndex = csvread(sprintf('../../sampleIndex/%ssampleValidationDataIndex%d.csv', sampleSizeLevel, datasetId));
 testDataIndex = csvread(sprintf('../../sampleIndex/%ssampleTestDataIndex%d.csv', sampleSizeLevel, datasetId));
-numValidationInstance = length(validationDataIndex);
-numTestInstance = length(testDataIndex);
+
 numSampleInstance = [0 0];
 
 Sv = cell(1, numDom);
@@ -32,7 +31,6 @@ TrueYMatrix = cell(1, numDom);
 allLabel = cell(1, numDom);
 sampleLabel = cell(1, numDom);
 
-denseFeatures = findCoDenseFeature(X{1}, X{2}, numSampleFeature);
 for dom = 1: numDom
     domainName = domainNameList{dom};
     allLabel{dom} = load([prefix, domainName(1:length(domainName)-4), '_label.csv']);
@@ -52,7 +50,7 @@ for dom = 1: numDom
     end
     [numSampleInstance(dom), ~] = size(X{dom});
     if isSampleFeature == true
-%         denseFeatures = findDenseFeature(X{dom}, numSampleFeature);
+        denseFeatures = findDenseFeature(X{dom}, numSampleFeature);
         X{dom} = X{dom}(:, denseFeatures);
     end
     TrueYMatrix{dom} = zeros(numSampleInstance(dom), numClass(dom));
@@ -61,6 +59,11 @@ for dom = 1: numDom
     end
     X{dom} = normr(X{dom});
 end
+
+numValidationInstance = length(validationDataIndex);
+numTestInstance = length(testDataIndex);
+
+
 
 for dom = 1: numDom
     Su{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
