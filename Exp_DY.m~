@@ -73,18 +73,16 @@ resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'w')
 fprintf(resultFile, 'cpRank,instanceCluster,featureCluster,sigma,lambda,delta,objectiveScore,accuracy,trainingTime\n');
 
 lambdaStart = 10^-6;
-lambdaScale = 100;
+lambdaScale = 80;
 lambdaMaxOrder = 4;
 
 deltaStart = 10^-18;
 deltaScale = 10000;
-deltaMaxOrder = 2;
+deltaMaxOrder = 3;
 
 if datasetId < 7
-    sigmaList = 0.003:0.005:0.028;
+    sigmaList = 0.003:0.005:0.0;
 else
-    sigmaList = 0.01:0.01:0.06;
-end
 
 cpRankList = [15];
 instanceClusterList = [15];

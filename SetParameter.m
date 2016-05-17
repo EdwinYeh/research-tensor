@@ -9,7 +9,7 @@ isTransductiveSetting = false;
 numSampleFeature = 2000;
 numClass = [2, 2];
 
-maxIter = 500;
+maxIter = 400;
 numValidationInstance = 0;
 numTestInstance = 0;
 numCVFold = 5;
