@@ -1,11 +1,11 @@
-function [ vectorOfDenseFeature ] = findDenseFeature( sourceMatrix, targetMatrix, numSampleFeature )
+function [ vectorOfDenseFeature ] = findCoDenseFeature( sourceMatrix, targetMatrix, numSampleFeature )
     %disp('finding dense feature.');
     [~, numSourceFeature] = size(sourceMatrix);
     [~, numTargetFeature] = size(targetMatrix);
     if numSourceFeature > numTargetFeature
         sourceMatrix = sourceMatrix(:, 1:numTargetMatrix);
         numFeature = numTargetFeature;
-    elseif numTargetFeature > numSourceFeature
+    elseif numTargetFeature >= numSourceFeature
         targetMatrix = targetMatrix(:, 1:numSourceFeature);
         numFeature = numSourceFeature;
     end

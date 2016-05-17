@@ -52,7 +52,7 @@ for t = 1: randomTryTime
         newObjectiveScore = Inf;
         stopTag = 0;
         
-        while (stopTag < 75 && iter < maxIter)
+        while (stopTag < 60 && iter < maxIter)
             iter = iter + 1;
             %                 disp(diff);
 %             fprintf('Fold:%d,Iteration:%d, ObjectiveScore:%g\n',fold, iter, newObjectiveScore);
