@@ -15,7 +15,7 @@ gamaScale = 1000;
 lambdaMaxOrder = 3;
 gamaMaxOrder = 3;
 
-sampleSizeLevel = 'bigSample2/'
+sampleSizeLevel = 'bigSample2/';
 expTitle = sprintf('GCMF%d', datasetId);
 resultDirectory = sprintf('../../../exp_result/%sGCMF/%d/', sampleSizeLevel, datasetId);
 mkdir(resultDirectory);
