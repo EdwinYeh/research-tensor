@@ -1,6 +1,6 @@
 % % % datasetId = 6;
 numDom = 2;
-numSampleFeature = 3000;
+numSampleFeature = 2000;
 % numSourceData = 500;
 % numValidateData = 100;
 % numTestData = 500;
@@ -29,8 +29,9 @@ domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', da
 % Load data from source and target domain data
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
 
+denseFeatureIndex = findCoDenseFeature(X{1}, X{2}, 3000);
 for i = 1:numDom
-    denseFeatureIndex = findDenseFeature(X{i}, numSampleFeature);
+%     denseFeatureIndex = findDenseFeature(X{i}, numSampleFeature);
     X{i} = X{i}(:, denseFeatureIndex);
 end
 sourceY = load([prefix sprintf('source%d_label.csv', datasetId)]);

@@ -1,10 +1,10 @@
 % Please assign datasetId in the commend line
 SetParameter;
 randomTryTime = 1;
-maxIter = 300;
+maxIter = 250;
 sigmaList = [0.0001, 0.001];
 sigma2List = [0.0001, 0.001];
-numFeatureClusterList = [10];
+numFeatureClusterList = [15];
 
 lambdaStart = 10^-10;
 gamaStart = 10^-10;
@@ -12,11 +12,12 @@ gamaStart = 10^-10;
 lambdaScale = 1000;
 gamaScale = 1000;
 
-lambdaMaxOrder = 2;
-gamaMaxOrder = 2;
+lambdaMaxOrder = 3;
+gamaMaxOrder = 3;
 
+sampleSizeLevel = 'bigSample2/';
 expTitle = sprintf('GCMF%d', datasetId);
-resultDirectory = sprintf('../../../exp_result/GCMF/%d/', datasetId);
+resultDirectory = sprintf('../../../exp_result/%sGCMF/%d/', sampleSizeLevel, datasetId);
 mkdir(resultDirectory);
 resultFile = fopen(sprintf('%s%s_validate.csv', resultDirectory, expTitle), 'w');
 fprintf(resultFile, 'numInstanceCluster, numFeatureCluster, sigma, sigma2, lambda, gama, objectiveScore, accuracy, convergeTime\n');

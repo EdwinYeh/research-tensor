@@ -1,4 +1,4 @@
-function sampleDataAndSave(datasetId, saveDirectory, numValidationInstance, numTestInstance)
+function sampleDataAndSave(datasetId, saveDirectory, numInstance, numTestInstance)
 
 mkdir(sprintf('sampleIndex/%s', saveDirectory));
 
@@ -34,10 +34,10 @@ elseif datasetId >=14 && datasetId <=23
     
 end
 
-sampleSourceDataIndex = randperm(numSourceInstance, numValidationInstance(sourceDomain));
-sampleTargetDataIndex = randperm(numTargetInstance, numValidationInstance(targetDomain) + numTestInstance);
-sampleTestDataIndex = sampleTargetDataIndex(numValidationInstance(targetDomain)+1:numValidationInstance(targetDomain)+numTestInstance);
-sampleValidationDataIndex = sampleTargetDataIndex(1:numValidationInstance(targetDomain));
+sampleSourceDataIndex = randperm(numSourceInstance, numInstance(sourceDomain));
+sampleTargetDataIndex = randperm(numTargetInstance, numInstance(targetDomain));
+sampleTestDataIndex = sampleTargetDataIndex(numInstance(targetDomain)-numTestInstance+1:numInstance(targetDomain));
+sampleValidationDataIndex = sampleTargetDataIndex(1:numInstance(targetDomain)-numTestInstance);
 
 csvwrite(sprintf('sampleIndex/%ssampleSourceDataIndex%d.csv', saveDirectory, datasetId), sampleSourceDataIndex);
 csvwrite(sprintf('sampleIndex/%ssampleValidationDataIndex%d.csv', saveDirectory, datasetId), sampleValidationDataIndex);

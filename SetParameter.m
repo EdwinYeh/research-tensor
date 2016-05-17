@@ -4,15 +4,15 @@ isSampleInstance = true;
 isSampleFeature = true;
 isRandom = true;
 isUsingTensor = true;
-isLoad = false;
+isTransductiveSetting = false;
 
 numSampleFeature = 2000;
 numClass = [2, 2];
 
 maxIter = 500;
+numValidationInstance = 0;
+numTestInstance = 0;
 numCVFold = 5;
 numDom = 2;
 sourceDomain = 1;
 targetDomain = 2;
-alpha = 0;
-beta = 0;
