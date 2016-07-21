@@ -38,6 +38,7 @@ A = randi(10,hyperparam.clusterNum,hyperparam.cpRank);
 E=cell(length(input.Y),1);
 W=cell(length(input.Y),1);
 XW=cell(length(input.Y),1);
+reconstructY=cell(length(input.Y),1);
 X = input.X;
 Y = input.Y;
 for domainIdx = 1:length(input.Y)
@@ -57,7 +58,7 @@ objectiveTrack = [];
 objectiveScore = Inf;
 relativeError = Inf;
 terminateFlag = 0;
-while terminateFlag<10
+while terminateFlag<5
     for DomIdx = 1:length(Y)
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         Tensor = updateA(input,XW,Tensor,hyperparam);
@@ -74,7 +75,7 @@ while terminateFlag<10
 %         W = updateW(W,XW,input,domainIdx);
     end
     NewObjectiveScore = getObjectiveScore(input,XW,Tensor,hyperparam);
-    disp(NewObjectiveScore);
+    %disp(NewObjectiveScore);
     %     Terminate Check
     relativeError = objectiveScore - NewObjectiveScore;
     objectiveScore = NewObjectiveScore;
@@ -91,7 +92,10 @@ output.objective = objectiveScore;
 output.Tensor = Tensor;
 output.W = W;
 output.XW = XW;
-
+for domId = 1:length(Y)
+    reconstructY{domId} = getReconstructY(XW,Tensor,domId);
+end
+output.reconstrucY = reconstructY;
 
 
 function flag = terminateCheck(relativeError,tol)

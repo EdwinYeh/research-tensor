@@ -10,17 +10,17 @@ betaStart = 0;
 betaScale = 1000;
 betaMaxOrder = 0;
 
-gamaStart = 10^-6;
-gamaScale = 10000;
-gamaMaxOrder = 0;
+gamaStart = 10^-12;
+gamaScale = 10^3;
+gamaMaxOrder = 4;
 
-lambdaStart = 0.00001;
-lambdaScale = 1000;
-lambdaMaxOrder = 0;
+lambdaStart = 10^-6;
+lambdaScale = 10;
+lambdaMaxOrder = 6;
 
-sigmaList = [0.1];
-cpRankList = [10];
-instanceClusterList = [10];
+sigmaList = [0.1, 0.5, 1];
+cpRankList = [10,20,50];
+instanceClusterList = [10,20,50];
 
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
@@ -55,20 +55,15 @@ for tuneSigma = 1:length(sigmaList)
                         output=solver(input,hyperparam);
                         trainingTime = toc(trainingTimer);
                         
-                        accuracy = zeros(1, numDom);
+                        trainAccuracy = zeros(1, numDom);
+                        testAccuracy = zeros(1, numDom);
                         for domID = 1:numDom
-                            correctCount = 0;
-                            for testDataIndex = 1: numTestData(domID)
-                                hyperparam.domIdx = domID;
-                                [~, predictResult] = max(predict(output, XTest{domID}(testDataIndex, :), domID));
-                                if LabelTest{domID}(testDataIndex) == predictResult
-                                    correctCount = correctCount + 1;
-                                end
-                            end
-                            accuracy(domID) = correctCount/numTestData(domID);
-                            fprintf('domain: %d, accuracy: %g\n', domID, correctCount/numTestData(domID));
+                            trainAccuracy(domID) = comparePredictResult(YTrain{domID}, output.reconstrucY{domID});
+                            testLabel = predict(output, XTest{domID}, domID);
+                            testAccuracy(domID) = comparePredictResult(YTest{domID}, testLabel);
+                            fprintf('domain: %d, trainAccuracy: %g, testAccuracy: %g\n', domID, trainAccuracy(domID), testAccuracy(domID));
                         end
-                        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, 0, gama, lambda, output.objective, accuracy(1), accuracy(2), trainingTime);
+                        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, 0, gama, lambda, output.objective, testAccuracy(1), testAccuracy(2), trainingTime);
                     end
                 end
             end
