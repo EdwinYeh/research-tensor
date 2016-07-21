@@ -62,6 +62,7 @@ for dom = 1: numDom
     X{dom} = normr(X{dom});
 end
 
+prepareTimer = tic;
 for dom = 1: numDom
     Su{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
     Du{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
@@ -103,3 +104,5 @@ if ~isTestPhase
 else
     CVFoldSize = numTestInstance/ numCVFold;
 end
+prepareTime = toc(prepareTimer);
+disp(prepareTime);

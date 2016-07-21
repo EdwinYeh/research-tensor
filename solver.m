@@ -82,7 +82,7 @@ while terminateFlag<5
     objectiveTrack(end+1) = NewObjectiveScore;
     terminateFlag = terminateFlag + terminateCheck(relativeError,tol);
 end
-W = updateW(W,XW,input,domainIdx);
+% W = updateW(W,XW,input,domainIdx);
 if debugMode
 %     plot(objectiveTrack)
 %     saveas(gcf,['ObjectiveTrack.png']);

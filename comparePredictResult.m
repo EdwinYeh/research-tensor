@@ -5,6 +5,7 @@ function accuracy = comparePredictResult(YTrue,Y)
 	[~, labelPredict] = max(Y(i,:));
         if isequal(labelTrue, labelPredict)
             correctCount = correctCount + 1;
+        end
     end
     accuracy = correctCount/size(Y,1);
 end

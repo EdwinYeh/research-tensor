@@ -36,9 +36,8 @@ numSource = 1;
 numTarget = 1;
 numIteration = 100;
 numSampleFeature = 2000;
-maxRandomTryTime = 1;
-
-iscsvread = 1;
+maxRandomTryTime = 5;
+sampleSizeLevel = 'bigSample2/';
 
 labelset = [];
 
@@ -58,8 +57,8 @@ domainNameList = {sprintf('source%d.csv', datasetId), sprintf('target%d.csv', da
 
 % Load data from source and target domain data
 X = createSparseMatrix_multiple(prefix, domainNameList, numDom, dataType);
+denseFeatureIndex = findCoDenseFeature(X{1}, X{2}, numSampleFeature);
 for i = 1:numDom
-    denseFeatureIndex = findDenseFeature(X{i}, numSampleFeature);
     X{i} = X{i}(:, denseFeatureIndex);
 end
 TrainY = load([prefix sprintf('source%d_label.csv', datasetId)]);
@@ -68,8 +67,8 @@ TestY = load([prefix sprintf('target%d_label.csv', datasetId)]);
 TrainX = X{1};
 TestX = X{2};
 
-sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/sampleSourceDataIndex%d.csv', datasetId));
-sampleTargetDataIndex = csvread(sprintf('../../sampleIndex/sampleTargetDataIndex%d.csv', datasetId));
+sampleSourceDataIndex = csvread(sprintf('../../sampleIndex/%ssampleSourceDataIndex%d.csv', sampleSizeLevel, datasetId));
+sampleTargetDataIndex = [csvread(sprintf('../../sampleIndex/%ssampleValidationDataIndex%d.csv', sampleSizeLevel, datasetId)), csvread(sprintf('../../sampleIndex/%ssampleTestDataIndex%d.csv', sampleSizeLevel, datasetId))];
 numTrain = length(sampleSourceDataIndex);
 numTest = length(sampleTargetDataIndex);
 TrainX = TrainX(sampleSourceDataIndex, :);
@@ -346,6 +345,6 @@ accuracy = nCorrect/(numTest);
 avgAccuracy = avgAccuracy + accuracy;
 Results = iter_results;
 end
-totalTime = toc(totalTimer);
+totalTime = toc(totalTimer/maxRandomTryTime);
 disp(totalTime);
 disp(avgAccuracy/maxRandomTryTime);

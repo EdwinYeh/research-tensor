@@ -1,6 +1,6 @@
-function sampleDataAndSave(datasetId, saveDirectory, numInstance, numTestInstance)
+function sampleDataAndSave(datasetId, saveDirectory, numTrainInstance, numTestInstance)
 
-mkdir(sprintf('sampleIndex/%s', saveDirectory));
+mkdir(sprintf('sampleIndex/%s/', saveDirectory));
 
 numDom = 2;
 sourceDomain = 1;
@@ -34,13 +34,17 @@ elseif datasetId >=14 && datasetId <=23
     
 end
 
-sampleSourceDataIndex = randperm(numSourceInstance, numInstance(sourceDomain));
-sampleTargetDataIndex = randperm(numTargetInstance, numInstance(targetDomain));
-sampleTestDataIndex = sampleTargetDataIndex(numInstance(targetDomain)-numTestInstance+1:numInstance(targetDomain));
-sampleValidationDataIndex = sampleTargetDataIndex(1:numInstance(targetDomain)-numTestInstance);
+sampleSourceIndex = randperm(numSourceInstance, (numTrainInstance+numTestInstance));
+sampleTargetIndex = randperm(numTargetInstance, (numTrainInstance+numTestInstance));
 
-csvwrite(sprintf('sampleIndex/%ssampleSourceDataIndex%d.csv', saveDirectory, datasetId), sampleSourceDataIndex);
-csvwrite(sprintf('sampleIndex/%ssampleValidationDataIndex%d.csv', saveDirectory, datasetId), sampleValidationDataIndex);
-csvwrite(sprintf('sampleIndex/%ssampleTestDataIndex%d.csv', saveDirectory, datasetId), sampleTestDataIndex);
+sampleSourceTrainIndex = sampleSourceIndex(1:numTrainInstance);
+sampleSourceTestIndex = sampleSourceIndex(numTrainInstance+1:(numTrainInstance+numTestInstance));
+sampleTargetTrainIndex = sampleTargetIndex(1:numTrainInstance);
+sampleTargetTestIndex = sampleTargetIndex(numTrainInstance+1:(numTrainInstance+numTestInstance));
+
+csvwrite(sprintf('sampleIndex/%s/sampleSourceTrainIndex%d.csv', saveDirectory, datasetId), sampleSourceTrainIndex);
+csvwrite(sprintf('sampleIndex/%s/sampleSourceTestIndex%d.csv', saveDirectory, datasetId), sampleSourceTestIndex);
+csvwrite(sprintf('sampleIndex/%s/sampleTargetTrainIndex%d.csv', saveDirectory, datasetId), sampleTargetTrainIndex);
+csvwrite(sprintf('sampleIndex/%s/sampleTargetTestIndex%d.csv', saveDirectory, datasetId), sampleTargetTestIndex);
 
 end

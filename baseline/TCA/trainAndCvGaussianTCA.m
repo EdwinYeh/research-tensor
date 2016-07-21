@@ -1,4 +1,4 @@
-function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sigma, numFold, numSourceData, numValidateData, numTestData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, isTestPhase)
+function [predictLabel, avgEmpError, accuracy, avgPrepareTime, avgTrainAndPredictTime ] = trainAndCvGaussianTCA( mu, sigma, numFold, numSourceData, numValidateData, numTestData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, isTestPhase)
     fprintf('mu = %f\nsigma = %f\n', mu, sigma);
     numCorrectPredict = 0;
     empErrorSum = 0;
@@ -15,6 +15,10 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
     L = zeros(numAllData, numAllData);
     H = eye(numAllData) - ((1/(numAllData) * ones(numAllData, numAllData)));
     
+    avgTrainAndPredictTime = 0;
+    avgPrepareTime = 0;
+    
+    avgTotalTimer = tic;
     for fold = 0: (numFold-1)
         % Compute K, L matrix
         if isTestPhase
@@ -61,6 +65,8 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
         % Project data in kernel space to the learned components
         dimReducedMatrix = tcaMatrix * transformMatrix;
         trainX = dimReducedMatrix(trainDataIndex, :);
+        avgPrepareTime = avgPrepareTime + toc(avgTotalTimer);
+        avgTrainAndPreidctTimer = tic;
         svmModel = fitcsvm(trainX, trainY, 'KernelFunction', 'gaussian');
         empErrorSum = empErrorSum + loss(svmModel, trainX, trainY);
         predictLabel = predict(svmModel, dimReducedMatrix(hiddenDataIndex, :));
@@ -70,6 +76,7 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
                 numCorrectPredict = numCorrectPredict + 1;
             end
         end
+        avgTrainAndPredictTime = avgTrainAndPredictTime + toc(avgTrainAndPreidctTimer);
     end
     avgEmpError = empErrorSum/ numFold;
     if isTestPhase
@@ -77,5 +84,7 @@ function [predictLabel, avgEmpError, accuracy ] = trainAndCvGaussianTCA( mu, sig
     else
         accuracy = numCorrectPredict/ numValidateData;
     end
+    avgTrainAndPredictTime = avgTrainAndPredictTime/ numFold;
+    avgPrepareTime = avgPrepareTime/ numFold;
     disp(accuracy);
 end

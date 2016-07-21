@@ -1,7 +1,7 @@
 SetParameter;
-resultDirectory = sprintf('../exp_result/newmodel/DY_cross_3way/%d/', datasetId);
+resultDirectory = sprintf('../exp_result/newmodel//%d/', datasetId);
 mkdir(resultDirectory);
-expTitle = sprintf('DY_cross_3way_%d', datasetId);
+expTitle = sprintf('newmodel_%d', datasetId);
 sampleSizeLevel = '1000_100';
 resultFile = fopen(sprintf('%s%s.csv', resultDirectory, expTitle), 'a');
 fprintf(resultFile, 'cpRank,instanceCluster,beta,gama,lambda,objectiveScore,accuracy1,accuracy2,trainingTime\n');
@@ -35,35 +35,49 @@ for tuneSigma = 1:length(sigmaList)
                     for gamaOrder = 0: gamaMaxOrder
                         gama = gamaStart * gamaScale ^ gamaOrder;
                         
-                        S = cell(length(X),1);
-                        for domID = 1:length(X)
-                            S{domID}=ones(numTrainData(domID), numClass(domID));
-                            input.Sxw{domID} = Su{domID};
-                            input.Dxw{domID} = Du{domID};
-                        end
-                        input.X = XTrain;
-                        input.Y = YTrain;
-                        input.S= S;
+                        save environmentForNewModel;                                                
                         
-                        hyperparam.beta = 0;
-                        hyperparam.gamma = gama;
-                        hyperparam.lambda = lambda;
-                        hyperparam.cpRank = cpRank;
-                        hyperparam.clusterNum = numInstanceCluster;
-                        save environmentForNewModel;
-                        trainingTimer = tic;
-                        output=solver(input,hyperparam);
-                        trainingTime = toc(trainingTimer);
+                        CVFoldSize = size(XTrain{1}, 1)/CVFoldNum;
+                        validationIndex = 1:CVFoldSize;
+                        avgValidationAccuracy = zeros(numDom, 1);
+                        trainingTime = 0;
                         
-                        trainAccuracy = zeros(1, numDom);
-                        testAccuracy = zeros(1, numDom);
-                        for domID = 1:numDom
-                            trainAccuracy(domID) = comparePredictResult(YTrain{domID}, output.reconstrucY{domID});
-                            testLabel = predict(output, XTest{domID}, domID);
-                            testAccuracy(domID) = comparePredictResult(YTest{domID}, testLabel);
-                            fprintf('domain: %d, trainAccuracy: %g, testAccuracy: %g\n', domID, trainAccuracy(domID), testAccuracy(domID));
+                        for cvFold = 1:CVFoldNum
+                            % S: selection matrix for validation set
+                            S = cell(length(X),1);
+                            for domID = 1:length(X)
+                                S{domID}=ones(numTrainData(domID), numClass(domID));
+                                S{domID}(validationIndex,:) = 0;
+                                input.Sxw{domID} = Su{domID};
+                                input.Dxw{domID} = Du{domID};
+                            end
+                            input.S= S;
+                            input.X = XTrain;
+                            input.Y = YTrain;
+                            
+                            hyperparam.beta = 0;
+                            hyperparam.gamma = gama;
+                            hyperparam.lambda = lambda;
+                            hyperparam.cpRank = cpRank;
+                            hyperparam.clusterNum = numInstanceCluster;
+                            
+                            trainingTimer = tic;
+                            output=solver(input,hyperparam);
+                            trainingTime = trainingTime + toc(trainingTimer);
+                            
+                            validationAccuracy = zeros(1, numDom);
+                            for domID = 1:numDom
+                                validationAccuracy(domID) = comparePredictResult(YTrain{domID}(validationIndex,:), output.reconstrucY{domID}(validationIndex,:));
+%                                 testLabel = predict(output, XTest{domID}, domID);
+%                                 testAccuracy(domID) = comparePredictResult(YTest{domID}, testLabel);
+                                avgValidationAccuracy(domID) = avgValidationAccuracy(domID) + validationAccuracy(domID);
+%                                 fprintf('domain: %d, validationAccuracy: %g\n', domID, validationAccuracy(domID));
+                            end
+                            validationIndex = validationIndex + CVFoldSize;
                         end
-                        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, 0, gama, lambda, output.objective, testAccuracy(1), testAccuracy(2), trainingTime);
+                        trainingTime = trainingTime/CVFoldNum;
+                        avgValidationAccuracy = avgValidationAccuracy/CVFoldNum;
+                        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, 0, gama, lambda, output.objective, avgValidationAccuracy(1), avgValidationAccuracy(2), trainingTime);
                     end
                 end
             end

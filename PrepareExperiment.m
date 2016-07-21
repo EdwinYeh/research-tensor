@@ -59,6 +59,7 @@ for i = 1: numDom
 end
 
 %
+prepareTimer = tic;
 for dom = 1: numDom
     Su{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
     Du{dom} = zeros(numSampleInstance(dom), numSampleInstance(dom));
@@ -74,6 +75,8 @@ for dom = 1: numDom
     Lu{dom} = Du{dom} - Su{dom};
 end
 
+prepareTime = toc(prepareTimer);
+disp(prepareTime);
 if isTestPhase
     numCVFold = 1;
     CVFoldSize = numTestInstance/ numCVFold;

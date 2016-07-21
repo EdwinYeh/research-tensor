@@ -94,17 +94,17 @@ mkdir(resultDirectory);
 %     end
 % end
 % fclose(resultFile);
-bestSigma = 0.1;
-bestMu = 1;
+bestSigma = 1;
+bestMu = 100;
 resultFile = fopen(sprintf('%sresult_TCA_test%d.csv', resultDirectory, datasetId), 'w');
-fprintf(resultFile, 'mu,sigma,accuracy,time\n');
+fprintf(resultFile, 'mu,sigma,accuracy,prepareTime,trainAndPredictTime\n');
 Y = [sourceY; [targetY; testY]];
 targetDomainData = [targetDomainData; testData];
 for t = 1:randomTryTime
     totalTimer = tic;
-    [predictLabel, avgEmpError, accuracy] = trainAndCvGaussianTCA(bestMu, bestSigma, 1, numSourceData, numValidateData, numTestData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, true);
+    [predictLabel, avgEmpError, accuracy, avgTrainAndPredicTime, avgTotalTime] = trainAndCvGaussianTCA(bestMu, bestSigma, 1, numSourceData, numValidateData, numTestData, featureDimAfterReduce, sourceDomainData, targetDomainData, Y, true);
     totalTime = toc(totalTimer);
     % csvwrite(sprintf('../../../exp_result/predict_result/TCA_gaussian%d_predict_result.csv', datasetId), predictLabel);
-    fprintf(resultFile, '%f,%f,%f,%f\n', bestMu, bestSigma, accuracy, totalTime);
+    fprintf(resultFile, '%f,%f,%f,%f,%f\n', bestMu, bestSigma, accuracy, avgTrainAndPredicTime, avgTotalTime);
 end
 fclose(resultFile);
