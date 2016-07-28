@@ -38,8 +38,13 @@ A = randi(10,hyperparam.clusterNum,hyperparam.cpRank);
 E=cell(length(input.Y),1);
 W=cell(length(input.Y),1);
 XW=cell(length(input.Y),1);
+<<<<<<< HEAD
 reconstructY=cell(length(input.Y),1);
 
+=======
+X = input.X;
+Y = input.Y;
+>>>>>>> parent of c5a470c... (1) Apply CV on all domains
 for domainIdx = 1:length(input.Y)
     E{domainIdx} = randi(10,size(input.Y{domainIdx},2),hyperparam.cpRank);
     W{domainIdx} = randi(10,size(input.X{domainIdx},2),hyperparam.clusterNum);
@@ -57,30 +62,44 @@ objectiveTrack = [];
 objectiveScore = Inf;
 relativeError = Inf;
 terminateFlag = 0;
+<<<<<<< HEAD
 while terminateFlag<5
     for domID = 1:length(input.Y)
+=======
+while terminateFlag<1
+    for DomIdx = 1:length(Y)
+>>>>>>> parent of c5a470c... (1) Apply CV on all domains
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         Tensor = updateA(input,XW,Tensor,hyperparam);
 %         disp('A:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         
-        Tensor = updateE(input,XW,Tensor,hyperparam,domID);
+        Tensor = updateE(input,XW,Tensor,hyperparam,DomIdx);
 %         disp('E:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         
+<<<<<<< HEAD
         W = updateW(input,hyperparam,W,Tensor,domID);
+=======
+        XW = updateXW(XW,W,input,Tensor,DomIdx,hyperparam);
+>>>>>>> parent of c5a470c... (1) Apply CV on all domains
 %         disp('XW:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
+        W = updateW(W,XW,input,domainIdx);
     end
-    NewObjectiveScore = getObjectiveScore(input,XW,Tensor,hyperparam);
-    %disp(NewObjectiveScore);
+    NewObjectiveScore = getObjectiveScore(input,XW,Tensor,hyperparam)
+    
     %     Terminate Check
     relativeError = objectiveScore - NewObjectiveScore;
     objectiveScore = NewObjectiveScore;
     objectiveTrack(end+1) = NewObjectiveScore;
     terminateFlag = terminateFlag + terminateCheck(relativeError,tol);
 end
+<<<<<<< HEAD
 % W = updateW(W,XW,input,domainIdx);
+=======
+W = updateW(W,XW,input,domainIdx);
+>>>>>>> parent of c5a470c... (1) Apply CV on all domains
 if debugMode
 %     plot(objectiveTrack)
 %     saveas(gcf,['ObjectiveTrack.png']);
@@ -90,10 +109,14 @@ output.objective = objectiveScore;
 output.Tensor = Tensor;
 output.W = W;
 output.XW = XW;
+<<<<<<< HEAD
 for domId = 1:length(input.Y)
     reconstructY{domId} = getReconstructY(XW,Tensor,domId);
 end
 output.reconstrucY = reconstructY;
+=======
+
+>>>>>>> parent of c5a470c... (1) Apply CV on all domains
 
 
 function flag = terminateCheck(relativeError,tol)
@@ -219,7 +242,7 @@ end
 A=A.*sqrt(Numerator./Denominator);
 Tensor.A = A;
 
-function Tensor = updateE(input,XW,Tensor,hyperparam,domainIdx)
+function Tensor = updateE(input,W,Tensor,hyperparam,domainIdx)
 E=Tensor.E{domainIdx};
 [r,c]=size(E);
 
@@ -232,12 +255,12 @@ for DomIdx = 1:domainNum
     %     Numerator
     Numerator = Numerator + ...
         (input.Y{DomIdx}.*input.S{DomIdx})' ...
-        * (XW{DomIdx})...
+        * (input.X{DomIdx}*W{DomIdx})...
         * Tensor.A*getPsi(Tensor,DomIdx);
     %     Denominator
     Denominator = Denominator + ...
-        (getReconstructY(XW,Tensor,DomIdx).*input.S{DomIdx})' ...
-        * (XW{DomIdx})...
+        (getReconstructY(input,W,Tensor,DomIdx).*input.S{DomIdx})' ...
+        * (input.X{DomIdx}*W{DomIdx})...
         * Tensor.A*getPsi(Tensor,DomIdx)...
         + ...
         hyperparam.gamma * big1 * get1normSparsityTerm(Tensor,DomIdx);
@@ -245,6 +268,7 @@ end
 E=E.*sqrt(Numerator./Denominator);
 Tensor.E{domainIdx} = E;
 
+<<<<<<< HEAD
 function W = updateW(input,hyperparam,W,Tensor,domID)
 %  Note that W is a cell sturcture
 % W{domainIdx}=input.X{domainIdx}\(XW{domainIdx});
@@ -255,6 +279,11 @@ cvx_begin quiet
     minimize(norm((input.Y{domID}-input.X{domID}*tmpW*projH.*input.S{domID}), 'fro')+hyperparam.beta*norm(tmpW, 'fro'))
 cvx_end
 W{domID} = tmpW;
+=======
+function W = updateW(W,XW,input,domainIdx)
+%  Note that W is a cell sturcture
+W{domainIdx}=input.X{domainIdx}\(XW{domainIdx});
+>>>>>>> parent of c5a470c... (1) Apply CV on all domains
 
 
 function XW = updateXW(XW,W,input,Tensor,domainIdx,hyperparam)
@@ -265,7 +294,7 @@ Numerator = input.Y{domainIdx} .* input.S{domainIdx}...
     * projection(Tensor,domainIdx)'...
     + hyperparam.lambda * input.Sxw{domainIdx} * xw;
 Denominator = (xw*xw')...
-    * (getReconstructY(XW,Tensor,domainIdx).*input.S{domainIdx})...
+    * (getReconstructY(input,W,Tensor,domainIdx).*input.S{domainIdx})...
     * projection(Tensor,domainIdx)'...
     + hyperparam.lambda * input.Dxw{domainIdx} * xw;
 xw=xw.*sqrt(Numerator./Denominator);
