@@ -44,7 +44,7 @@ Y = input.Y;
 for domainIdx = 1:length(input.Y)
     E{domainIdx} = randi(10,size(input.Y{domainIdx},2),hyperparam.cpRank);
     W{domainIdx} = randi(10,size(input.X{domainIdx},2),hyperparam.clusterNum);
-    XW{domainIdx} = X{domainIdx}*W{domainIdx};
+    XW{domainIdx} = input.X{domainIdx}*W{domainIdx};
 end
 
 % Package A,E matrices into structure named "Tensor"
@@ -59,33 +59,33 @@ objectiveScore = Inf;
 relativeError = Inf;
 terminateFlag = 0;
 while terminateFlag<5
-    for DomIdx = 1:length(Y)
+    for domID = 1:length(input.Y)
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         Tensor = updateA(input,XW,Tensor,hyperparam);
 %         disp('A:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         
-        Tensor = updateE(input,XW,Tensor,hyperparam,DomIdx);
+        Tensor = updateE(input,XW,Tensor,hyperparam,domID);
 %         disp('E:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         
-        XW = updateXW(XW,W,input,Tensor,DomIdx,hyperparam);
-%         disp('XW:')
+        XW = updateXW(XW,W,input,Tensor,domID,hyperparam);
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
 %         W = updateW(W,XW,input,domainIdx);
     end
-    NewObjectiveScore = getObjectiveScore(input,W,Tensor,hyperparam);
+    NewObjectiveScore = getObjectiveScore(input,XW,Tensor,hyperparam);
     %disp(NewObjectiveScore);
     %     Terminate Check
     relativeError = objectiveScore - NewObjectiveScore;
     objectiveScore = NewObjectiveScore;
-%     objectiveTrack(end+1) = NewObjectiveScore;
+    objectiveTrack(end+1) = NewObjectiveScore;
     terminateFlag = terminateFlag + terminateCheck(relativeError,tol);
 end
-for domID = 1:numDom
-    W = updateW(input,W,Tensor,domID);
-end
 % W = updateW(W,XW,input,domainIdx);
+% disp('solve W1');
+W = updateW(input,W,XW,Tensor,1);
+% disp('solve W2');
+W = updateW(input,W,XW,Tensor,2);
 if debugMode
 %     plot(objectiveTrack)
 %     saveas(gcf,['ObjectiveTrack.png']);
@@ -94,8 +94,8 @@ end
 output.objective = objectiveScore;
 output.Tensor = Tensor;
 output.W = W;
-W = updateW(input,W,Tensor,domID);
-for domId = 1:length(Y)
+output.XW = XW;
+for domId = 1:length(input.Y)
     reconstructY{domId} = getReconstructY(XW,Tensor,domId);
 end
 output.reconstrucY = reconstructY;
@@ -149,13 +149,12 @@ for r = 1:cpRank
     M(:,r)=M(:,r)+E_col;
 end
 
-function Y=getReconstructY(XW,Tensor,domID)
+function Y=getReconstructY(XW,Tensor,domainIdx)
 % Note that
 %       Y hasn't been filtered/selected here
 %       Y = X * W * proj, where proj = A*psi*E'
-
-proj = projection(Tensor,domID);
-Y=XW{domID}*proj;
+proj = projection(Tensor,domainIdx);
+Y=XW{domainIdx}*proj;
 
 function proj = projection(Tensor,domainIdx)
 psi = getPsi(Tensor,domainIdx);
@@ -195,16 +194,16 @@ Numerator = zeros(r,c);
 Denominator = zeros(r,c);
 domainNum = length(Tensor.E);
 big1 = ones(size(A,1),size(A,2));
-for domID = 1:domainNum
+for DomIdx = 1:domainNum
     %     Numerator
 %     Numerator = Numerator + ...
 %         (input.X{DomIdx}*W{DomIdx})' ...
 %         * (input.Y{DomIdx}.*input.S{DomIdx})...
 %         * Tensor.E{DomIdx}*getPsi(Tensor,DomIdx);
     Numerator = Numerator + ...
-        (XW{domID})' ...
-        * (input.Y{domID}.*input.S{domID})...
-        * Tensor.E{domID}*getPsi(Tensor,domID);
+        (XW{DomIdx})' ...
+        * (input.Y{DomIdx}.*input.S{DomIdx})...
+        * Tensor.E{DomIdx}*getPsi(Tensor,DomIdx);
     %     Denominator    
 %     Denominator = Denominator + ...
 %         (input.X{DomIdx}*W{DomIdx})' ...
@@ -213,12 +212,13 @@ for domID = 1:domainNum
 %         + ...
 %         hyperparam.gamma * big1 * get1normSparsityTerm(Tensor,0);
         Denominator = Denominator + ...
-        (XW{domID})' ...
-        * (getReconstructY(XW{domID},Tensor,domID).*input.S{domID})...
-        * Tensor.E{domID}*getPsi(Tensor,domID)...
+        (XW{DomIdx})' ...
+        * (getReconstructY(XW,Tensor,DomIdx).*input.S{DomIdx})...
+        * Tensor.E{DomIdx}*getPsi(Tensor,DomIdx)...
         + ...
         hyperparam.gamma * big1 * get1normSparsityTerm(Tensor,0);
         % regularize bug
+        
 end
 A=A.*sqrt(Numerator./Denominator);
 Tensor.A = A;
@@ -232,31 +232,32 @@ Numerator = zeros(r,c);
 Denominator = zeros(r,c);
 domainNum = length(Tensor.E);
 big1 = ones(size(E,1),size(E,2));
-for domID = 1:domainNum
+for DomIdx = 1:domainNum
     %     Numerator
     Numerator = Numerator + ...
-        (input.Y{domID}.*input.S{domID})' ...
-        * (XW{domID})...
-        * Tensor.A*getPsi(Tensor,domID);
+        (input.Y{DomIdx}.*input.S{DomIdx})' ...
+        * (XW{DomIdx})...
+        * Tensor.A*getPsi(Tensor,DomIdx);
     %     Denominator
     Denominator = Denominator + ...
-        (getReconstructY(XW{domID},Tensor,domID).*input.S{domID})' ...
-        * (XW{domID})...
-        * Tensor.A*getPsi(Tensor,domID)...
+        (getReconstructY(XW,Tensor,DomIdx).*input.S{DomIdx})' ...
+        * (XW{DomIdx})...
+        * Tensor.A*getPsi(Tensor,DomIdx)...
         + ...
-        hyperparam.gamma * big1 * get1normSparsityTerm(Tensor,domID);
+        hyperparam.gamma * big1 * get1normSparsityTerm(Tensor,DomIdx);
 end
 E=E.*sqrt(Numerator./Denominator);
 Tensor.E{domainIdx} = E;
 
-function W = updateW(input,W,Tensor,domID)
+function W = updateW(input,W,XW,Tensor,domID)
 %  Note that W is a cell sturcture
 % W{domainIdx}=input.X{domainIdx}\(XW{domainIdx});
 projH = projection(Tensor,domID);
 [WRowSize, WColSize] = size(W{domID});
+X = input.X{domID};
 cvx_begin quiet
     variable tmpW(WRowSize, WColSize)
-    minimize(norm((input.Y{domID}-input.X{domID}*tmpW*projH.*input.S{domID}), 'fro'))
+    minimize(norm(XW{domID}-X*tmpW,'fro'))
 cvx_end
 W{domID} = tmpW;
 
@@ -275,18 +276,15 @@ Denominator = (xw*xw')...
 xw=xw.*sqrt(Numerator./Denominator);
 XW{domainIdx}=xw;
 
-function objectiveScore = getObjectiveScore(input,W,Tensor,hyperparam)
+function objectiveScore = getObjectiveScore(input,XW,Tensor,hyperparam)
 objectiveScore = 0;
 
-for DomIdx = 1:length(input.Y)
+for domID = 1:length(input.Y)
 %     objectiveScore = objectiveScore ...
 %         + norm(input.Y{DomIdx}-input.X{DomIdx}*W{DomIdx}*projection(Tensor,DomIdx),'fro')...
 %         + hyperparam.gamma * norm(projection(Tensor,DomIdx),1);
     objectiveScore = objectiveScore ...
-        + norm((input.Y{domID}-input.X{domID}*W{domID}*projection(Tensor,domID).*input.S{domID}),'fro')...
-        + hyperparam.gamma * norm(projection(Tensor,domID),1)...
-        + hyperparam.beta * norm(W{domID},'fro');
-        + norm(input.Y{DomIdx}-XW{DomIdx}*projection(Tensor,DomIdx),'fro')...
-        + hyperparam.gamma * norm(projection(Tensor,DomIdx),1);
+        + norm((input.Y{domID}-XW{domID}*projection(Tensor,domID).*input.S{domID}),'fro')...
+        + hyperparam.gamma * norm(projection(Tensor,domID),1);
 end
 
