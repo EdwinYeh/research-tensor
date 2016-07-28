@@ -34,7 +34,6 @@ for tuneSigma = 1:length(sigmaList)
                     lambda = lambdaStart * lambdaScale ^ lambdaOrder;
                     for gamaOrder = 0: gamaMaxOrder
                         gama = gamaStart * gamaScale ^ gamaOrder;
-<<<<<<< HEAD
                         for betaOrder = 0:betaMaxOrder
                             beta = betaStart * betaScale ^ betaOrder;
                             
@@ -89,52 +88,6 @@ for tuneSigma = 1:length(sigmaList)
                             fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, numInstanceCluster, 0, gama, lambda, output.objective, avgValidationAccuracy(1), avgValidationAccuracy(2), trainingTime);
                             fprintf('%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, numInstanceCluster, 0, gama, lambda, output.objective, avgValidationAccuracy(1), avgValidationAccuracy(2), trainingTime);
                         end
-=======
-                        
-                        save environmentForNewModel;                                                
-                        
-                        CVFoldSize = size(XTrain{1}, 1)/CVFoldNum;
-                        validationIndex = 1:CVFoldSize;
-                        avgValidationAccuracy = zeros(numDom, 1);
-                        trainingTime = 0;
-                        
-                        for cvFold = 1:CVFoldNum
-                            % S: selection matrix for validation set
-                            S = cell(length(X),1);
-                            for domID = 1:length(X)
-                                S{domID}=ones(numTrainData(domID), numClass(domID));
-                                S{domID}(validationIndex,:) = 0;
-                                input.Sxw{domID} = Su{domID};
-                                input.Dxw{domID} = Du{domID};
-                            end
-                            input.S= S;
-                            input.X = XTrain;
-                            input.Y = YTrain;
-                            
-                            hyperparam.beta = 0;
-                            hyperparam.gamma = gama;
-                            hyperparam.lambda = lambda;
-                            hyperparam.cpRank = cpRank;
-                            hyperparam.clusterNum = numInstanceCluster;
-                            
-                            trainingTimer = tic;
-                            output=solver(input,hyperparam);
-                            trainingTime = trainingTime + toc(trainingTimer);
-                            
-                            validationAccuracy = zeros(1, numDom);
-                            for domID = 1:numDom
-                                validationAccuracy(domID) = comparePredictResult(YTrain{domID}(validationIndex,:), output.reconstrucY{domID}(validationIndex,:));
-%                                 testLabel = predict(output, XTest{domID}, domID);
-%                                 testAccuracy(domID) = comparePredictResult(YTest{domID}, testLabel);
-                                avgValidationAccuracy(domID) = avgValidationAccuracy(domID) + validationAccuracy(domID);
-%                                 fprintf('domain: %d, validationAccuracy: %g\n', domID, validationAccuracy(domID));
-                            end
-                            validationIndex = validationIndex + CVFoldSize;
-                        end
-                        trainingTime = trainingTime/CVFoldNum;
-                        avgValidationAccuracy = avgValidationAccuracy/CVFoldNum;
-                        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g\n', cpRank, numInstanceCluster, 0, gama, lambda, output.objective, avgValidationAccuracy(1), avgValidationAccuracy(2), trainingTime);
->>>>>>> parent of c5a470c... (1) Apply CV on all domains
                     end
                 end
             end
