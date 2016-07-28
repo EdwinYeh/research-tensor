@@ -39,12 +39,11 @@ E=cell(length(input.Y),1);
 W=cell(length(input.Y),1);
 XW=cell(length(input.Y),1);
 reconstructY=cell(length(input.Y),1);
-X = input.X;
-Y = input.Y;
+
 for domainIdx = 1:length(input.Y)
     E{domainIdx} = randi(10,size(input.Y{domainIdx},2),hyperparam.cpRank);
     W{domainIdx} = randi(10,size(input.X{domainIdx},2),hyperparam.clusterNum);
-    XW{domainIdx} = X{domainIdx}*W{domainIdx};
+    XW{domainIdx} = input.X{domainIdx}*W{domainIdx};
 end
 
 % Package A,E matrices into structure named "Tensor"
@@ -59,20 +58,19 @@ objectiveScore = Inf;
 relativeError = Inf;
 terminateFlag = 0;
 while terminateFlag<5
-    for DomIdx = 1:length(Y)
+    for domID = 1:length(input.Y)
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         Tensor = updateA(input,XW,Tensor,hyperparam);
 %         disp('A:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         
-        Tensor = updateE(input,XW,Tensor,hyperparam,DomIdx);
+        Tensor = updateE(input,XW,Tensor,hyperparam,domID);
 %         disp('E:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
         
-        XW = updateXW(XW,W,input,Tensor,DomIdx,hyperparam);
+        XW = updateXW(XW,W,input,Tensor,domID,hyperparam);
 %         disp('XW:')
 %         getObjectiveScore(input,XW,Tensor,hyperparam)
-%         W = updateW(W,XW,input,domainIdx);
     end
     NewObjectiveScore = getObjectiveScore(input,XW,Tensor,hyperparam);
     %disp(NewObjectiveScore);
@@ -83,6 +81,10 @@ while terminateFlag<5
     terminateFlag = terminateFlag + terminateCheck(relativeError,tol);
 end
 % W = updateW(W,XW,input,domainIdx);
+disp('solve W1');
+W = updateW(input,W,Tensor,1);
+disp('solve W2');
+W = updateW(input,W,Tensor,2);
 if debugMode
 %     plot(objectiveTrack)
 %     saveas(gcf,['ObjectiveTrack.png']);
@@ -92,7 +94,7 @@ output.objective = objectiveScore;
 output.Tensor = Tensor;
 output.W = W;
 output.XW = XW;
-for domId = 1:length(Y)
+for domId = 1:length(input.Y)
     reconstructY{domId} = getReconstructY(XW,Tensor,domId);
 end
 output.reconstrucY = reconstructY;
@@ -247,9 +249,16 @@ end
 E=E.*sqrt(Numerator./Denominator);
 Tensor.E{domainIdx} = E;
 
-function W = updateW(W,XW,input,domainIdx)
+function W = updateW(input,W,Tensor,domID)
 %  Note that W is a cell sturcture
-W{domainIdx}=input.X{domainIdx}\(XW{domainIdx});
+% W{domainIdx}=input.X{domainIdx}\(XW{domainIdx});
+projH = projection(Tensor,domID);
+[WRowSize, WColSize] = size(W{domID});
+cvx_begin quiet
+    variable tmpW(WRowSize, WColSize)
+    minimize(norm((input.Y{domID}-input.X{domID}*tmpW*projH.*input.S{domID}), 'fro'))
+cvx_end
+W{domID} = tmpW;
 
 
 function XW = updateXW(XW,W,input,Tensor,domainIdx,hyperparam)
@@ -269,12 +278,12 @@ XW{domainIdx}=xw;
 function objectiveScore = getObjectiveScore(input,XW,Tensor,hyperparam)
 objectiveScore = 0;
 
-for DomIdx = 1:length(input.Y)
+for domID = 1:length(input.Y)
 %     objectiveScore = objectiveScore ...
 %         + norm(input.Y{DomIdx}-input.X{DomIdx}*W{DomIdx}*projection(Tensor,DomIdx),'fro')...
 %         + hyperparam.gamma * norm(projection(Tensor,DomIdx),1);
     objectiveScore = objectiveScore ...
-        + norm(input.Y{DomIdx}-XW{DomIdx}*projection(Tensor,DomIdx),'fro')...
-        + hyperparam.gamma * norm(projection(Tensor,DomIdx),1);
+        + norm((input.Y{domID}-XW{domID}*projection(Tensor,domID).*input.S{domID}),'fro')...
+        + hyperparam.gamma * norm(projection(Tensor,domID),1);
 end
 
