@@ -7,15 +7,15 @@ domainNum = length(userIdList);
 
 gamaStart = 10^-9;
 gamaScale = 10^3;
-gamaMaxOrder = 6;
+gamaMaxOrder = 3;
 
 lambdaStart = 10^-12;
 lambdaScale = 10^3;
 lambdaMaxOrder = 5;
 
 sigmaList = [0.01, 0.05, 0.1, 0.5, 1];
-perceptionClusterNumList = [5, 10, 20];
-cpRankList = [10, 50, 100];
+perceptionClusterNumList = [5, 15];
+cpRankList = [10, 30];
 
 maxRandomTryTime = 5;
 
