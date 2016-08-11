@@ -18,7 +18,7 @@ lambdaStart = 10^-6;
 lambdaScale = 10^2;
 lambdaMaxOrder = 3;
 
-sigmaList = [0.005, 0.05, 0.5];
+sigmaList = [0.05, 0.5];
 cpRankList = [10];
 instanceClusterList = [10];
 
@@ -84,7 +84,7 @@ for tuneSigma = 1:length(sigmaList)
                         trainingTime = trainingTime/(CVFoldNum*CVFoldNum);
                         avgValidationAccuracy = avgValidationAccuracy/(CVFoldNum*CVFoldNum);
                         fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, numInstanceCluster, 0, gama, lambda, output.objective, avgValidationAccuracy(1), avgValidationAccuracy(2), trainingTime);
-                        %fprintf('%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, numInstanceCluster, 0, gama, lambda, output.objective, avgValidationAccuracy(1), avgValidationAccuracy(2), trainingTime);
+                        fprintf('%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, numInstanceCluster, 0, gama, lambda, output.objective, avgValidationAccuracy(1), avgValidationAccuracy(2), trainingTime);
                     end
                 end
             end
