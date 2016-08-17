@@ -1,5 +1,5 @@
 function Exp_mturk_perceptioncluster(userIdList)
-resultDirectory = '../exp_result/newmodel/Mturk/';
+resultDirectory = '../../exp_result/Mturk/';
 mkdir(resultDirectory);
 domainNum = length(userIdList);
 expTitle = 'Mturk';
@@ -51,7 +51,7 @@ for tuneSigma = 1:length(sigmaList)
                                     input.SeedCluster{domId}=SeedCluster{seedCombination, domId};
                                     input.X{domId} = X{domId};
                                     % If Y has all 0 row or col update rule will fail
-                                    Y{domId}(Y{domId}==0) = 10^-6;
+                                    Y{domId}(Y{domId}==0) = 10^-18;
                                     input.Y{domId} = Y{domId};
                                     input.XW{domId} = XW{domId};
                                     input.Sxw{domId} = Su{domId};

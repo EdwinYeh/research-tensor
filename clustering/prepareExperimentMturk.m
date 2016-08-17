@@ -1,4 +1,5 @@
-function [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = prepareExperimentMturk(expTitle, userIdList, sigmaInstsnce, maxSeedCombination)
+function [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = ...
+    prepareExperimentMturk(expTitle, userIdList, sigmaInstsnce, maxSeedCombination)
 % Input:
 %   userIdArray: 1-d array saving userId involved in experiment
 % Output:
@@ -25,8 +26,8 @@ PerceptionSeedFilter = cell(maxSeedCombination, numDom);
 %     Dv = cell(1, domNum);
 for domId = 1:numDom;
     userId = userIdList(domId);
-    load(sprintf('../mturk/User%d.mat', userId));
-    load('../mturk/data_feature.mat');
+    load(sprintf('../../mturk/User%d.mat', userId));
+    load('../../mturk/data_feature.mat');
     data_feature = normr(data_feature);
     X{domId} = data_feature;
     Y{domId} = PerceptionInstance;
