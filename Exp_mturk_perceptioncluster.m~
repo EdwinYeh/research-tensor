@@ -46,9 +46,9 @@ for tuneSigma = 1:length(sigmaList)
                             for randomTryTime = 1:maxRandomTryTime
                                 for domId = 1: domainNum
                                     % fprintf('validation index domain%d: %d~%d\n', domID, min(validationIndex{domID}), max(validationIndex{domID}));
-                                    input.S{domId}=PerceptionSeedFilter{seedCombination, domId};
-                                    input.SeedSet{domId} = SeedSet{seedCombination, domId};
-                                    input.SeedCluster{domId}=SeedCluster{seedCombination, domId};
+                                    input.S{domId}=PerceptionSeedFilter{domId};
+                                    input.SeedSet{domId} = SeedSet{domId};
+                                    input.SeedCluster{domId}=SeedCluster{domId};
                                     input.X{domId} = X{domId};
                                     % If Y has all 0 row or col update rule will fail
                                     Y{domId}(Y{domId}==0) = 10^-6;
@@ -92,9 +92,9 @@ for tuneSigma = 1:length(sigmaList)
                         end
                         avgSeedCombinationPrecision = mean(seedCombinationPrecision);
                         avgSeedCombinationTrainingTime = mean(seedCombinationTrainingTime);
-                        avgSeedCombinationObjective = mean(seedCombinationObjective);
-                        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, perceptionClusterNum, lambda, gama, avgSeedCombinationPrecision, avgSeedCombinationObjective, avgSeedCombinationTrainingTime);
-                        fprintf('%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, perceptionClusterNum, lambda, gama, avgSeedCombinationPrecision, avgSeedCombinationObjective, avgSeedCombinationTrainingTime);
+                        avgSeedCombinationObjective = mean(seed)
+                        fprintf(resultFile, '%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, perceptionClusterNum, lambda, gama, avgRandomPrecision, avgRandomObjective, avgRandomTrainingTime);
+                        fprintf('%g,%g,%g,%g,%g,%g,%g,%g\n', sigma, cpRank, perceptionClusterNum, lambda, gama, avgRandomPrecision, avgRandomObjective, avgRandomTrainingTime);
                     end
                 end
             end

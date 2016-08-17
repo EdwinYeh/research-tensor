@@ -18,6 +18,7 @@ function [ Recall, precision] = getRecallPrecision(GroundTruth, Prediction, Seed
     for instanceId = 1: length(PredictionResult)
         Prediction(instanceId, PredictionResult(instanceId)) = 1;
     end
+   
     PrecisionIntersect = Prediction & GroundTruth;
     precisionNumerator = sum(sum(PrecisionIntersect));
     precisionDenominator = sum(sum(Prediction));

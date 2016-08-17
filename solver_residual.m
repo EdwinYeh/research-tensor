@@ -1,4 +1,4 @@
-function [output]=solver_orthognal_perceptioncluster(input,hyperparam)
+function [output]=solver_residual(input,hyperparam)
 % Input variable:
 %   input.X{d} = instance x feature matrix in domain d
 %   input.Y{d} = perception x instance matrix in domain d
@@ -20,8 +20,9 @@ function [output]=solver_orthognal_perceptioncluster(input,hyperparam)
 %  System parameter
 %  Todo
 %       add to hyperparam
-tol = 10 ^-5;
+tol = 10 ^-3;
 debugMode = 1;
+
 
 % Initialize :
 %     W{d} : featureNum x clusterNum
@@ -33,24 +34,27 @@ domainNum = length(input.Y);
 instanceClusterNumList = zeros(1, domainNum);
 instanceNumList = zeros(1, domainNum);
 featureNumList = zeros(1, domainNum);
-perceptionNum = size(input.Y{1}, 1);
+perceptionNumList = zeros(1, domainNum);
 
-A = randi(10,input.perceptionClusterNum,hyperparam.cpRank);
-U = cell(domainNum, 1);
-E = cell(domainNum,1);
-W = cell(domainNum,1);
-XW = cell(domainNum,1);
-reconstructY = cell(length(input.Y),1);
+A = randi(10,(hyperparam.perceptionClusterNum+1),hyperparam.cpRank);
+E=cell(domainNum,1);
+W=cell(domainNum,1);
+XW=cell(domainNum,1);
+U=cell(domainNum,1);
+reconstructY=cell(length(input.Y),1);
 
 for domId = 1:domainNum
     instanceClusterNumList(domId) = size(input.XW{domId}, 2);
     instanceNumList(domId) = size(input.X{domId}, 1);
     featureNumList(domId) = size(input.X{domId}, 2);
+    perceptionNumList(domId) = size(input.Y{domId}, 1);
     
-    U{domId} = randi(10, perceptionNum, input.perceptionClusterNum);
-    E{domId} = randi(10, instanceClusterNumList(domId), hyperparam.cpRank);
+    E{domId} = randi(10, (instanceClusterNumList(domId)+1), hyperparam.cpRank);
     W{domId} = randi(10, featureNumList(domId), instanceClusterNumList(domId));
-    XW{domId} = randi(10, instanceNumList(domId), instanceClusterNumList(domId));
+    U{domId} = randi(10, perceptionNumList(domId), (hyperparam.perceptionClusterNum+1));
+    XW{domId} = randi(10, instanceNumList(domId), (instanceClusterNumList(domId)+1));
+    U{domId}(:, size(U{domId}, 2)) = ones(size(U{domId}, 1), 1)*10^-30;
+    XW{domId}(:, size(XW{domId}, 2)) = ones(size(XW{domId}, 1), 1)*10^-30;
 end
 
 % Package A,E matrices into structure named "Tensor"
@@ -63,48 +67,48 @@ terminateFlag = 0;
 findNan = 0;
 
 while terminateFlag<1 && ~findNan
-    for domID = 1:domainNum       
-        Tensor = updateA(input, XW, U, Tensor,hyperparam);
-        disp('A:');
-        tmpScore = getObjectiveScore(input, XW, U, Tensor, hyperparam)
-        save('debug.mat');
-        if isnan(tmpScore)
-            disp('find Nan');
-            findNan = 1;
-            break;
-        end
+    for domID = 1:length(input.Y)
+        Tensor = updateA(input, U, XW, Tensor,hyperparam);
+%         disp('A:');
+%         tmpScore = getObjectiveScore(input, U, XW, Tensor, hyperparam);
+% %         save('debug.mat');
+%         if isnan(tmpScore)            
+%             findNan = 1;
+%             break;
+%         end
         
-        Tensor = updateE(input, XW, U, Tensor, hyperparam, domID);
-        disp('E:');
-        tmpScore = getObjectiveScore(input, XW, U, Tensor, hyperparam)
-        save('debug.mat');
-        if isnan(tmpScore)
-            disp('find Nan');
-            findNan = 1;
-            break;
-        end
+        Tensor = updateE(input, U, XW, Tensor, hyperparam, domID);
+%         disp('E:');
+%         tmpScore = getObjectiveScore(input, U, XW, Tensor, hyperparam);
+% %         save('debug.mat');
+%         if isnan(tmpScore)            
+%             findNan = 1;
+%             break;
+%         end
         
-        U = updateU(input, XW, U, Tensor, domId);
-        disp('U:');
-        tmpScore = getObjectiveScore(input, XW, U, Tensor, hyperparam)
-        save('debug.mat');
-        if isnan(tmpScore)
-            disp('find Nan');
-            findNan = 1;
-            break;
-        end
+        U = updateU(U, XW, input, Tensor, domID);
+%         disp('U:');
+%         tmpScore = getObjectiveScore(input, U, XW, Tensor, hyperparam);
+% %         save('debug.mat');
+%         if isnan(tmpScore)            
+%             findNan = 1;
+%             break;
+%         end
         
-        XW = updateXW(input, XW, U, Tensor, domID, hyperparam);
-        disp('XW:');
-        tmpScore = getObjectiveScore(input, XW, U, Tensor, hyperparam)
-        save('debug.mat');
-        if isnan(tmpScore)
-            disp('find Nan');
-            findNan = 1;
-            break;
-        end
+        XW = updateXW(U, XW, input, Tensor, domID, hyperparam);
+%         disp('XW:');
+%         tmpScore = getObjectiveScore(input, U, XW, Tensor, hyperparam);
+% %         save('debug.mat');
+%         if isnan(tmpScore)            
+%             findNan = 1;
+%             break;
+%         end
     end
-    NewObjectiveScore = getObjectiveScore(input, XW, U, Tensor, hyperparam)
+    NewObjectiveScore = getObjectiveScore(input, U, XW, Tensor, hyperparam);
+    if isnan(NewObjectiveScore)
+        break;
+    end
+%     disp(NewObjectiveScore);
     %     Terminate Check
     relativeError = objectiveScore - NewObjectiveScore;
     objectiveScore = NewObjectiveScore;
@@ -117,7 +121,7 @@ end
 % end
 
 if debugMode
-%     plot(objectiveTrack);
+%     plot(objectiveTrack)
 %     saveas(gcf,['ObjectiveTrack.png']);
 end
 % save('obj.mat','objectiveTrack');
@@ -126,7 +130,7 @@ output.Tensor = Tensor;
 output.W = W;
 output.XW = XW;
 for domId = 1:length(input.Y)
-    reconstructY{domId} = getReconstructY(XW, U, Tensor, domId);
+    reconstructY{domId} = getReconstructY(U, XW, Tensor, domId);
 end
 output.reconstrucY = reconstructY;
 
@@ -148,7 +152,6 @@ function [M,ProductionOfLabelNum]=Khatrirao(Tensor,domainIdx)
 %           1.the preparation for large Label set (Total #Label cross domain) overflow
 %           2.or sparse matrix calculation
 %
-
 % Prepare the matrices
 cpRank=size(Tensor.E{1},2);
 domainNum=length(Tensor.E);
@@ -160,7 +163,7 @@ for DomIdx = 1:domainNum
     end
     ProductionOfLabelNum = ProductionOfLabelNum * size(Tensor.E{DomIdx},1);
 end
-M=sparse( ProductionOfLabelNum ,cpRank);
+M=sparse(ProductionOfLabelNum ,cpRank);
 
 for r = 1:cpRank
     M(:,r);
@@ -177,7 +180,7 @@ for r = 1:cpRank
     M(:,r)=M(:,r)+E_col;
 end
 
-function Y=getReconstructY(XW, U, Tensor, domId)
+function Y=getReconstructY(U, XW, Tensor, domId)
 % Note that
 %       Y hasn't been filtered/selected here
 %       Y = X * W * proj, where proj = A*psi*E'
@@ -210,7 +213,7 @@ for DomIdx = 1:domainNum
     sparsityTerm = sparsityTerm.*getlatin(Tensor.E{DomIdx});
 end
 
-function Tensor = updateA(input,XW,U,Tensor,hyperparam)
+function Tensor = updateA(input, U, XW, Tensor,hyperparam)
 A=Tensor.A;
 [r,c]=size(A);
 % Calculate Numerator and Denominator
@@ -227,7 +230,7 @@ for domId = 1:domainNum
     
     Denominator = Denominator + ...
         U{domId}' ...
-        *(getReconstructY(XW, U, Tensor, domId).*input.S{domId}) ...
+        *(getReconstructY(U, XW, Tensor, domId).*input.S{domId}) ...
         * XW{domId} ...
         * Tensor.E{domId}*getPsi(Tensor,domId) ...
         +hyperparam.gamma * big1 * get1normSparsityTerm(Tensor,0);
@@ -235,7 +238,7 @@ end
 A=A.*sqrt(Numerator./Denominator);
 Tensor.A = A;
 
-function Tensor = updateE(input, XW, U, Tensor, hyperparam, domId)
+function Tensor = updateE(input, U, XW, Tensor, hyperparam, domId)
 E=Tensor.E{domId};
 [r,c]=size(E);
 % Calculate Numerator and Denominator
@@ -252,7 +255,7 @@ Numerator = Numerator + ...
 %     Denominator
 Denominator = Denominator + ...
     XW{domId}' ...
-    * (getReconstructY(XW, U, Tensor, domId).*input.S{domId})' ...
+    * (getReconstructY(U, XW, Tensor, domId).*input.S{domId})' ...
     * U{domId} ...
     * Tensor.A*getPsi(Tensor,domId)...
     + hyperparam.gamma * big1 * get1normSparsityTerm(Tensor,domId);
@@ -271,7 +274,8 @@ cvx_begin quiet
 cvx_end
 W{domID} = tmpW;
 
-function U = updateU(input, XW, U, Tensor, domId)
+
+function U = updateU(U, XW, input, Tensor, domId)
     TmpU = U{domId};
     projectionH = projection(Tensor,domId);
     
@@ -286,9 +290,9 @@ function U = updateU(input, XW, U, Tensor, domId)
     
     TmpU = TmpU.*sqrt(Numerator./Denominator);
     U{domId} = TmpU;
-        
 
-function XW = updateXW(input, XW, U, Tensor, domId, hyperparam)
+
+function XW = updateXW(U, XW, input, Tensor, domId, hyperparam)
     TmpXW = XW{domId};
     projectionH = projection(Tensor,domId);
     
@@ -304,17 +308,17 @@ function XW = updateXW(input, XW, U, Tensor, domId, hyperparam)
         + hyperparam.lambda * input.Dxw{domId} * TmpXW;
     
     TmpXW=TmpXW.*sqrt(Numerator./Denominator);
-    TmpXW(input.SeedSet{domId}, :) = input.SeedCluster{domId}(input.SeedSet{domId}, :);
+    TmpXW(input.SeedSet{domId}, 1:(size(TmpXW,2)-1)) = input.SeedCluster{domId}(input.SeedSet{domId}, :);
     XW{domId} = TmpXW;
     
 
-function objectiveScore = getObjectiveScore(input, XW, U, Tensor, hyperparam)
+function objectiveScore = getObjectiveScore(input, U, XW, Tensor, hyperparam)
 objectiveScore = 0;
 
 for domId = 1:length(input.Y)
     objectiveScore = objectiveScore ...
-        + norm((input.Y{domId}-U{domId}*projection(Tensor,domId)*XW{domId}').*input.S{domId},'fro') ...
-        + hyperparam.gamma * norm(projection(Tensor,domId),1) ...
-        + hyperparam.lambda*trace(XW{domId}'*(input.Sxw{domId}-input.Dxw{domId})*XW{domId});
+        + norm((input.Y{domId}-U{domId}*projection(Tensor,domId)*XW{domId}').*input.S{domId},'fro')...
+        + hyperparam.gamma*norm(projection(Tensor,domId),1) ...
+        + hyperparam.lambda*trace(XW{domId}'*(input.Dxw{domId}-input.Sxw{domId})*XW{domId});
 end
 

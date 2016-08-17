@@ -1,4 +1,4 @@
-function [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = prepareExperimentMturk(expTitle, userIdList, sigmaInstsnce, maxSeedCombination)
+function [X, InstanceCluster, SeedPerception, SeedCluster, Su, Du, PerceptionSeedFilter, SeedClusterFilter, SeedSet] = prepareExperimentMturk2(expTitle, userIdList, sigmaInstsnce)
 % Input:
 %   userIdArray: 1-d array saving userId involved in experiment
 % Output:
@@ -13,27 +13,25 @@ function [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = prepar
 %   (2) #perception feature & #cluster are different from users
 numDom = length(userIdList);
 X = cell(1,numDom);
-Y = cell(1, numDom);
-XW = cell(1, numDom);
 Su = cell(1, numDom);
 Du = cell(1, numDom);
-SeedSet = cell(maxSeedCombination, numDom);
-SeedCluster = cell(maxSeedCombination, numDom);
-PerceptionSeedFilter = cell(maxSeedCombination, numDom);
-
+InstanceCluster = cell(1,numDom);
+SeedSet = cell(1, numDom);
+SeedCluster = cell(1, numDom);
+SeedPerception = cell(1, numDom);
+PerceptionSeedFilter = cell(1, numDom);
+SeedClusterFilter = cell(1, numDom);
 %     Sv = cell(1, domNum);
 %     Dv = cell(1, domNum);
 for domId = 1:numDom;
     userId = userIdList(domId);
-    load(sprintf('../mturk/User%d.mat', userId));
+    Data = load(sprintf('../mturk/User%d.mat', userId));
     load('../mturk/data_feature.mat');
     data_feature = normr(data_feature);
     X{domId} = data_feature;
-    Y{domId} = PerceptionInstance;
-    XW{domId} = InstanceCluster;
     [numInstance, ~] = size(data_feature);
-    [numPerception, ~] = size(PerceptionInstance);
-    
+    [numPerception, ~] = size(Data.PerceptionInstance);
+    InstanceCluster{domId} = Data.InstanceCluster;
     Su{domId} = zeros(numInstance, numInstance);
     Du{domId} = zeros(numInstance, numInstance);
     Su{domId} = gaussianSimilarityMatrix(data_feature, sigmaInstsnce);
@@ -42,26 +40,26 @@ for domId = 1:numDom;
         Du{domId}(userId,userId) = sum(Su{domId}(userId,:));
     end
     
-    for seedCombination = 1: maxSeedCombination
-        try
-            SeedData = load(sprintf('SeedData_%s.mat', expTitle));
-            SeedSet = SeedData.SeedSet;
-            SeedCluster = SeedData.SeedCluster;
-            PerceptionSeedFilter = SeedData.PerceptionSeedFilter;
-        catch
-            disp('SeedData.mat doesnt exist create a new one');
-            [SeedSet{seedCombination, domId}, SeedCluster{seedCombination, domId}, PerceptionSeedFilter{seedCombination, domId}] = generateSeed(InstanceCluster, numPerception, 2);
-        end
+    try
+        SeedData = load(sprintf('SeedData_%s.mat', expTitle));
+        SeedSet = SeedData.SeedSet;
+        SeedCluster = SeedData.SeedCluster;
+        PerceptionSeedFilter = SeedData.PerceptionSeedFilter;
+        SeedClusterFilter = SeedData.SeedClusterFilter;
+    catch
+        disp('SeedData.mat doesnt exist create a new one');
+        [SeedSet{domId}, SeedCluster{domId}, PerceptionSeedFilter{domId}, SeedClusterFilter{domId}] = generateSeed(InstanceCluster{domId}, numPerception, 2);
     end
-    
+    SeedPerception{domId} = (Data.PerceptionInstance.*PerceptionSeedFilter{domId})';
 end
-save(sprintf('SeedData_%s.mat', expTitle), 'SeedSet', 'SeedCluster', 'PerceptionSeedFilter');
+save(sprintf('SeedData_%s.mat', expTitle), 'SeedSet', 'SeedCluster', 'PerceptionSeedFilter', 'SeedClusterFilter');
 end
 
-function [SeedSet, SeedCluster, PerceptionSeedFilter] = generateSeed(InstanceCluster, numPerception, seedCount)
+function [SeedSet, SeedCluster, PerceptionSeedFilter, SeedClusterFilter] = generateSeed(InstanceCluster, numPerception, seedCount)
 [numInstance, numCluster] = size(InstanceCluster);
 SeedCluster = zeros(numInstance, numCluster);
 PerceptionSeedFilter = zeros(numPerception, numInstance);
+SeedClusterFilter = zeros(numInstance, numCluster);
 SeedSet = zeros(numCluster*seedCount, 1);
 for clusterId = 1: numCluster
     % Find each cluster's random two instances to be the cluster's seeds
@@ -71,6 +69,7 @@ for clusterId = 1: numCluster
     SeedSet(clusterId*seedCount-(seedCount-1): clusterId*seedCount) = seed;
     for seedId = 1: seedCount
         SeedCluster(seed(seedId), clusterId) = 1;
+        SeedClusterFilter(seed(seedId), :) = 1;
         PerceptionSeedFilter(:, seed(seedId)) = 1;
     end
 end
