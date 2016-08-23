@@ -1,8 +1,9 @@
-function Exp_clustering(expTitle, userIdList)
+function Exp_clustering(datasetName, userIdList)
 resultDirectory = '../../exp_result/Mturk/';
 parameterNameOrder = 'sigma, lambda, gama, cpRank';
 mkdir(resultDirectory);
 numDom = length(userIdList);
+expTitle = datasetName;
 for domId = 1:numDom
     expTitle = [expTitle '_' num2str(userIdList(domId))];
 end
@@ -33,7 +34,7 @@ bestParamCombination = cell(1, maxSeedCombination);
 for tuneSigma = 1:length(sigmaList)
     sigma = sigmaList(tuneSigma);
     [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = ...
-        prepareExperimentMturk(expTitle, userIdList, sigma, maxSeedCombination);
+        prepareExperimentMturk(datasetName, userIdList, sigma, maxSeedCombination);
     for tuneCPRank = 1: length(cpRankList)
         cpRank = cpRankList(tuneCPRank);
         for lambdaOrder = 0: lambdaMaxOrder

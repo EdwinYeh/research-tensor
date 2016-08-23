@@ -1,5 +1,5 @@
-function [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = ...
-    prepareExperimentMturk(expTitle, userIdList, sigmaInstsnce, maxSeedCombination)
+function [X, Y, XW, Su, Du, AllSeedCluster, AllPerceptionSeedFilter, AllSeedSet] = ...
+    prepareExperimentMturk(datasetName, userIdList, sigmaInstsnce, maxSeedCombination)
 % Input:
 %   userIdArray: 1-d array saving userId involved in experiment
 % Output:
@@ -18,9 +18,12 @@ Y = cell(1, numDom);
 XW = cell(1, numDom);
 Su = cell(1, numDom);
 Du = cell(1, numDom);
-SeedSet = cell(maxSeedCombination, numDom);
-SeedCluster = cell(maxSeedCombination, numDom);
-PerceptionSeedFilter = cell(maxSeedCombination, numDom);
+SeedSet = cell(maxSeedCombination,1);
+SeedCluster = cell(maxSeedCombination,1);
+PerceptionSeedFilter = cell(maxSeedCombination,1);
+AllSeedSet = cell(maxSeedCombination, numDom);
+AllSeedCluster = cell(maxSeedCombination, numDom);
+AllPerceptionSeedFilter = cell(maxSeedCombination, numDom);
 
 %     Sv = cell(1, domNum);
 %     Dv = cell(1, domNum);
@@ -39,24 +42,28 @@ for domId = 1:numDom;
     Du{domId} = zeros(numInstance, numInstance);
     Su{domId} = gaussianSimilarityMatrix(data_feature, sigmaInstsnce);
     Su{domId}(isnan(Su{domId})) = 0;
-    for userId = 1:numInstance
-        Du{domId}(userId,userId) = sum(Su{domId}(userId,:));
+    for instanceId = 1:numInstance
+        Du{domId}(instanceId,instanceId) = sum(Su{domId}(instanceId,:));
     end
     
     for seedCombination = 1: maxSeedCombination
         try
-            SeedData = load(sprintf('SeedData_%s.mat', expTitle));
+            SeedData = load(sprintf('SeedData_%s_%d.mat', datasetName, userId));
             SeedSet = SeedData.SeedSet;
             SeedCluster = SeedData.SeedCluster;
             PerceptionSeedFilter = SeedData.PerceptionSeedFilter;
         catch
             disp('SeedData.mat doesnt exist create a new one');
-            [SeedSet{seedCombination, domId}, SeedCluster{seedCombination, domId}, PerceptionSeedFilter{seedCombination, domId}] = generateSeed(InstanceCluster, numPerception, 2);
+            [SeedSet{seedCombination}, SeedCluster{seedCombination}, PerceptionSeedFilter{seedCombination}] = generateSeed(InstanceCluster, numPerception, 2);
         end
     end
-    
+    save(sprintf('SeedData_%s_%d.mat', datasetName, userId), 'SeedSet', 'SeedCluster', 'PerceptionSeedFilter');
+    for seedCombination = 1: maxSeedCombination
+        AllSeedCluster{seedCombination, domId} = SeedCluster{seedCombination};
+        AllSeedSet{seedCombination, domId} = SeedSet{seedCombination};
+        AllPerceptionSeedFilter{seedCombination, domId} = PerceptionSeedFilter{seedCombination};
+    end
 end
-save(sprintf('SeedData_%s.mat', expTitle), 'SeedSet', 'SeedCluster', 'PerceptionSeedFilter');
 end
 
 function [SeedSet, SeedCluster, PerceptionSeedFilter] = generateSeed(InstanceCluster, numPerception, seedCount)
