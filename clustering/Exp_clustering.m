@@ -18,7 +18,7 @@ lambdaStart = 10^-4;
 lambdaScale = 10^2;
 lambdaMaxOrder = 2;
 
-sigmaList = [0.01, 0.2, 0,4, 0.6];
+sigmaList = [0.01, 0.2, 0.4, 0.6];
 cpRankList = [40, 80];
 
 maxRandomTryTime = 2;
