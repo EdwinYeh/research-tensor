@@ -1,4 +1,4 @@
-function [ recall, precision] = getRecallPrecision(GroundTruth, Prediction, SeedSet)
+function [ Recall, precision] = getRecallPrecision(GroundTruth, Prediction, SeedSet)
 % Calculate recall and precision for a domain
 
 % Input
@@ -20,21 +20,29 @@ function [ recall, precision] = getRecallPrecision(GroundTruth, Prediction, Seed
         Prediction(instanceId, PredictionResult(instanceId)) = 1;
     end
    
-    precision = 0;
+    score = 0;
     for clusterId = 1: numCluster;
         precisionDenominator = sum(Prediction(:, clusterId));
         if precisionDenominator ==0
             continue;
         end
         PrecisionIntersect = Prediction(:, clusterId) & GroundTruth(:, clusterId);
-        PrecisionNumerator = sum(PrecisionIntersect);
-        precision = precision + (PrecisionNumerator/ precisionDenominator);
+        PrecisionNumerator = sum(Precision)
+        score = score+( )
     end
-    precision = precision/ numCluster;
     
-    recallDenominator = sum(sum(GroundTruth));
-    recallIntersect = GroundTruth & Prediction;
-    recallNumerator = sum(sum(recallIntersect));
-    recall = recallNumerator/ recallDenominator;
+    PrecisionIntersect = Prediction & GroundTruth;
+    precisionNumerator = sum(sum(PrecisionIntersect));
+    precisionDenominator = sum(sum(Prediction));
+    precision = precisionNumerator/ precisionDenominator;
+    
+    
+    Recall = zeros(1, numCluster);
+    for clusterId = 1: numCluster
+        RecallIntersect = Prediction(:, clusterId) & GroundTruth(:, clusterId);
+        recallNumerator = sum(RecallIntersect);
+        recallDenominator = sum(GroundTruth(:, clusterId));
+        Recall(clusterId) = recallNumerator/ recallDenominator;
+    end
 end
 
