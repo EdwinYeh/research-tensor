@@ -24,10 +24,9 @@ end
 
 numCluster = size(GroundTruth, 2);
 supervisedIndex = find(sum(GroundTruth, 2));
-% supervisedIndex = setdiff(supervisedIndex, SeedSet);
+supervisedIndex = setdiff(supervisedIndex, SeedSet);
 GroundTruth = GroundTruth(supervisedIndex, :);
 Prediction = Prediction(supervisedIndex, :);
-
 
 precision = 0;
 for clusterId = 1: numCluster;
@@ -47,4 +46,3 @@ recallNumerator = sum(sum(recallIntersect));
 recall = recallNumerator/ recallDenominator;
 
 end
-
