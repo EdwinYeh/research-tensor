@@ -60,8 +60,11 @@ objectiveTrack = [];
 objectiveScore = Inf;
 terminateFlag = 0;
 findNan = 0;
+iter = 0;
+maxIter = 100;
 
-while terminateFlag<1 && ~findNan
+while terminateFlag<1 && ~findNan && iter < maxIter
+    iter = iter + 1;
     for domID = 1:length(input.Y)
         Tensor = updateA(input, XW, Tensor,hyperparam);
 %         disp('A:');

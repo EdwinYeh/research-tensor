@@ -40,6 +40,7 @@ for sigma = sigmaList
             for gamaOrder = 0: gamaMaxOrder
                 gama = gamaStart * gamaScale ^ gamaOrder;
                 fprintf('(sigma, lambda, gama, cpRank)=(%g,%g,%g,%g)\n', sigma, lambda, gama, cpRank);
+        
                 for seedCombinationId = 1: maxSeedCombination
                     RandomPrecision = zeros(maxRandomTryTime, numDom);
                     RandomRecall = zeros(maxRandomTryTime, numDom);
@@ -96,6 +97,7 @@ for sigma = sigmaList
                             'bestParamCombination', 'parameterNameOrder');
                     end
                 end
+                toc;
             end
         end
     end
