@@ -33,7 +33,7 @@ bestParamCombination = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
     [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = ...
-        prepareExperimentMturk(datasetName, userIdList, sigma, maxSeedCombination);
+        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination);
     for cpRank = cpRankList
         for lambdaOrder = 0: lambdaMaxOrder
             lambda = lambdaStart * lambdaScale ^ lambdaOrder;
