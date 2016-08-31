@@ -1,5 +1,5 @@
 function Exp_clustering(datasetName, userIdList)
-resultDirectory = '../../exp_result/Mturk/';
+resultDirectory = sprintf('../../exp_result/%s/', datasetName);
 parameterNameOrder = 'sigma, lambda, gama, cpRank';
 mkdir(resultDirectory);
 numDom = length(userIdList);
@@ -19,7 +19,7 @@ lambdaScale = 10^2;
 lambdaMaxOrder = 2;
 
 sigmaList = [0.005, 0.01, 0.05, 0.1];
-cpRankList = [40, 80];
+cpRankList = [40, 80, 120];
 
 maxRandomTryTime = 2;
 maxSeedCombination = 100;

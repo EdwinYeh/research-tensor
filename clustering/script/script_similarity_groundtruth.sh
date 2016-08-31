@@ -1,4 +1,4 @@
-UserIdList="75 79 85 90 65"
+UserIdList="74 78 84 89 64"
 
 for userId in $UserIdList
 do
