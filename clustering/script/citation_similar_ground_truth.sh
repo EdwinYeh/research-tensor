@@ -1,6 +1,6 @@
-UserIdList="37 44 11 17 97"
+UserIdList="154 131 111 13 3"
 
 for userId in $UserIdList
 do
- /usr/local/MATLAB/R2012a/bin/matlab -r "cd ..; Exp_clustering('citation', [38, $userId])" &
+ /usr/local/MATLAB/R2012a/bin/matlab -r "cd ..; Exp_clustering('citation', [21, $userId])" &
  done

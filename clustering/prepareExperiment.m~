@@ -34,9 +34,7 @@ for domId = 1:numDom;
     load(sprintf('../../%s/data_feature.mat', datasetName));
     if isSample
         load(sprintf('../../%s/sampleData/User%d.mat', datasetName, userId));
-        InstanceCluster = InstanceCluster(sampleIndex, bigEnoughClusterIndex);
-        PerceptionInstance = PerceptionInstance(:, sampleIndex);
-        data_feature = data_feature(sampleIndex, :);
+        
     end
     data_feature = normr(data_feature);
     X{domId} = data_feature;
