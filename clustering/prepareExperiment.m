@@ -38,7 +38,12 @@ for domId = 1:numDom;
         PerceptionInstance = PerceptionInstance(:, sampleIndex);
         data_feature = data_feature(sampleIndex, :);
     end
-    data_feature = normr(data_feature);
+    % Normalize data
+    if strcmp(datasetName, 'song')
+        data_feature = zNormalize(data_feature);
+    else
+        data_feature = normr(data_feature);
+    end
     X{domId} = data_feature;
     Y{domId} = PerceptionInstance;
     XW{domId} = InstanceCluster;
@@ -52,7 +57,9 @@ for domId = 1:numDom;
     for instanceId = 1:numInstance
         Du{domId}(instanceId,instanceId) = sum(Su{domId}(instanceId,:));
     end
-    
+end
+[Y, remainPerceptionIndex] = deleteZeroPerception(Y);
+for domId = 1:numDom
     for seedCombination = 1: maxSeedCombination
         try
             SeedData = load(sprintf('SeedData_%s_%d.mat', datasetName, userId));
@@ -61,14 +68,15 @@ for domId = 1:numDom;
             PerceptionSeedFilter = SeedData.PerceptionSeedFilter;
         catch
             disp('SeedData.mat doesnt exist create a new one');
-            [SeedSet{seedCombination}, SeedCluster{seedCombination}, PerceptionSeedFilter{seedCombination}] = generateSeed(InstanceCluster, numPerception, 2);
+            [SeedSet{seedCombination}, SeedCluster{seedCombination}, PerceptionSeedFilter{seedCombination}] = ...
+                generateSeed(InstanceCluster, numPerception, 2);
         end
     end
     save(sprintf('SeedData_%s_%d.mat', datasetName, userId), 'SeedSet', 'SeedCluster', 'PerceptionSeedFilter');
     for seedCombination = 1: maxSeedCombination
         AllSeedCluster{seedCombination, domId} = SeedCluster{seedCombination};
         AllSeedSet{seedCombination, domId} = SeedSet{seedCombination};
-        AllPerceptionSeedFilter{seedCombination, domId} = PerceptionSeedFilter{seedCombination};
+        AllPerceptionSeedFilter{seedCombination, domId} = PerceptionSeedFilter{seedCombination}(remainPerceptionIndex, :);
     end
 end
 end
@@ -89,4 +97,23 @@ for clusterId = 1: numCluster
         PerceptionSeedFilter(:, seed(seedId)) = 1;
     end
 end
+end
+
+function newX = zNormalize(X)
+% X: #instance x #feature
+[numInstance, numFeature] = size(X);
+newX = zeros(numInstance, numFeature);
+for featureId = 1: numFeature
+    colX = X(:, featureId);
+    colX = (colX - mean(colX))/ std(colX);
+    newX(:, featureId) = colX;
+end
+end
+
+function [newY,remainPerceptionIndex] = deleteZeroPerception(Y)
+    newY = cell(1,2);
+    combY = [Y{1}, Y{2}];
+    remainPerceptionIndex = find(sum(combY,2) > 0);
+    newY{1} = Y{1}(remainPerceptionIndex, :);
+    newY{2} = Y{2}(remainPerceptionIndex, :);
 end
