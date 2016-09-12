@@ -10,25 +10,29 @@ end
 % resultFile = fopen(sprintf('%s%s.csv', resultDirectory, expTitle), 'a');
 % fprintf(resultFile, 'sigma,cpRank,lambda,gama,avgPrecision,objective,trainingTime\n');
 
-gamaStart = 10^-8;
+gamaStart = 10^-9;
 gamaScale = 10^2;
 gamaMaxOrder = 2;
 
-lambdaStart = 10^-5;
+lambdaStart = 10^-6;
 lambdaScale = 10^2;
 lambdaMaxOrder = 2;
 
-sigmaList = [0.005, 0.01, 0.05, 0.1];
-cpRankList = [40, 80, 120];
+if strcmp(datasetName, 'song')
+    sigmaList = [300, 500, 700, 900];
+else
+    sigmaList = [0.001 0.005, 0.01, 0.05];
+end
+cpRankList = [40, 60, 80];
 
 maxRandomTryTime = 2;
-maxSeedCombination = 100;
+maxSeedCombination = 1;
 
-bestSeedCombinationPrecision = cell(1, maxSeedCombination);
-bestSeedCombinationRecall = cell(1, maxSeedCombination);
-bestSeedCombinationFScore = cell(1, maxSeedCombination);
-bestSeedCombinationTrainingTime = zeros(1, maxSeedCombination);
-bestSeedCombinationObjective = ones(1, maxSeedCombination)*Inf;
+bestParamPrecision = cell(1, maxSeedCombination);
+bestParamRecall = cell(1, maxSeedCombination);
+bestParamFScore = cell(1, maxSeedCombination);
+bestParamTrainingTime = zeros(1, maxSeedCombination);
+bestParamObjective = ones(1, maxSeedCombination)*Inf;
 bestParamCombination = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
@@ -77,22 +81,23 @@ for sigma = sigmaList
                         end                        
                         RandomObjective(randomTryTime) = output.objective;
                     end
-                    avgRandomPrecision = mean(RandomPrecision, 1);
-                    avgRandomRecall = mean(RandomRecall, 1);
-                    avgRandomFScore = mean(RandomFScore, 1);
-                    avgRandomTrainingTime = mean(RandomTrainingTime);
-                    avgRandomObjective = mean(RandomObjective);
                     
-                    if avgRandomObjective < bestSeedCombinationObjective(seedCombinationId)
-                        bestSeedCombinationPrecision{seedCombinationId} = avgRandomPrecision;
-                        bestSeedCombinationRecall{seedCombinationId} = avgRandomRecall;
-                        bestSeedCombinationFScore{seedCombinationId} = avgRandomFScore;
-                        bestSeedCombinationTrainingTime(seedCombinationId) = avgRandomTrainingTime;
-                        bestSeedCombinationObjective(seedCombinationId) = avgRandomObjective;
+                    [minRandomObjective, minObjRandomTime] = min(RandomObjective);
+                    minRandomPrecision = RandomPrecision(minObjRandomTime, :);
+                    minRandomRecall = RandomRecall(minObjRandomTime, :);
+                    minRandomFScore = RandomFScore(minObjRandomTime, :);
+                    minRandomTrainingTime = RandomTrainingTime(minObjRandomTime);
+                    
+                    if minRandomObjective < bestParamObjective(seedCombinationId)
+                        bestParamPrecision{seedCombinationId} = minRandomPrecision;
+                        bestParamRecall{seedCombinationId} = minRandomRecall;
+                        bestParamFScore{seedCombinationId} = minRandomFScore;
+                        bestParamTrainingTime(seedCombinationId) = minRandomTrainingTime;
+                        bestParamObjective(seedCombinationId) = minRandomObjective;
                         bestParamCombination{seedCombinationId} = [sigma, lambda, gama, cpRank];
                         save(sprintf('%s%s.mat', resultDirectory, expTitle), ...
-                            'bestSeedCombinationPrecision', 'bestSeedCombinationRecall', 'bestSeedCombinationFScore', ...
-                            'bestSeedCombinationTrainingTime', 'bestSeedCombinationObjective', ...
+                            'bestParamPrecision', 'bestParamRecall', 'bestParamFScore', ...
+                            'bestParamTrainingTime', 'bestParamObjective', ...
                             'bestParamCombination', 'parameterNameOrder');
                     end
                 end
