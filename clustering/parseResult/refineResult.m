@@ -1,5 +1,5 @@
 function [] = refineResult(datasetName, resultFileName)
-    result = load(sprintf('../../../exp_result/%s/%s.mat', datasetName, resultFileName));
+    result = load(sprintf('%s/%s.mat', datasetName, resultFileName));
     numSeedSet = length(result.bestSeedCombinationPrecision);
     numUserId = length(result.bestSeedCombinationPrecision{1});
     fprintf('numSeedSet: %d, numUser: %d\n', numSeedSet, numUserId);

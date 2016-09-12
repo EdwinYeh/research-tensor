@@ -97,7 +97,7 @@ while terminateFlag<1 && ~findNan && iter < maxIter
     if isnan(NewObjectiveScore)
         break;
     end
-    % disp(NewObjectiveScore);
+%     disp(NewObjectiveScore);
     %     Terminate Check
     relativeError = objectiveScore - NewObjectiveScore;
     objectiveScore = NewObjectiveScore;
