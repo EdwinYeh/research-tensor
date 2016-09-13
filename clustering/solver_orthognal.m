@@ -274,6 +274,7 @@ function XW = updateXW(XW, input, Tensor, domId, hyperparam)
         + hyperparam.lambda * input.Dxw{domId} * TmpXW;
     
     TmpXW=TmpXW.*sqrt(Numerator./Denominator);
+    % force seed instance to be in the right cluster
     TmpXW(input.SeedSet{domId}, :) = input.SeedCluster{domId}(input.SeedSet{domId}, :);
     XW{domId} = TmpXW;
     
