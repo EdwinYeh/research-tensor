@@ -10,23 +10,23 @@ end
 % resultFile = fopen(sprintf('%s%s.csv', resultDirectory, expTitle), 'a');
 % fprintf(resultFile, 'sigma,cpRank,lambda,gama,avgPrecision,objective,trainingTime\n');
 
-gamaStart = 10^-9;
+gamaStart = 10^-10;
 gamaScale = 10^2;
 gamaMaxOrder = 2;
 
-lambdaStart = 10^-6;
+lambdaStart = 10^-7;
 lambdaScale = 10^2;
 lambdaMaxOrder = 2;
 
 if strcmp(datasetName, 'song')
     sigmaList = [300, 500, 700, 900];
 else
-    sigmaList = [0.001 0.005, 0.01, 0.05];
+    sigmaList = [0.001, 0.005, 0.01, 0.05];
 end
 cpRankList = [40, 60, 80];
 
 maxRandomTryTime = 2;
-maxSeedCombination = 1;
+maxSeedCombination = 100;
 
 bestParamPrecision = cell(1, maxSeedCombination);
 bestParamRecall = cell(1, maxSeedCombination);

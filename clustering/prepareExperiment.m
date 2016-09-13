@@ -1,5 +1,5 @@
 function [X, Y, XW, Su, Du, AllSeedCluster, AllPerceptionSeedFilter, AllSeedSet] = ...
-    prepareExperimentMturk(datasetName, userIdList, sigmaInstsnce, maxSeedCombination)
+    prepareExperiment(datasetName, userIdList, sigmaInstsnce, maxSeedCombination)
 % Input:
 %   userIdArray: 1-d array saving userId involved in experiment
 % Output:
@@ -12,7 +12,11 @@ function [X, Y, XW, Su, Du, AllSeedCluster, AllPerceptionSeedFilter, AllSeedSet]
 % Note:
 %   (1) #feature is shared to all users
 %   (2) #perception feature & #cluster are different from users
-isSample = true;
+if strcmp(datasetName, 'mturk')
+    isSample = false;
+else
+    isSample = true;
+end
 numDom = length(userIdList);
 X = cell(1,numDom);
 Y = cell(1, numDom);
