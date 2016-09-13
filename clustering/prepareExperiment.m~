@@ -84,31 +84,24 @@ for domId = 1:numDom
 end
 end
 
-function [AllSeedSet, AllSeedCluster, AllPerceptionSeedFilter] = ...
+function [SeedSet, SeedCluster, PerceptionSeedFilter] = ...
     generateSeed(InstanceCluster, numPerception, seedCount, maxSeedCombination)
 
-AllSeedSet = cell(1, maxSeedCombination);
-AllSeedCluster = cell(1, maxSeedCombination);
-AllPerceptionSeedFilter = cell(1, maxSeedCombination);
-for seedCombinationId = 1: maxSeedCombination
-    [numInstance, numCluster] = size(InstanceCluster);
-    SeedCluster = zeros(numInstance, numCluster);
-    PerceptionSeedFilter = zeros(numPerception, numInstance);
-    SeedSet = zeros(numCluster*seedCount, 1);
-    for clusterId = 1: numCluster
-        % Find each cluster's random two instances to be the cluster's seeds
-        seed = find(InstanceCluster(:, clusterId));
-        seed = seed(randperm(length(seed)));
-        seed = seed(1:seedCount);
-        SeedSet(clusterId*seedCount-(seedCount-1): clusterId*seedCount) = seed;
-        for seedId = 1: seedCount
-            SeedCluster(seed(seedId), clusterId) = 1;
-            PerceptionSeedFilter(:, seed(seedId)) = 1;
-        end
+for 
+[numInstance, numCluster] = size(InstanceCluster);
+SeedCluster = zeros(numInstance, numCluster);
+PerceptionSeedFilter = zeros(numPerception, numInstance);
+SeedSet = zeros(numCluster*seedCount, 1);
+for clusterId = 1: numCluster
+    % Find each cluster's random two instances to be the cluster's seeds
+    seed = find(InstanceCluster(:, clusterId));
+    seed = seed(randperm(length(seed)));
+    seed = seed(1:seedCount);
+    SeedSet(clusterId*seedCount-(seedCount-1): clusterId*seedCount) = seed;
+    for seedId = 1: seedCount
+        SeedCluster(seed(seedId), clusterId) = 1;
+        PerceptionSeedFilter(:, seed(seedId)) = 1;
     end
-    AllSeedSet{seedCombinationId} = SeedSet;
-    AllSeedCluster{seedCombinationId} = SeedCluster;
-    AllPerceptionSeedFilter{seedCombinationId} = PerceptionSeedFilter;
 end
 end
 

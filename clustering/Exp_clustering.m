@@ -70,6 +70,7 @@ for sigma = sigmaList
                         hyperparam.cpRank = cpRank;                        
                         
                         trainingTimer = tic;
+%                         save('debug.mat');
                         output=solver_orthognal(input, hyperparam);
                         trainingTime = toc(trainingTimer);
                         RandomTrainingTime(randomTryTime) = trainingTime;
