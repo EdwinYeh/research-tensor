@@ -64,18 +64,17 @@ for sigma = sigmaList
                             input.Sxw{domId} = Su{domId};
                             input.Dxw{domId} = Du{domId};
                         end;
-                        
+
                         hyperparam.beta = 0;
                         hyperparam.gamma = gama;
                         hyperparam.lambda = lambda;
-                        hyperparam.cpRank = cpRank;                        
-                        
+                        hyperparam.cpRank = cpRank;
+
                         trainingTimer = tic;
-                         save('debug.mat');
                         output=solver_orthognal(input, hyperparam);
                         trainingTime = toc(trainingTimer);
                         RandomTrainingTime(randomTryTime) = trainingTime;
-                                 
+
                         % Precision of each domain
                         for domId = 1: numDom
                             [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] = getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
@@ -83,17 +82,16 @@ for sigma = sigmaList
                             if isnan(RandomFScore(randomTryTime, domId))
                                 RandomFScore(randomTryTime, domId) = 0;
                             end
-                        end                        
+                        end
                         RandomObjective(randomTryTime) = output.objective;
                     end
-                    
+
                     [minRandomObjective, minObjRandomTime] = min(RandomObjective);
                     minRandomPrecision = RandomPrecision(minObjRandomTime, :);
                     minRandomRecall = RandomRecall(minObjRandomTime, :);
                     minRandomFScore = RandomFScore(minObjRandomTime, :);
                     minRandomTrainingTime = RandomTrainingTime(minObjRandomTime);
-                    [minRandomObjective minRandomFScore]
-                    
+
                     if minRandomObjective < bestParamObjective(seedCombinationId)
                         bestParamPrecision{seedCombinationId} = minRandomPrecision;
                         bestParamRecall{seedCombinationId} = minRandomRecall;
