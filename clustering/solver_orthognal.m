@@ -20,7 +20,7 @@ function [output]=solver_orthognal(input,hyperparam)
 %  System parameter
 %  Todo
 %       add to hyperparam
-tol = 10 ^-3;
+tol = 10 ^-6;
 debugMode = 1;
 
 
@@ -61,7 +61,7 @@ objectiveScore = Inf;
 terminateFlag = 0;
 findNan = 0;
 iter = 0;
-maxIter = 100;
+maxIter = 500;
 
 while terminateFlag<1 && ~findNan && iter < maxIter
     iter = iter + 1;

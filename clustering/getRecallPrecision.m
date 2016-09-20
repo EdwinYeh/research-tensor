@@ -45,5 +45,12 @@ recallDenominator = sum(sum(GroundTruth));
 recallIntersect = GroundTruth & Prediction;
 recallNumerator = sum(sum(recallIntersect));
 recall = recallNumerator/ recallDenominator;
+if isnan(recall)
+    recall = 0;
+end
+
+if isnan(precision)
+    precision = 0;
+end
 
 end

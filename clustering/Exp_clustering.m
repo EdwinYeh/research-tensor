@@ -1,9 +1,9 @@
-function Exp_clustering(datasetName, userIdList)
+function Exp_clustering(datasetName, userIdList, perceptionSeedRate)
 resultDirectory = sprintf('../../exp_result/%s/', datasetName);
 parameterNameOrder = 'sigma, lambda, gama, cpRank';
 mkdir(resultDirectory);
 numDom = length(userIdList);
-expTitle = datasetName;
+expTitle = [datasetName '(' num2str(perceptionSeedRate) ')'];
 for domId = 1:numDom
     expTitle = [expTitle '_' num2str(userIdList(domId))];
 end
@@ -25,8 +25,8 @@ else
 end
 cpRankList = [40, 60, 80];
 
-maxRandomTryTime = 2;
-maxSeedCombination = 10;
+maxRandomTryTime = 1;
+maxSeedCombination = 30;
 
 bestParamPrecision = cell(1, maxSeedCombination);
 bestParamRecall = cell(1, maxSeedCombination);
@@ -36,7 +36,7 @@ bestParamObjective = ones(1, maxSeedCombination)*Inf;
 bestParamCombination = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
-    [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = ...
+    [X, Y, XW, Su, Du, SeedCluster, ~, SeedSet] = ...
         prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination);
     for cpRank = cpRankList
         for lambdaOrder = 0: lambdaMaxOrder
@@ -52,8 +52,8 @@ for sigma = sigmaList
                     RandomObjective = zeros(1, maxRandomTryTime);
                     for randomTryTime = 1:maxRandomTryTime
                         for domId = 1: numDom
-                            input.S{domId}=PerceptionSeedFilter{seedCombinationId, domId};
-                            input.S{domId}(:,:) = 1;
+%                             input.S{domId}=PerceptionSeedFilter{seedCombinationId, domId};
+                            input.S{domId} = getRandomPerceptionSeed(Y{domId}, perceptionSeedRate);
                             input.SeedSet{domId} = SeedSet{seedCombinationId, domId};
                             input.SeedCluster{domId}=SeedCluster{seedCombinationId, domId};
                             input.X{domId} = X{domId};
@@ -71,15 +71,18 @@ for sigma = sigmaList
                         hyperparam.cpRank = cpRank;                        
                         
                         trainingTimer = tic;
-%                         save('debug.mat');
+                         save('debug.mat');
                         output=solver_orthognal(input, hyperparam);
                         trainingTime = toc(trainingTimer);
                         RandomTrainingTime(randomTryTime) = trainingTime;
                                  
                         % Precision of each domain
                         for domId = 1: numDom
-                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] = getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{domId});
+                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] = getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
                             RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
+                            if isnan(RandomFScore(randomTryTime, domId))
+                                RandomFScore(randomTryTime, domId) = 0;
+                            end
                         end                        
                         RandomObjective(randomTryTime) = output.objective;
                     end
@@ -89,6 +92,7 @@ for sigma = sigmaList
                     minRandomRecall = RandomRecall(minObjRandomTime, :);
                     minRandomFScore = RandomFScore(minObjRandomTime, :);
                     minRandomTrainingTime = RandomTrainingTime(minObjRandomTime);
+                    [minRandomObjective minRandomFScore]
                     
                     if minRandomObjective < bestParamObjective(seedCombinationId)
                         bestParamPrecision{seedCombinationId} = minRandomPrecision;
@@ -108,4 +112,14 @@ for sigma = sigmaList
     end
 end
 % fclose(resultFile);
+end
+
+function perceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perceptionSeedRate)
+    [numPerception, numInstance] = size(PerceptionInstance);
+    perceptionSeedFilter = zeros(numPerception, numInstance);
+    supervisedIndex = find(PerceptionInstance);
+    numSupervise = length(supervisedIndex);
+    numPerceptionSeed = round(numSupervise* perceptionSeedRate);
+    perceptionSeedIndex = supervisedIndex(randperm(numSupervise, numPerceptionSeed));
+    perceptionSeedFilter(perceptionSeedIndex) = 1;
 end
