@@ -1,5 +1,5 @@
 function Exp_clustering(datasetName, userIdList)
-resultDirectory = sprintf('../../exp_result/%s/', datasetName);
+resultDirectory = sprintf('../../exp_result/%s/tmp', datasetName);
 parameterNameOrder = 'sigma, lambda, gama, cpRank';
 mkdir(resultDirectory);
 numDom = length(userIdList);
@@ -14,7 +14,7 @@ gamaStart = 10^-10;
 gamaScale = 10^2;
 gamaMaxOrder = 2;
 
-lambdaStart = 10^-7;
+lambdaStart = 10^-4;
 lambdaScale = 10^2;
 lambdaMaxOrder = 2;
 
@@ -26,7 +26,7 @@ end
 cpRankList = [40, 60, 80];
 
 maxRandomTryTime = 2;
-maxSeedCombination = 10;
+maxSeedCombination = 1;
 
 bestParamPrecision = cell(1, maxSeedCombination);
 bestParamRecall = cell(1, maxSeedCombination);
@@ -36,8 +36,8 @@ bestParamObjective = ones(1, maxSeedCombination)*Inf;
 bestParamCombination = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
-    [X, Y, XW, Su, Du, SeedCluster, PerceptionSeedFilter, SeedSet] = ...
-        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination);
+    [X, Y, XW, Su, Du, SeedPerception, ClusterSeedFilter, SeedSet] = ...
+        prepareExperiment2(datasetName, userIdList, sigma, maxSeedCombination);
     for cpRank = cpRankList
         for lambdaOrder = 0: lambdaMaxOrder
             lambda = lambdaStart * lambdaScale ^ lambdaOrder;
@@ -52,10 +52,9 @@ for sigma = sigmaList
                     RandomObjective = zeros(1, maxRandomTryTime);
                     for randomTryTime = 1:maxRandomTryTime
                         for domId = 1: numDom
-                            input.S{domId}=PerceptionSeedFilter{seedCombinationId, domId};
-                            input.S{domId}(:,:) = 1;
+                            input.S{domId} = ClusterSeedFilter{seedCombinationId, domId};
                             input.SeedSet{domId} = SeedSet{seedCombinationId, domId};
-                            input.SeedCluster{domId}=SeedCluster{seedCombinationId, domId};
+                            input.SeedCluster{domId} = SeedPerception{seedCombinationId, domId};
                             input.X{domId} = X{domId};
                             % If Y has all 0 row or col update rule will fail
                             Y{domId}(Y{domId}==0) = 10^-18;
@@ -72,15 +71,19 @@ for sigma = sigmaList
                         
                         trainingTimer = tic;
 %                         save('debug.mat');
-                        output=solver_orthognal(input, hyperparam);
+                        output=solver(input, hyperparam);
                         trainingTime = toc(trainingTimer);
                         RandomTrainingTime(randomTryTime) = trainingTime;
                                  
                         % Precision of each domain
                         for domId = 1: numDom
-                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] = getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{domId});
-                            RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
-                        end                        
+                            clusterResult = output.reconstructY{domId};
+                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] = ...
+                                getRecallPrecision(Y{domId}', clusterResult', SeedSet{domId});
+                            RandomFScore(randomTryTime, domId) = ...
+                                2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
+                        end
+                        fprintf('objective: %g, FScore: %g\n', output.objective, RandomFScore(randomTryTime,1));
                         RandomObjective(randomTryTime) = output.objective;
                     end
                     

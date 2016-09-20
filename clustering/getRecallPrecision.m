@@ -9,6 +9,7 @@ function [recall, precision] = getRecallPrecision(GroundTruth, Prediction, SeedS
 % Output
 %   Recall: matrix that stores recell of each cluster
 %   Precision: vector that stores precision
+GroundTruth(GroundTruth<0.5) = 0;
 [~, PredictionResult] = max(Prediction, [], 2);
 Prediction = zeros(size(Prediction,1), size(Prediction,2));
 for instanceId = 1: length(PredictionResult)
@@ -23,7 +24,7 @@ end
 % %------------
 
 numCluster = size(GroundTruth, 2);
-supervisedIndex = find(sum(GroundTruth, 2));
+supervisedIndex = find(sum(GroundTruth, 2)>0);
 supervisedIndex = setdiff(supervisedIndex, SeedSet);
 GroundTruth = GroundTruth(supervisedIndex, :);
 Prediction = Prediction(supervisedIndex, :);

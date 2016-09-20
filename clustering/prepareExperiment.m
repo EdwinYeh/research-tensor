@@ -4,7 +4,7 @@ function [X, Y, XW, Su, Du, AllSeedCluster, AllPerceptionSeedFilter, AllSeedSet]
 %   userIdArray: 1-d array saving userId involved in experiment
 % Output:
 %   X: low level feature matrix of instance (#instance * #feature)
-%   Y: perception feature matrix of instance (#instance * #perception feature)
+%   Y: perception feature matrix of instance (#perception feature * #instance)
 %   XW: cluster indicator matrix of instance (#instance * #cluster)
 %   Su, Du: for calculating Laplacian matrix of instance
 %   Sv, Dv: for calculating Laplacian matrix of perception feature
@@ -124,9 +124,14 @@ end
 end
 
 function [newY,remainPerceptionIndex] = deleteZeroPerception(Y)
-    newY = cell(1,2);
-    combY = [Y{1}, Y{2}];
+    numDom = length(Y);
+    newY = cell(1,numDom);
+    combY = [];
+    for domId = 1:numDom
+        combY = [combY, Y{domId}];
+    end
     remainPerceptionIndex = find(sum(combY,2) > 0);
-    newY{1} = Y{1}(remainPerceptionIndex, :);
-    newY{2} = Y{2}(remainPerceptionIndex, :);
+    for domId = 1:numDom
+        newY{domId} = Y{domId}(remainPerceptionIndex, :);
+    end
 end

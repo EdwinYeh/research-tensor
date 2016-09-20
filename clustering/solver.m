@@ -1,4 +1,4 @@
-function [output]=solver_orthognal(input,hyperparam)
+function [output]=solver(input,hyperparam)
 % Input variable:
 %   input.X{d} = instance x feature matrix in domain d
 %   input.Y{d} = perception x instance matrix in domain d
@@ -121,7 +121,7 @@ output.XW = XW;
 for domId = 1:length(input.Y)
     reconstructY{domId} = getReconstructY(XW, Tensor, domId);
 end
-output.reconstrucY = reconstructY;
+output.reconstructY = reconstructY;
 
 
 function flag = terminateCheck(relativeError,tol)
@@ -268,14 +268,12 @@ function XW = updateXW(XW, input, Tensor, domId, hyperparam)
         * projectionH ...
         + hyperparam.lambda * input.Sxw{domId} * TmpXW;
     
-    Denominator = TmpXW*TmpXW' ...
-        * (input.Y{domId}'.*input.S{domId}') ...
+    Denominator = (input.Y{domId}'.*input.S{domId}') ...
         * projectionH ...
         + hyperparam.lambda * input.Dxw{domId} * TmpXW;
     
     TmpXW=TmpXW.*sqrt(Numerator./Denominator);
     % force seed instance to be in the right cluster
-    domI
     TmpXW(input.SeedSet{domId}, :) = input.SeedCluster{domId}(input.SeedSet{domId}, :);
     XW{domId} = TmpXW;
     
