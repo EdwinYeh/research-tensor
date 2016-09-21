@@ -57,6 +57,7 @@ for sigma = sigmaList
                             input.SeedSet{domId} = SeedSet{seedCombinationId, domId};
                             input.SeedCluster{domId}=SeedCluster{seedCombinationId, domId};
                             input.X{domId} = X{domId};
+                            save('check.mat', 'input');
                             % If Y has all 0 row or col update rule will fail
                             Y{domId}(Y{domId}==0) = 10^-18;
                             input.Y{domId} = Y{domId};
@@ -115,9 +116,9 @@ end
 function perceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perceptionSeedRate)
     [numPerception, numInstance] = size(PerceptionInstance);
     perceptionSeedFilter = zeros(numPerception, numInstance);
-    supervisedIndex = find(PerceptionInstance);
-    numSupervise = length(supervisedIndex);
-    numPerceptionSeed = round(numSupervise* perceptionSeedRate);
-    perceptionSeedIndex = supervisedIndex(randperm(numSupervise, numPerceptionSeed));
-    perceptionSeedFilter(perceptionSeedIndex) = 1;
+    superviseInstanceIndex = find(sum(PerceptionInstance, 1)>0);
+    numSuperviseInstance = length(superviseInstanceIndex);
+    numPerceptionSeed = round(numSuperviseInstance* perceptionSeedRate);
+    perceptionSeedIndex = superviseInstanceIndex(randperm(numSuperviseInstance, numPerceptionSeed));
+    perceptionSeedFilter(:, perceptionSeedIndex) = 1;
 end
