@@ -66,7 +66,7 @@ end
 for domId = 1:numDom
     userId = userIdList(domId);
     try
-        SeedData = load(sprintf('SeedData_%s_%d.mat', datasetName, userId));
+        SeedData = load(sprintf('ClusterSeed/SeedData_%s_%d.mat', datasetName, userId));
         SeedSet = SeedData.SeedSet;
         SeedCluster = SeedData.SeedCluster;
         PerceptionSeedFilter = SeedData.PerceptionSeedFilter;
@@ -74,7 +74,7 @@ for domId = 1:numDom
         disp('SeedData.mat doesnt exist create a new one');
         [SeedSet, SeedCluster, PerceptionSeedFilter] = ...
             generateSeed(InstanceCluster, numPerception, 2, maxSeedCombination);
-        save(sprintf('SeedData_%s_%d.mat', datasetName, userId), 'SeedSet', 'SeedCluster', 'PerceptionSeedFilter');
+        save(sprintf('ClusterSeed/SeedData_%s_%d.mat', datasetName, userId), 'SeedSet', 'SeedCluster', 'PerceptionSeedFilter');
     end
     for seedCombination = 1: maxSeedCombination
         AllSeedCluster{seedCombination, domId} = SeedCluster{seedCombination};

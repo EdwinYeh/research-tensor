@@ -118,7 +118,7 @@ function PerceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perc
     superviseInstanceIndex = find(sum(PerceptionInstance, 1)>0);
     numSuperviseInstance = length(superviseInstanceIndex);
     numPerceptionSeed = round(numSuperviseInstance* perceptionSeedRate);
-    perceptionSeedIndex = superviseInstanceIndex(randperm(numSuperviseInstance, numPerceptionSeed));
+    perceptionSeedIndex = superviseInstanceIndex(1: numPerceptionSeed);
     PerceptionInstance(PerceptionInstance>0) = 1;
     PerceptionSeedFilter(:, perceptionSeedIndex) = PerceptionInstance(:, perceptionSeedIndex);
 end

@@ -10,23 +10,25 @@ end
 % resultFile = fopen(sprintf('%s%s.csv', resultDirectory, expTitle), 'a');
 % fprintf(resultFile, 'sigma,cpRank,lambda,gama,avgPrecision,objective,trainingTime\n');
 
-gamaStart = 10^-10;
+gamaStart = 10^-8;
 gamaScale = 10^2;
-gamaMaxOrder = 2;
+gamaMaxOrder = 0;
 
 lambdaStart = 10^-7;
 lambdaScale = 10^2;
-lambdaMaxOrder = 2;
+lambdaMaxOrder = 0;
 
 if strcmp(datasetName, 'song')
     sigmaList = [300, 500, 700, 900];
 else
     sigmaList = [0.001, 0.005, 0.01, 0.05];
+    sigmaList = [0.01];
 end
 cpRankList = [40, 60, 80];
+cpRankList = [40];
 
 maxRandomTryTime = 1;
-maxSeedCombination = 30;
+maxSeedCombination = 5;
 
 bestParamPrecision = cell(1, maxSeedCombination);
 bestParamRecall = cell(1, maxSeedCombination);
@@ -112,10 +114,14 @@ end
 % fclose(resultFile);
 end
 
-function perceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perceptionSeedRate)
+function PerceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perceptionSeedRate)
+    [numPerception, numInstance] = size(PerceptionInstance);
+    PerceptionSeedFilter = zeros(numPerception, numInstance);
     superviseInstanceIndex = find(sum(PerceptionInstance, 1)>0);
     numSuperviseInstance = length(superviseInstanceIndex);
     numPerceptionSeed = round(numSuperviseInstance* perceptionSeedRate);
     perceptionSeedIndex = superviseInstanceIndex(randperm(numSuperviseInstance, numPerceptionSeed));
-    perceptionSeedFilter(:, perceptionSeedIndex) = 1;
+    PerceptionInstance(PerceptionInstance>0) = 1;
+    PerceptionSeedFilter(:, perceptionSeedIndex) = PerceptionInstance(:, perceptionSeedIndex);
+    save('PerceptionInstance')
 end
