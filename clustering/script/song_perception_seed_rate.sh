@@ -1,11 +1,11 @@
-PerceptionSeedRateList="0.2 0.4 0.6"
+PerceptionSeedRateList="0.1 0.3 0.5"
 
 for perceptionSeedRate in $PerceptionSeedRateList
 do
- /usr/local/MATLAB/R2012a/bin/matlab -r "cd ..; Exp_clustering('song', [0, 3], $perceptionSeedRate)" &
+  /usr/local/MATLAB/R2012a/bin/matlab -r "cd ..; Exp_clustering('song', [0,3], $perceptionSeedRate)" &
 done
 
 for perceptionSeedRate in $PerceptionSeedRateList
 do
- /usr/local/MATLAB/R2012a/bin/matlab -r "cd ..; Exp_clustering('song', [0, 3, 5], $perceptionSeedRate)" &
+  /usr/local/MATLAB/R2012a/bin/matlab -r "cd ..; Exp_clustering('song', [0,3,5], $perceptionSeedRate)" &
 done
