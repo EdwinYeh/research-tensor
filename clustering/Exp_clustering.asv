@@ -112,12 +112,13 @@ end
 % fclose(resultFile);
 end
 
-function perceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perceptionSeedRate)
+function PerceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perceptionSeedRate)
     [numPerception, numInstance] = size(PerceptionInstance);
-    perceptionSeedFilter = zeros(numPerception, numInstance);
-    supervisedIndex = find(PerceptionInstance);
-    numSupervise = length(supervisedIndex);
+    PerceptionSeedFilter = zeros(numPerception, numInstance);
+    superviseIndex = find(PerceptionInstance > 0);
+    numSupervise = length(superviseIndex);
     numPerceptionSeed = round(numSupervise* perceptionSeedRate);
-    perceptionSeedIndex = supervisedIndex(randperm(numSupervise, numPerceptionSeed));
-    perceptionSeedFilter(perceptionSeedIndex) = 1;
+    perceptionSeedIndex = superviseIndex(randperm(numSupervise));
+    PerceptionInstance(PerceptionInstance>0) = 1;
+    PerceptionSeedFilter(:, perceptionSeedIndex) = PerceptionInstance(:, perceptionSeedIndex);
 end
