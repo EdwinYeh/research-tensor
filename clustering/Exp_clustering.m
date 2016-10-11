@@ -1,4 +1,4 @@
-function Exp_clustering(datasetName, userIdList, perceptionSeedRate)
+function Exp_clustering(datasetName, userIdList, perceptionSeedRate, clusterSeedLevel)
 resultDirectory = sprintf('../../exp_result/%s/', datasetName);
 parameterNameOrder = 'sigma, lambda, gama, cpRank';
 mkdir(resultDirectory);
@@ -36,8 +36,8 @@ bestParamObjective = ones(1, maxSeedCombination)*Inf;
 bestParamCombination = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
-    [X, Y, XW, Su, Du, SeedCluster, ~, SeedSet] = ...
-        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination);
+    [X, Y, XW, Su, Du, SeedCluster, SeedSet] = ...
+        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination, clusterSeedLevel);
     for cpRank = cpRankList
         for lambdaOrder = 0: lambdaMaxOrder
             lambda = lambdaStart * lambdaScale ^ lambdaOrder;
@@ -56,6 +56,10 @@ for sigma = sigmaList
                             input.S{domId} = getRandomPerceptionSeed(Y{domId}, perceptionSeedRate);
                             input.SeedSet{domId} = SeedSet{seedCombinationId, domId};
                             input.SeedCluster{domId}=SeedCluster{seedCombinationId, domId};
+                            % Set somain 1 to no cluster seed in zero shot experiment
+%                             if isZeroShot && domId==1
+%                                 input.SeedSet{domId} = [];
+%                             end
                             input.X{domId} = X{domId};
                             % If Y has all 0 row or col update rule will fail
                             Y{domId}(Y{domId}==0) = 10^-18;
@@ -74,15 +78,22 @@ for sigma = sigmaList
                         output=solver_orthognal(input, hyperparam);
                         trainingTime = toc(trainingTimer);
                         RandomTrainingTime(randomTryTime) = trainingTime;
-
-                        % Precision of each domain
+                        
                         for domId = 1: numDom
-                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] = getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+%                             if isZeroShot
+%                                 [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
+%                                     getRecallPrecisionZeroShot(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+%                             else
+                                [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
+                                    getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+%                             end
                             RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
                             if isnan(RandomFScore(randomTryTime, domId))
                                 RandomFScore(randomTryTime, domId) = 0;
                             end
                         end
+                        
+                        % Precision of each domain
                         RandomObjective(randomTryTime) = output.objective;
                     end
 
@@ -120,4 +131,65 @@ function perceptionSeedFilter = getRandomPerceptionSeed(PerceptionInstance, perc
     numPerceptionSeed = round(numSupervise* perceptionSeedRate);
     perceptionSeedIndex = supervisedIndex(randperm(numSupervise, numPerceptionSeed));
     perceptionSeedFilter(perceptionSeedIndex) = 1;
+end
+
+function NewGroundTruth = reshape(GroundTruth)
+    [numInstance, numCluster] = size(GroundTruth);
+    NewGroundTruth = zeros(numInstance, numInstance);
+    for clusterId = 1:numCluster
+        instanceInCluster = find(GroundTruth(:, clusterId) == 1);
+        for i = 1: length(instanceInCluster)
+            for j = 1:length(instanceInCluster)
+                NewGroundTruth(instanceInCluster(i), instanceInCluster(j)) = 1;
+            end
+        end
+    end
+end
+
+function [recall, precision] = getRecallPrecisionZeroShot(GroundTruth, ClusterResult, SeedSet)
+    [~, PredictionResult] = max(ClusterResult, [], 2);
+    ClusterResult = zeros(size(ClusterResult,1), size(ClusterResult,2));
+    for instanceId = 1: length(PredictionResult)
+        ClusterResult(instanceId, PredictionResult(instanceId)) = 1;
+    end
+    % find the index of instance that supervised
+    supervisedIndex = find(sum(GroundTruth, 2));
+    % find index of seed
+    seedIndex = find(sum(SeedSet, 2));
+    % exclude seed when calculating performance
+    supervisedIndex = setdiff(supervisedIndex, seedIndex);
+    ClusterResult = reshape(ClusterResult(supervisedIndex, :));
+    GroundTruth = reshape(GroundTruth(supervisedIndex,:));
+    numInstance = size(ClusterResult, 1);
+    base = 0;
+    overlap = 0;
+    for i = 1:numInstance
+        for j = 1:numInstance
+            if j < i
+                if ClusterResult(i, j) == 1
+                    base = base + 1;
+                    if GroundTruth(i, j) == 1
+                        overlap = overlap + 1;
+                    end
+                end
+            end
+        end
+    end
+    precision = overlap/ base;
+    
+    base = 0;
+    overlap = 0;
+    for i = 1:numInstance
+        for j = 1:numInstance
+            if j < i
+                if GroundTruth(i, j) == 1
+                    base = base + 1;
+                    if ClusterResult(i, j) == 1
+                        overlap = overlap + 1;
+                    end
+                end
+            end
+        end
+    end
+    recall = overlap/ base;
 end

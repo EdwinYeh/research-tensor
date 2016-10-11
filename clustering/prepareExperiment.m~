@@ -65,17 +65,14 @@ end
 [Y, remainPerceptionIndex] = deleteZeroPerception(Y);
 for domId = 1:numDom
     userId = userIdList(domId);
-    if clusterSeedLevel == -1
-        SeedData = load(sprintf('ClusterSeed/default/SeedData_%s_%d.mat', datasetName, userId));
-    else
-        SeedData = load(sprintf('ClusterSeed/%s/SeedData_%s_%d.mat', num2str(clusterSeedLevel), datasetName, userId));
-    end
+    SeedData = load(sprintf('ClusterSeed/%s/SeedData_%s_%d.mat', num2str(clusterSeedLevel), datasetName, userId));
     SeedSet = SeedData.SeedSet;
     SeedCluster = SeedData.SeedCluster;
     %         PerceptionSeedFilter = SeedData.PerceptionSeedFilter;
     for seedCombination = 1: maxSeedCombination
         AllSeedCluster{seedCombination, domId} = SeedCluster{seedCombination};
         AllSeedSet{seedCombination, domId} = SeedSet{seedCombination};
+        AllPerceptionSeedFilter{seedCombination, domId} = PerceptionSeedFilter{seedCombination}(remainPerceptionIndex, :);
     end
 end
 end
@@ -104,6 +101,7 @@ for seedCombinationId = 1: maxSeedCombination
     end
     AllSeedSet{seedCombinationId} = SeedSet;
     AllSeedCluster{seedCombinationId} = SeedCluster;
+    AllPerceptionSeedFilter{seedCombinationId} = PerceptionSeedFilter;
 end
 end
 
