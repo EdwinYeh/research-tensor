@@ -1,9 +1,9 @@
-function Exp_clustering(datasetName, userIdList, perceptionSeedRate, clusterSeedLevel)
+function Exp_clustering(datasetName, userIdList, perceptionSeedRate, clusterSeedRate)
 resultDirectory = sprintf('../../exp_result/%s/', datasetName);
 parameterNameOrder = 'sigma, lambda, gama, cpRank';
 mkdir(resultDirectory);
 numDom = length(userIdList);
-expTitle = [datasetName '(' num2str(perceptionSeedRate) ')'];
+expTitle = [datasetName '(' num2str(perceptionSeedRate) ')' '(' num2str(clusterSeedRate) ')'];
 for domId = 1:numDom
     expTitle = [expTitle '_' num2str(userIdList(domId))];
 end
@@ -37,7 +37,7 @@ bestParamCombination = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
     [X, Y, XW, Su, Du, SeedCluster, SeedSet] = ...
-        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination, clusterSeedLevel);
+        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination, clusterSeedRate);
     for cpRank = cpRankList
         for lambdaOrder = 0: lambdaMaxOrder
             lambda = lambdaStart * lambdaScale ^ lambdaOrder;
