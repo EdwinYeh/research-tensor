@@ -250,8 +250,6 @@ for tuneLambda = 0:6
                         A(isnan(A)) = 0;
                         A(~isfinite(A)) = 0;
                         %A = (spdiags (sum(abs(A),1)', 0, cA, cA)\A')';
-                        A(isnan(A)) = 0;
-                        A(~isfinite(A)) = 0;
 
                         %disp(sprintf('\t\tupdate E...'));
                         [rE ,cE] = size(E);
@@ -260,8 +258,6 @@ for tuneLambda = 0:6
                         E(isnan(E)) = 0;
                         E(~isfinite(E)) = 0;
                         %E = (spdiags (sum(abs(E),1)', 0, cE, cE)\E')';
-                        E(isnan(E)) = 0;
-                        E(~isfinite(E)) = 0;
 
                         %disp(sprintf('\tcombine next iterator B...'));
                         parfor idx = 1:r

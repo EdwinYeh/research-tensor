@@ -15,6 +15,7 @@ function [output]=solver_orthognal(input,hyperparam)
 %   output.Tensor = Tensor
 %   output.W = W
 %   output.Objective = Objective
+%   output.Tracker: cell that stores timeTracker/objTracker/UTracker
 
 
 %  System parameter
@@ -56,14 +57,18 @@ A = randi(10,perceptionNumList(1),hyperparam.cpRank);
 Tensor.A = A; Tensor.E = E;
 
 %  Optimization main body
-objectiveTrack = [];
 objectiveScore = Inf;
 terminateFlag = 0;
 findNan = 0;
 iter = 0;
 maxIter = 500;
+TimeTracker = cell(maxIter ,  1);
+ObjTracker = cell(maxIter, 1);
+UTracker = cell(maxIter, 1);
 
+timeBasis = 0;
 while terminateFlag<1 && ~findNan && iter < maxIter
+    iterTimer = tic;
     iter = iter + 1;
     for domID = 1:length(input.Y)
         Tensor = updateA(input, XW, Tensor,hyperparam);
@@ -101,8 +106,11 @@ while terminateFlag<1 && ~findNan && iter < maxIter
     %     Terminate Check
     relativeError = objectiveScore - NewObjectiveScore;
     objectiveScore = NewObjectiveScore;
-    objectiveTrack(end+1) = NewObjectiveScore;
     terminateFlag = terminateFlag + terminateCheck(relativeError,tol);
+    timeBasis = timeBasis + toc(iterTimer);
+    TimeTracker{iter} = timeBasis;
+    ObjTracker{iter} = NewObjectiveScore;
+    UTracker{iter} = XW;
 end
 
 % for domId = 1:domainNum
@@ -122,6 +130,9 @@ for domId = 1:length(input.Y)
     reconstructY{domId} = getReconstructY(XW, Tensor, domId);
 end
 output.reconstrucY = reconstructY;
+output.Tracker{1} = TimeTracker;
+output.Tracker{2} = ObjTracker;
+output.Tracker{3} = UTracker;
 
 
 function flag = terminateCheck(relativeError,tol)
