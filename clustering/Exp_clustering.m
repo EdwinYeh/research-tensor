@@ -1,4 +1,10 @@
 function Exp_clustering(datasetName, userIdList, perceptionSeedRate, clusterSeedRate)
+% Input
+%     datasetName: the name of dataset to run
+%     userIdList: all user ids for co-training(Is a list. Like [1,2,3])
+%     perceptionSeedRate: entry-wise ratio of revealed supervision of perception(0~1)
+%     clusterSeedRate: ratio of how mant clusters have seed(0~1)
+
 resultDirectory = sprintf('../../exp_result/%s/', datasetName);
 parameterNameOrder = 'sigma, lambda, gama, cpRank';
 mkdir(resultDirectory);
@@ -26,7 +32,7 @@ end
 cpRankList = [40, 60, 80];
 
 maxRandomTryTime = 1;
-maxSeedCombination = 30;
+maxSeedCombination = 31;
 
 bestParamPrecision = cell(1, maxSeedCombination);
 bestParamRecall = cell(1, maxSeedCombination);
@@ -37,7 +43,7 @@ bestParamCombination = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
     [X, Y, XW, Su, Du, SeedCluster, SeedSet] = ...
-        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination, clusterSeedRate);
+        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination);
     for cpRank = cpRankList
         for lambdaOrder = 0: lambdaMaxOrder
             lambda = lambdaStart * lambdaScale ^ lambdaOrder;
@@ -52,19 +58,21 @@ for sigma = sigmaList
                     RandomObjective = zeros(1, maxRandomTryTime);
                     for randomTryTime = 1:maxRandomTryTime
                         for domId = 1: numDom
-%                             input.S{domId}=PerceptionSeedFilter{seedCombinationId, domId};
+                            % Selector matrix to control the perception supervision rate
                             input.S{domId} = getRandomPerceptionSeed(Y{domId}, perceptionSeedRate);
+                            % Cluster groung truth matrix of seed(should not be edited)
+                            input.SeedCluster{domId} = SeedCluster{seedCombinationId, domId};
+                            removeSeedSet = findRemoveSeedSet(input.SeedCluster{domId}, clusterSeedRate);
+                            % Cluster seed index
                             input.SeedSet{domId} = SeedSet{seedCombinationId, domId};
-                            input.SeedCluster{domId}=SeedCluster{seedCombinationId, domId};
-                            % Set somain 1 to no cluster seed in zero shot experiment
-%                             if isZeroShot && domId==1
-%                                 input.SeedSet{domId} = [];
-%                             end
+                            input.SeedSet{domId} = setdiff(input.SeedSet{domId}, removeSeedSet);
+                            % Feature matrix
                             input.X{domId} = X{domId};
-                            % If Y has all 0 row or col update rule will fail
+                            % If Y has all 0 row or col update rule will
+                            % fail, so add a small epsilon here
                             Y{domId}(Y{domId}==0) = 10^-18;
+                            % Perception matrix
                             input.Y{domId} = Y{domId};
-                            input.XW{domId} = XW{domId};
                             input.Sxw{domId} = Su{domId};
                             input.Dxw{domId} = Du{domId};
                         end;
@@ -80,13 +88,8 @@ for sigma = sigmaList
                         RandomTrainingTime(randomTryTime) = trainingTime;
                         
                         for domId = 1: numDom
-%                             if isZeroShot
-%                                 [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
-%                                     getRecallPrecisionZeroShot(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
-%                             else
-                                [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
-                                    getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
-%                             end
+                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
+                                getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
                             RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
                             if isnan(RandomFScore(randomTryTime, domId))
                                 RandomFScore(randomTryTime, domId) = 0;
@@ -146,7 +149,15 @@ function NewGroundTruth = reshape(GroundTruth)
     end
 end
 
-function [recall, precision] = getRecallPrecisionZeroShot(GroundTruth, ClusterResult, SeedSet)
+function removeSeedSet = findRemoveSeedSet(SeedCluster, clusterSeedRate)
+    numCluster = size(SeedCluster, 2);
+    % Calculate how many clusters should remove the seed
+    numRemoveCluster = round(numCluster*(1-clusterSeedRate));
+    % Find the seed index that should be removed
+    removeSeedSet = find(sum(SeedCluster(:, (1:numRemoveCluster)), 2) > 0);
+end
+
+function [recall, precision] = getRecallPrecision(GroundTruth, ClusterResult, seedSet)
     [~, PredictionResult] = max(ClusterResult, [], 2);
     ClusterResult = zeros(size(ClusterResult,1), size(ClusterResult,2));
     for instanceId = 1: length(PredictionResult)
@@ -154,10 +165,8 @@ function [recall, precision] = getRecallPrecisionZeroShot(GroundTruth, ClusterRe
     end
     % find the index of instance that supervised
     supervisedIndex = find(sum(GroundTruth, 2));
-    % find index of seed
-    seedIndex = find(sum(SeedSet, 2));
     % exclude seed when calculating performance
-    supervisedIndex = setdiff(supervisedIndex, seedIndex);
+    supervisedIndex = setdiff(supervisedIndex, seedSet);
     ClusterResult = reshape(ClusterResult(supervisedIndex, :));
     GroundTruth = reshape(GroundTruth(supervisedIndex,:));
     numInstance = size(ClusterResult, 1);

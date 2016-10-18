@@ -43,7 +43,7 @@ XW=cell(domainNum,1);
 reconstructY=cell(length(input.Y),1);
 
 for domId = 1:domainNum
-    instanceClusterNumList(domId) = size(input.XW{domId}, 2);
+    instanceClusterNumList(domId) = size(input.SeedCluster{domId}, 2);
     instanceNumList(domId) = size(input.X{domId}, 1);
     featureNumList(domId) = size(input.X{domId}, 2);
     perceptionNumList(domId) = size(input.Y{domId}, 1);

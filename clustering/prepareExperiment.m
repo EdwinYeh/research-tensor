@@ -1,5 +1,5 @@
 function [X, Y, XW, Su, Du, AllSeedCluster, AllSeedSet] = ...
-    prepareExperiment(datasetName, userIdList, sigmaInstsnce, maxSeedCombination, clusterSeedLevel)
+    prepareExperiment(datasetName, userIdList, sigmaInstsnce, maxSeedCombination)
 % Input:
 %   userIdArray: 1-d array saving userId involved in experiment
 % Output:
@@ -62,14 +62,15 @@ for domId = 1:numDom;
         Du{domId}(instanceId,instanceId) = sum(Su{domId}(instanceId,:));
     end
 end
-[Y, remainPerceptionIndex] = deleteZeroPerception(Y);
+[Y, ~] = deleteZeroPerception(Y);
 for domId = 1:numDom
     userId = userIdList(domId);
-    if clusterSeedLevel == -1
-        SeedData = load(sprintf('ClusterSeed/default/SeedData_%s_%d.mat', datasetName, userId));
-    else
-        SeedData = load(sprintf('ClusterSeed/%s/SeedData_%s_%d.mat', num2str(clusterSeedLevel), datasetName, userId));
-    end
+    SeedData = load(sprintf('ClusterSeed/default/SeedData_%s_%d.mat', datasetName, userId));
+%     if clusterSeedLevel == -1
+%         SeedData = load(sprintf('ClusterSeed/default/SeedData_%s_%d.mat', datasetName, userId));
+%     else
+%         SeedData = load(sprintf('ClusterSeed/%s/SeedData_%s_%d.mat', num2str(clusterSeedLevel), datasetName, userId));
+%     end
     SeedSet = SeedData.SeedSet;
     SeedCluster = SeedData.SeedCluster;
     %         PerceptionSeedFilter = SeedData.PerceptionSeedFilter;
