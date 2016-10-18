@@ -150,11 +150,15 @@ function NewGroundTruth = reshape(GroundTruth)
 end
 
 function removeSeedSet = findRemoveSeedSet(SeedCluster, clusterSeedRate)
-    numCluster = size(SeedCluster, 2);
-    % Calculate how many clusters should remove the seed
-    numRemoveCluster = round(numCluster*(1-clusterSeedRate));
-    % Find the seed index that should be removed
-    removeSeedSet = find(sum(SeedCluster(:, (1:numRemoveCluster)), 2) > 0);
+    if clusterSeedRate == 1
+        removeSeedSet = [];
+    else
+        numCluster = size(SeedCluster, 2);
+        % Calculate how many clusters should remove the seed
+        numRemoveCluster = round(numCluster*(1-clusterSeedRate));
+        % Find the seed index that should be removed
+        removeSeedSet = find(sum(SeedCluster(:, (1:numRemoveCluster)), 2) > 0);
+    end
 end
 
 function [recall, precision] = getRecallPrecision(GroundTruth, ClusterResult, seedSet)
