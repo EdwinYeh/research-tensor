@@ -1,4 +1,4 @@
-ClusterSeedRateList="0.33 0.66 0.1"
+ClusterSeedRateList="0.33 0.66 1"
 
 for clusterSeedRate in $ClusterSeedRateList
 do
