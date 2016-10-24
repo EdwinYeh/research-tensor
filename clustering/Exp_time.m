@@ -38,7 +38,7 @@ Tracker = cell(1, maxSeedCombination);
 
 for sigma = sigmaList
     [X, Y, XW, Su, Du, SeedCluster, SeedSet] = ...
-        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination, clusterSeedRate);
+        prepareExperiment(datasetName, userIdList, sigma, maxSeedCombination);
     for cpRank = cpRankList
         for lambdaOrder = 0: lambdaMaxOrder
             lambda = lambdaStart * lambdaScale ^ lambdaOrder;
@@ -55,12 +55,12 @@ for sigma = sigmaList
                         for domId = 1: numDom
 %                             input.S{domId}=PerceptionSeedFilter{seedCombinationId, domId};
                             input.S{domId} = getRandomPerceptionSeed(Y{domId}, perceptionSeedRate);
+                            % Cluster groung truth matrix of seed(should not be edited)
+                            input.SeedCluster{domId} = SeedCluster{seedCombinationId, domId};
+                            removeSeedSet = findRemoveSeedSet(input.SeedCluster{domId}, clusterSeedRate);
+                            % Cluster seed index
                             input.SeedSet{domId} = SeedSet{seedCombinationId, domId};
-                            input.SeedCluster{domId}=SeedCluster{seedCombinationId, domId};
-                            % Set somain 1 to no cluster seed in zero shot experiment
-%                             if isZeroShot && domId==1
-%                                 input.SeedSet{domId} = [];
-%                             end
+                            input.SeedSet{domId} = setdiff(input.SeedSet{domId}, removeSeedSet);
                             input.X{domId} = X{domId};
                             % If Y has all 0 row or col update rule will fail
                             Y{domId}(Y{domId}==0) = 10^-18;
@@ -81,7 +81,7 @@ for sigma = sigmaList
                         trainingTime = toc(trainingTimer);
                         RandomTrainingTime(randomTryTime) = trainingTime;
                         iterFScore = zeros(500,1);
-                        for iter = 1:500
+                        for iter = 1:50
                             if ~isempty(output.Tracker{1, 3}{iter})
                                 iterU = output.Tracker{1, 3}{iter}{1};
                                 [iterRecall, iterPrecision] = getRecallPrecision(XW{1}, iterU, SeedSet{seedCombinationId, 1});
@@ -92,14 +92,9 @@ for sigma = sigmaList
                         Tracker{seedCombinationId} = output.Tracker;
                         save('time_Tracker.mat', 'Tracker');
                         
-                        for domId = 1: numDom
-%                             if isZeroShot
-%                                 [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
-%                                     getRecallPrecisionZeroShot(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
-%                             else
-                                [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
-                                    getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
-%                             end
+                        for domId = 1: numDom                            
+                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
+                                getRecallPrecisionZeroShot(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
                             RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
                             if isnan(RandomFScore(randomTryTime, domId))
                                 RandomFScore(randomTryTime, domId) = 0;
@@ -159,50 +154,14 @@ function NewGroundTruth = reshape(GroundTruth)
     end
 end
 
-function [recall, precision] = getRecallPrecisionZeroShot(GroundTruth, ClusterResult, SeedSet)
-    [~, PredictionResult] = max(ClusterResult, [], 2);
-    ClusterResult = zeros(size(ClusterResult,1), size(ClusterResult,2));
-    for instanceId = 1: length(PredictionResult)
-        ClusterResult(instanceId, PredictionResult(instanceId)) = 1;
+function removeSeedSet = findRemoveSeedSet(SeedCluster, clusterSeedRate)
+    if clusterSeedRate == 1
+        removeSeedSet = [];
+    else
+        numCluster = size(SeedCluster, 2);
+        % Calculate how many clusters should remove the seed
+        numRemoveCluster = round(numCluster*(1-clusterSeedRate));
+        % Find the seed index that should be removed
+        removeSeedSet = find(sum(SeedCluster(:, (1:numRemoveCluster)), 2) > 0);
     end
-    % find the index of instance that supervised
-    supervisedIndex = find(sum(GroundTruth, 2));
-    % find index of seed
-    seedIndex = find(sum(SeedSet, 2));
-    % exclude seed when calculating performance
-    supervisedIndex = setdiff(supervisedIndex, seedIndex);
-    ClusterResult = reshape(ClusterResult(supervisedIndex, :));
-    GroundTruth = reshape(GroundTruth(supervisedIndex,:));
-    numInstance = size(ClusterResult, 1);
-    base = 0;
-    overlap = 0;
-    for i = 1:numInstance
-        for j = 1:numInstance
-            if j < i
-                if ClusterResult(i, j) == 1
-                    base = base + 1;
-                    if GroundTruth(i, j) == 1
-                        overlap = overlap + 1;
-                    end
-                end
-            end
-        end
-    end
-    precision = overlap/ base;
-    
-    base = 0;
-    overlap = 0;
-    for i = 1:numInstance
-        for j = 1:numInstance
-            if j < i
-                if GroundTruth(i, j) == 1
-                    base = base + 1;
-                    if ClusterResult(i, j) == 1
-                        overlap = overlap + 1;
-                    end
-                end
-            end
-        end
-    end
-    recall = overlap/ base;
 end

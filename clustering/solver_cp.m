@@ -1,41 +1,13 @@
 function [output]=solver_cp(input,hyperparam)
-% Input variable:
-%   input.X{d} = instance x feature matrix in domain d
-%   input.Y{d} = perception x instance matrix in domain d
-%   input.S{d} = selector maxtrix of Y in domain d
-%   input.Sxw{d} = Laplacian on numerator in domain d
-%   input.Dxw{d} = Laplacian on denomerator in domain d
-%   input.InstanceIsSeed{d} = instance x cluster matrix saving seed to update XW
-%   hyperparam.beta = coef for 2-norm regularizer for W
-%   hyperparam.gamma = 1-norm sparsity for Tensor projection
-%   hyperparam.lambda = coef for Laplacian reg for instance
-%   hyperparam.cpRank
-%   hyperparam.perceptionClusterNum
-% Output:
-%   output.Tensor = Tensor
-%   output.W = W
-%   output.Objective = Objective
-%   output.Tracker: cell that stores timeTracker/objTracker/UTracker
 
-
-%  System parameter
-%  Todo
-%       add to hyperparam
 tol = 10 ^-6;
 
-% Initialize :
-%     W{d} : featureNum x clusterNum
-%     A : perceptionClusterNum x cpRank
-%     E{d} : instanceClusterNum x cpRank
-%     XW{d} : instanceNum x instanceClusterNum
-%     U{d}: perceptionNum x perceptionClusterNum
 domainNum = length(input.Y);
 instanceClusterNumList = zeros(1, domainNum);
 instanceNumList = zeros(1, domainNum);
 featureNumList = zeros(1, domainNum);
 perceptionNumList = zeros(1, domainNum);
 
-% E=cell(domainNum,1);
 W=cell(domainNum,1);
 XW=cell(domainNum,1);
 reconstructY=cell(length(input.Y),1);
@@ -46,27 +18,23 @@ for domId = 1:domainNum
     featureNumList(domId) = size(input.X{domId}, 2);
     perceptionNumList(domId) = size(input.Y{domId}, 1);
     
-%     E{domId} = randi(10, instanceClusterNumList(domId), hyperparam.cpRank);
     W{domId} = randi(10, featureNumList(domId), instanceClusterNumList(domId));
     XW{domId} = randi(10, instanceNumList(domId), instanceClusterNumList(domId));
 end
 threeMatrixB = randi(10, perceptionNumList(1), instanceClusterNumList(1), instanceClusterNumList(2));
-% A = randi(10,perceptionNumList(1),hyperparam.cpRank);
-% Package A,E matrices into structure named "Tensor"
-% Tensor.A = A; Tensor.E = E;
 
 %  Optimization main body
 objectiveScore = Inf;
 terminateFlag = 0;
 findNan = 0;
 iter = 0;
-maxIter = 20;
+maxIter = 50;
 TimeTracker = cell(maxIter ,  1);
 ObjTracker = cell(maxIter, 1);
 UTracker = cell(maxIter, 1);
 
 timeBasis = 0;
-while terminateFlag<1 && ~findNan && iter < maxIter
+while terminateFlag<5 && ~findNan && iter < maxIter
     iterTimer = tic;
     iter = iter + 1;
     for domID = 1:length(input.Y)

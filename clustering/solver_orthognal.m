@@ -61,13 +61,13 @@ objectiveScore = Inf;
 terminateFlag = 0;
 findNan = 0;
 iter = 0;
-maxIter = 500;
+maxIter = 50;
 TimeTracker = cell(maxIter ,  1);
 ObjTracker = cell(maxIter, 1);
 UTracker = cell(maxIter, 1);
 
 timeBasis = 0;
-while terminateFlag<1 && ~findNan && iter < maxIter
+while terminateFlag<5 && ~findNan && iter < maxIter
     iterTimer = tic;
     iter = iter + 1;
     for domID = 1:length(input.Y)

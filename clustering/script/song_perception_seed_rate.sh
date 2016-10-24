@@ -1,4 +1,4 @@
-PerceptionSeedRateList="0.3 0.5"
+PerceptionSeedRateList="0.3 0.5 0.7"
 
 for perceptionSeedRate in $PerceptionSeedRateList
 do
