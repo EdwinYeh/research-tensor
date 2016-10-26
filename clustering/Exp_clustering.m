@@ -88,8 +88,15 @@ for sigma = sigmaList
                         RandomTrainingTime(randomTryTime) = trainingTime;
                         
                         for domId = 1: numDom
-                            [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
-                                getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+                            if clusterSeedRate>0 && clusterSeedRate<1
+                                [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
+                                    getRecallPrecisionZeroShot(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+                            elseif clusterSeedRate == 1
+                                [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
+                                    getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+                            else
+                                disp('Cluster seed rate must > 0');
+                            end
                             RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
                             if isnan(RandomFScore(randomTryTime, domId))
                                 RandomFScore(randomTryTime, domId) = 0;

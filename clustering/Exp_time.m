@@ -77,11 +77,10 @@ for sigma = sigmaList
 
                         trainingTimer = tic;
                         output=solver_orthognal(input, hyperparam);
-                        save('output.mat', 'output');
                         trainingTime = toc(trainingTimer);
                         RandomTrainingTime(randomTryTime) = trainingTime;
                         iterFScore = zeros(500,1);
-                        for iter = 1:50
+                        for iter = 1:100
                             if ~isempty(output.Tracker{1, 3}{iter})
                                 iterU = output.Tracker{1, 3}{iter}{1};
                                 [iterRecall, iterPrecision] = getRecallPrecision(XW{1}, iterU, SeedSet{seedCombinationId, 1});
@@ -94,7 +93,7 @@ for sigma = sigmaList
                         
                         for domId = 1: numDom                            
                             [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
-                                getRecallPrecisionZeroShot(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+                                getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
                             RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
                             if isnan(RandomFScore(randomTryTime, domId))
                                 RandomFScore(randomTryTime, domId) = 0;

@@ -94,7 +94,7 @@ for sigma = sigmaList
                         
                         for domId = 1: numDom                             
                             [RandomRecall(randomTryTime, domId), RandomPrecision(randomTryTime, domId)] =...
-                                getRecallPrecisionZeroShot(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
+                                getRecallPrecision(XW{domId}, output.XW{domId}, SeedSet{seedCombinationId, domId});
                             RandomFScore(randomTryTime, domId) = 2*((RandomRecall(randomTryTime, domId)*RandomPrecision(randomTryTime, domId))/(RandomRecall(randomTryTime, domId)+RandomPrecision(randomTryTime, domId)));
                             if isnan(RandomFScore(randomTryTime, domId))
                                 RandomFScore(randomTryTime, domId) = 0;
